@@ -12,9 +12,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 
+file(GLOB_RECURSE SRC src/*.cpp src/*.hpp)
+
 add_executable(${PROJECT_NAME} WIN32
-    src/main.cpp
+    ${SRC}
 )
+
+target_include_directories(${PROJECT_NAME} PRIVATE src/includes)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
 
