@@ -112,6 +112,60 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		break;
 	}
 	/************* END KEYBOARD MESSAGES *************/
+	/************* MOUSE MESSAGES *************/
+	case WM_MOUSEMOVE: {
+		const POINTS pt = MAKEPOINTS(lParam);
+		// In client region
+		if (pt.x >= 0 && pt.x < m_width && pt.y >= 0 && pt.y < m_height) {
+			m_mouse.OnMouseMove(pt.x, pt.y);
+
+			if (!m_mouse.IsInWindow()) {
+				SetCapture(m_hWnd);
+				m_mouse.OnMouseEnter();
+			}
+		}
+		// Not in client region, log move if button down
+		else {
+			if(wParam & (MK_LBUTTON | MK_RBUTTON | MK_MBUTTON))
+				m_mouse.OnMouseMove(pt.x, pt.y);
+			else {
+				ReleaseCapture();
+				m_mouse.OnMouseLeave();
+			}
+		}
+		break;
+	}
+	case WM_LBUTTONDOWN: {
+		m_mouse.OnLeftPress();
+		break;
+	}
+	case WM_LBUTTONUP: {
+		m_mouse.OnLeftRelease();
+		break;
+	}
+	case WM_MBUTTONDOWN: {
+		m_mouse.OnMiddlePress();
+		break;
+	}
+	case WM_MBUTTONUP: {
+		m_mouse.OnMiddleRelease();
+		break;
+	}
+	case WM_RBUTTONDOWN: {
+		m_mouse.OnRightPress();
+		break;
+	}
+	case WM_RBUTTONUP: {
+		m_mouse.OnRightRelease();
+		break;
+	}
+	case WM_MOUSEWHEEL: {
+		int deltaWparam = GET_WHEEL_DELTA_WPARAM(wParam);
+
+		m_mouse.OnWheelDelta(deltaWparam);
+		break;
+	}
+	/************* END MOUSE MESSAGES *************/
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -157,4 +211,9 @@ HRESULT Window::Exception::GetErrorCode() const noexcept {
 
 std::string Window::Exception::GetErrorString() const noexcept {
 	return TranslateErrorCode(m_hr);
+}
+
+void Window::SetTitle(const std::string& title) {
+	if (!SetWindowText(m_hWnd, title.c_str()))
+		throw HWND_LAST_EXCEPT();
 }

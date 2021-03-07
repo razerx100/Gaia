@@ -5,7 +5,7 @@ bool Keyboard::IsKeyPressed(unsigned char keycode) const noexcept {
 }
 
 Keyboard::Event Keyboard::ReadKey() noexcept {
-	if (m_keyBuffer.size() > 0u) {
+	if (!m_keyBuffer.empty()) {
 		Keyboard::Event e = m_keyBuffer.front();
 		m_keyBuffer.pop();
 		return e;
@@ -19,7 +19,7 @@ bool Keyboard::IsKeyEmpty() const noexcept {
 }
 
 char Keyboard::ReadChar() noexcept {
-	if (m_charBuffer.size() > 0u) {
+	if (!m_charBuffer.empty()) {
 		unsigned char charCode = m_charBuffer.front();
 		m_charBuffer.pop();
 		return charCode;
@@ -59,18 +59,18 @@ bool Keyboard::IsAutoRepeatEnabled() const noexcept {
 
 void Keyboard::OnKeyPressed(unsigned char keycode) noexcept {
 	m_keystates[keycode] = true;
-	m_keyBuffer.push(Keyboard::Event(Keyboard::Event::Type::Press, keycode));
+	m_keyBuffer.emplace(Keyboard::Event(Keyboard::Event::Type::Press, keycode));
 	TrimBuffer(m_keyBuffer);
 }
 
 void Keyboard::OnKeyReleased(unsigned char keycode) noexcept {
 	m_keystates[keycode] = false;
-	m_keyBuffer.push(Keyboard::Event(Keyboard::Event::Type::Release, keycode));
+	m_keyBuffer.emplace(Keyboard::Event(Keyboard::Event::Type::Release, keycode));
 	TrimBuffer(m_keyBuffer);
 }
 
 void Keyboard::OnChar(char character) noexcept {
-	m_charBuffer.push(character);
+	m_charBuffer.emplace(character);
 	TrimBuffer(m_charBuffer);
 }
 
