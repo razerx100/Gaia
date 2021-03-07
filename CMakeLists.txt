@@ -16,6 +16,7 @@ file(GLOB_RECURSE SRC src/*.cpp src/*.hpp)
 
 add_executable(${PROJECT_NAME} WIN32
     ${SRC}
+    resources/resource.rc
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE src/includes)

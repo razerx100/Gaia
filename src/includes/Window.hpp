@@ -2,6 +2,7 @@
 #define __WINDOW_HPP__
 #include <CleanWin.hpp>
 #include <Xception.hpp>
+#include <Keyboard.hpp>
 
 class Window {
 public:
@@ -46,6 +47,9 @@ private:
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	static LRESULT CALLBACK HandleMsgWrap(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
+
+public:
+	Keyboard m_kb;
 
 private:
 	int m_width;
