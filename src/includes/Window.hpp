@@ -4,7 +4,9 @@
 #include <Xception.hpp>
 #include <Keyboard.hpp>
 #include <Mouse.hpp>
+#include <Graphics.hpp>
 #include <optional>
+#include <memory>
 
 class Window {
 public:
@@ -45,6 +47,7 @@ public:
 	Window(const Window&) = delete;
 	Window& operator=(const Window&) = delete;
 	void SetTitle(const std::string& title);
+	Graphics& GetGfx() const;
 	static std::optional<int> ProcessMessages();
 
 private:
@@ -60,6 +63,7 @@ private:
 	int m_width;
 	int m_height;
 	HWND m_hWnd;
+	std::unique_ptr<Graphics> m_pGfx;
 };
 
 // Error exception helper macro
