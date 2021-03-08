@@ -1,26 +1,13 @@
-#include <Window.hpp>
+#include <App.hpp>
 
 int CALLBACK WinMain(
-	HINSTANCE,
-	HINSTANCE,
-	LPSTR,
-	int
+	_In_ HINSTANCE,
+	_In_opt_ HINSTANCE,
+	_In_ LPSTR,
+	_In_ int
 ) {
 	try {
-		Window wnd(1280, 720, "Window 1");
-
-		MSG msg = {};
-		BOOL gResult;
-		static int i = 0;
-		while ((gResult = GetMessage(&msg, nullptr, 0, 0)) > 0) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-
-		if (gResult == -1)
-			return -1;
-
-		return static_cast<int>(msg.wParam);
+		return App().Go();
 	}
 	catch (const Xception& e) {
 		MessageBox(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);

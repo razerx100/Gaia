@@ -217,3 +217,17 @@ void Window::SetTitle(const std::string& title) {
 	if (!SetWindowText(m_hWnd, title.c_str()))
 		throw HWND_LAST_EXCEPT();
 }
+
+std::optional<int> Window::ProcessMessages() {
+	MSG msg = {};
+
+	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+		if (msg.message == WM_QUIT)
+			return static_cast<int>(msg.wParam);
+
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	return {};
+}
