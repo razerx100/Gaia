@@ -56,7 +56,7 @@ Window::Window(int width, int height, const char* name)
 		nullptr, nullptr, WindowClass::GetInstance(), this
 	);
 
-	if (m_hWnd == nullptr)
+	if (!m_hWnd)
 		throw HWND_LAST_EXCEPT();
 
 	ShowWindow(m_hWnd, SW_SHOWDEFAULT);
@@ -230,7 +230,7 @@ std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept {
 		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
 	);
 
-	if (nMsgLen == 0)
+	if (!nMsgLen)
 		return "Unidentified error code";
 
 	std::string errorString = pMsgBuf;

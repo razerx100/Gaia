@@ -71,13 +71,13 @@ Graphics::Graphics(HWND hwnd)
 }
 
 Graphics::~Graphics() {
-	if (m_pTargetView != nullptr)
+	if (m_pTargetView)
 		m_pTargetView->Release();
-	if (m_pDeviceContext != nullptr)
+	if (m_pDeviceContext)
 		m_pDeviceContext->Release();
-	if (m_pSwapChain != nullptr)
+	if (m_pSwapChain)
 		m_pSwapChain->Release();
-	if (m_pDevice != nullptr)
+	if (m_pDevice)
 		m_pDevice->Release();
 }
 
@@ -106,7 +106,7 @@ Graphics::HrException::HrException(int line, const char* file, HRESULT hr) noexc
 
 
 Graphics::HrException::HrException(int line, const char* file, HRESULT hr,
-	std::vector<std::string> infoMsgs) noexcept
+	const std::vector<std::string>& infoMsgs) noexcept
 	: Xception(line, file), m_hr(hr) {
 	for (const std::string& m : infoMsgs) {
 		m_info += m;
@@ -152,7 +152,7 @@ std::string Graphics::HrException::TranslateErrorCode(HRESULT hr) noexcept {
 		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
 	);
 
-	if (nMsgLen == 0)
+	if (!nMsgLen)
 		return "Unidentified error code";
 
 	std::string errorString = pMsgBuf;

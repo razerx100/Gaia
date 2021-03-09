@@ -10,7 +10,7 @@ public:
 	class HrException : public Xception {
 	public:
 		HrException(int line, const char* file, HRESULT hr) noexcept;
-		HrException(int line, const char* file, HRESULT hr, std::vector<std::string> infoMsgs) noexcept;
+		HrException(int line, const char* file, HRESULT hr, const std::vector<std::string>& infoMsgs) noexcept;
 		const char* what() const noexcept override;
 		const char* GetType() const noexcept override;
 		HRESULT GetErrorCode() const noexcept;

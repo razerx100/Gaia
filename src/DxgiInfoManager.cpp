@@ -12,14 +12,14 @@ DxgiInfoManager::DxgiInfoManager()
 
 	// load the dll that contains the function DXGIGetDebugInterface
 	const auto hModDxgiDebug = LoadLibraryEx("dxgidebug.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
-	if (hModDxgiDebug == nullptr)
+	if (!hModDxgiDebug)
 		throw HWND_LAST_EXCEPT();
 
 	// get address of DXGIGetDebugInterface in dll
 	const auto DxgiGetDebugInterface = reinterpret_cast<DXGIGetDebugInterface>(
 		reinterpret_cast<void*>(GetProcAddress(hModDxgiDebug, "DXGIGetDebugInterface"))
 		);
-	if (DxgiGetDebugInterface == nullptr)
+	if (!DxgiGetDebugInterface)
 		throw HWND_LAST_EXCEPT();
 
 	HRESULT hr;
@@ -27,7 +27,7 @@ DxgiInfoManager::DxgiInfoManager()
 }
 
 DxgiInfoManager::~DxgiInfoManager() {
-	if (m_pDxgiInfoQueue != nullptr)
+	if (m_pDxgiInfoQueue)
 		m_pDxgiInfoQueue->Release();
 }
 
