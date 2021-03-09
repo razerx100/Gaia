@@ -173,6 +173,33 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
+void Window::SetTitle(const std::string& title) {
+	if (!SetWindowText(m_hWnd, title.c_str()))
+		throw HWND_LAST_EXCEPT();
+}
+
+std::optional<int> Window::ProcessMessages() {
+	MSG msg = {};
+
+	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+		if (msg.message == WM_QUIT)
+			return static_cast<int>(msg.wParam);
+
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	return {};
+}
+
+Graphics& Window::GetGfx() const {
+	if (!m_pGfx)
+		throw HWND_NOGFX_EXCEPT();
+
+	return *m_pGfx;
+}
+
+// Window Exception
 Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
 	: Xception(line, file), m_hr(hr) {}
 
@@ -188,6 +215,10 @@ const char* Window::Exception::what() const noexcept {
 
 const char* Window::Exception::GetType() const noexcept {
 	return "Window Exception";
+}
+
+const char* Window::NoGfxException::GetType() const noexcept {
+	return "Window Exception [No Graphics]";
 }
 
 std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept {
@@ -213,27 +244,4 @@ HRESULT Window::Exception::GetErrorCode() const noexcept {
 
 std::string Window::Exception::GetErrorString() const noexcept {
 	return TranslateErrorCode(m_hr);
-}
-
-void Window::SetTitle(const std::string& title) {
-	if (!SetWindowText(m_hWnd, title.c_str()))
-		throw HWND_LAST_EXCEPT();
-}
-
-std::optional<int> Window::ProcessMessages() {
-	MSG msg = {};
-
-	while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
-		if (msg.message == WM_QUIT)
-			return static_cast<int>(msg.wParam);
-
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-
-	return {};
-}
-
-Graphics& Window::GetGfx() const {
-	return *m_pGfx;
 }

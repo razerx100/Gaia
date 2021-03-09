@@ -24,6 +24,12 @@ public:
 		HRESULT m_hr;
 	};
 
+	class NoGfxException : public Xception {
+	public:
+		using Xception::Xception;
+		const char* GetType() const noexcept override;
+	};
+
 private:
 
 	class WindowClass {
@@ -66,7 +72,8 @@ private:
 	std::unique_ptr<Graphics> m_pGfx;
 };
 
-// Error exception helper macro
 #define HWND_EXCEPT(hr) Window::Exception(__LINE__, __FILE__, hr)
+#define HWND_NOGFX_EXCEPT() Window::NoGfxException(__LINE__, __FILE__)
 #define HWND_LAST_EXCEPT() Window::Exception(__LINE__, __FILE__, static_cast<HRESULT>(GetLastError()))
+
 #endif
