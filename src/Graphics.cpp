@@ -121,10 +121,10 @@ const char* Graphics::HrException::what() const noexcept {
 	std::ostringstream oss;
 	oss << GetType() << "\n"
 		<< "[Error code] 0x" << std::hex << std::uppercase << GetErrorCode()
-		<< std::dec << " (" << static_cast<std::uint64_t>(GetErrorCode()) << ")\n"
+		<< std::dec << " (" << static_cast<std::uint64_t>(GetErrorCode()) << ")\n\n"
 		<< "[Error String] " << GetErrorString() << "\n";
 	if (!m_info.empty())
-		oss << "\n[Error Info]\n" << GetErrorInfo() << "\n\n";
+		oss << "[Error Info]\n" << GetErrorInfo() << "\n\n";
 	oss << GetOriginString();
 	m_whatBuffer = oss.str();
 

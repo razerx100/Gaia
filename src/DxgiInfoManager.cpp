@@ -2,28 +2,27 @@
 #include <Window.hpp>
 #include <dxgidebug.h>
 #include <memory>
+#include <functional>
 
 #define GFX_THROW_NOINFO(hr, hrCall) if(FAILED(hr = (hrCall))) throw Graphics::HrException(__LINE__, __FILE__, hr)
 
 DxgiInfoManager::DxgiInfoManager()
 	: m_next(0u), m_pDxgiInfoQueue(nullptr) {
-	// define function signature of DXGIGetDebugInterface
-	typedef HRESULT(WINAPI* DXGIGetDebugInterface)(REFIID, void**);
+	//typedef HRESULT(WINAPI* DXGIGetDebugInterface)(REFIID, void**); // C Style function pointer
 
-	// load the dll that contains the function DXGIGetDebugInterface
-	const auto hModDxgiDebug = LoadLibraryEx("dxgidebug.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+	const HMODULE hModDxgiDebug = LoadLibraryEx("dxgidebug.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 	if (!hModDxgiDebug)
 		throw HWND_LAST_EXCEPT();
 
-	// get address of DXGIGetDebugInterface in dll
-	const auto DxgiGetDebugInterface = reinterpret_cast<DXGIGetDebugInterface>(
-		reinterpret_cast<void*>(GetProcAddress(hModDxgiDebug, "DXGIGetDebugInterface"))
+	std::function<HRESULT(REFIID, void**)> DxgiGetDebugInterface = reinterpret_cast<HRESULT(__stdcall *)(REFIID, void**)>(
+		GetProcAddress(hModDxgiDebug, "DXGIGetDebugInterface")
 		);
 	if (!DxgiGetDebugInterface)
 		throw HWND_LAST_EXCEPT();
 
 	HRESULT hr;
 	GFX_THROW_NOINFO(hr, DxgiGetDebugInterface(__uuidof(IDXGIInfoQueue), reinterpret_cast<void**>(&m_pDxgiInfoQueue)));
+
 }
 
 DxgiInfoManager::~DxgiInfoManager() {
