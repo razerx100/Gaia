@@ -1,6 +1,5 @@
 #include <DxgiInfoManager.hpp>
 #include <Window.hpp>
-#include <dxgidebug.h>
 #include <memory>
 #include <functional>
 
@@ -21,13 +20,8 @@ DxgiInfoManager::DxgiInfoManager()
 		throw HWND_LAST_EXCEPT();
 
 	HRESULT hr;
-	GFX_THROW_NOINFO(hr, DxgiGetDebugInterface(__uuidof(IDXGIInfoQueue), reinterpret_cast<void**>(&m_pDxgiInfoQueue)));
+	GFX_THROW_NOINFO(hr, DxgiGetDebugInterface(__uuidof(IDXGIInfoQueue), &m_pDxgiInfoQueue));
 
-}
-
-DxgiInfoManager::~DxgiInfoManager() {
-	if (m_pDxgiInfoQueue)
-		m_pDxgiInfoQueue->Release();
 }
 
 void DxgiInfoManager::Set() noexcept {

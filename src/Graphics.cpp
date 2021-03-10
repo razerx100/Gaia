@@ -57,28 +57,16 @@ Graphics::Graphics(HWND hwnd)
 		&m_pDeviceContext
 	));
 
-	ID3D11Resource* pBackBuffer = nullptr;
+	ComPtr<ID3D11Resource> pBackBuffer = nullptr;
 	GFX_THROW_FAILED(hr, m_pSwapChain->GetBuffer(
 		0u,
 		__uuidof(ID3D11Resource),
-		reinterpret_cast<void**>(&pBackBuffer)
+		&pBackBuffer
 	));
 
 	GFX_THROW_FAILED(hr, m_pDevice->CreateRenderTargetView(
-		pBackBuffer, nullptr, &m_pTargetView
+		pBackBuffer.Get(), nullptr, &m_pTargetView
 	));
-	pBackBuffer->Release();
-}
-
-Graphics::~Graphics() {
-	if (m_pTargetView)
-		m_pTargetView->Release();
-	if (m_pDeviceContext)
-		m_pDeviceContext->Release();
-	if (m_pSwapChain)
-		m_pSwapChain->Release();
-	if (m_pDevice)
-		m_pDevice->Release();
 }
 
 void Graphics::EndFrame() {
@@ -97,7 +85,7 @@ void Graphics::EndFrame() {
 
 void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 	const float color[] = { red, green, blue, 1.0f };
-	m_pDeviceContext->ClearRenderTargetView(m_pTargetView, color);
+	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
 }
 
 // Graphics Exception

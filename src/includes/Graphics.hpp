@@ -4,6 +4,9 @@
 #include <Xception.hpp>
 #include <DxgiInfoManager.hpp>
 #include <d3d11.h>
+#include <wrl.h>
+
+using Microsoft::WRL::ComPtr;
 
 class Graphics {
 public:
@@ -34,7 +37,7 @@ public:
 	Graphics(HWND hwnd);
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
-	~Graphics();
+	~Graphics() = default;
 
 	void EndFrame();
 	void ClearBuffer(float red, float green, float blue) noexcept;
@@ -43,10 +46,10 @@ private:
 #ifdef _DEBUG
 	DxgiInfoManager m_infoManager;
 #endif
-	ID3D11Device* m_pDevice;
-	IDXGISwapChain* m_pSwapChain;
-	ID3D11DeviceContext* m_pDeviceContext;
-	ID3D11RenderTargetView* m_pTargetView;
+	ComPtr<ID3D11Device> m_pDevice;
+	ComPtr<IDXGISwapChain> m_pSwapChain;
+	ComPtr<ID3D11DeviceContext> m_pDeviceContext;
+	ComPtr<ID3D11RenderTargetView> m_pTargetView;
 
 };
 #endif

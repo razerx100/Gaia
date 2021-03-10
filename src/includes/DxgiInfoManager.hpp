@@ -1,13 +1,17 @@
 #ifndef __DXGI_INFO_MANAGER_HPP__
 #define __DXGI_INFO_MANAGER_HPP__
 #include <CleanWin.hpp>
+#include <wrl.h>
+#include <dxgidebug.h>
 #include <vector>
 #include <string>
+
+using Microsoft::WRL::ComPtr;
 
 class DxgiInfoManager {
 public:
 	DxgiInfoManager();
-	~DxgiInfoManager();
+	~DxgiInfoManager() = default;
 	DxgiInfoManager(const DxgiInfoManager&) = delete;
 	DxgiInfoManager& operator=(const DxgiInfoManager&) = delete;
 
@@ -16,6 +20,6 @@ public:
 
 private:
 	std::uint64_t m_next;
-	struct IDXGIInfoQueue* m_pDxgiInfoQueue;
+	ComPtr<IDXGIInfoQueue> m_pDxgiInfoQueue;
 };
 #endif
