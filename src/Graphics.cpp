@@ -1,11 +1,14 @@
 #include <Graphics.hpp>
 #include <sstream>
+#include <d3dcompiler.h>
 
 #ifdef _DEBUG
+#define GFX_THROW_NO_HR(funCall) m_infoManager.Set(); funCall; std::vector<std::string> vec = m_infoManager.GetMessages(); if(!vec.empty()) throw Graphics::InfoException(__LINE__, __FILE__, vec)
 #define GFX_THROW(hr) throw Graphics::HrException(__LINE__, __FILE__, hr, m_infoManager.GetMessages())
 #define GFX_THROW_FAILED(hr, hrCall) m_infoManager.Set(); if(FAILED(hr = (hrCall))) GFX_THROW(hr)
 #define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException(__LINE__, __FILE__, hr, m_infoManager.GetMessages())
 #else
+#define GFX_THROW_NO_HR(funCall) funCall
 #define GFX_THROW(hr) throw Graphics::HrException(__LINE__, __FILE__, hr)
 #define GFX_THROW_FAILED(hr, hrCall) if(FAILED(hr = (hrCall))) GFX_THROW(hr)
 #define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException(__LINE__, __FILE__, hr)
@@ -17,6 +20,8 @@ Graphics::Graphics(HWND hwnd)
 	m_pSwapChain(nullptr),
 	m_pDeviceContext(nullptr),
 	m_pTargetView(nullptr) {
+
+	GetFullProjectPath();
 
 	DXGI_SWAP_CHAIN_DESC desc = { };
 	desc.BufferDesc.Width = 0;
@@ -88,6 +93,96 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
 }
 
+void Graphics::DrawTriangle() {
+
+	const float vertices[3][2] = {
+		{0.0f, 0.5f},
+		{0.35f, -0.5f},
+		{-0.35f, -0.5f}
+	};
+
+	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	const std::uint32_t stride = sizeof(float[2]);
+
+
+	// Vertex Buffer
+	ComPtr<ID3D11Buffer> pVertexBuffer;
+	D3D11_BUFFER_DESC desc = {};
+	desc.ByteWidth = sizeof(vertices);
+	desc.Usage = D3D11_USAGE_DEFAULT;
+	desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	desc.CPUAccessFlags = 0u;
+	desc.MiscFlags = 0u;
+	desc.StructureByteStride = stride;
+
+	D3D11_SUBRESOURCE_DATA sData = {};
+	sData.pSysMem = vertices;
+
+	HRESULT hr;
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&desc, &sData, &pVertexBuffer));
+
+	const std::uint32_t offSet = 0u;
+	m_pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offSet);
+
+	// Shader Path
+	std::wstringstream shaderPath;
+	shaderPath << m_ProjectPath.c_str() <<L"shaders\\precompiled\\" << BuildType() << L"\\";
+
+	// Vertex Shader
+	ComPtr<ID3D11VertexShader> pVertexShader;
+	ComPtr<ID3DBlob> pBlob;
+	GFX_THROW_FAILED(hr, D3DReadFileToBlob((shaderPath.str() + L"VertexShader.cso").c_str(), &pBlob));
+	GFX_THROW_FAILED(hr, m_pDevice->CreateVertexShader(
+		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
+		nullptr, &pVertexShader
+	));
+
+	m_pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
+
+	// Vertex Layout
+	ComPtr<ID3D11InputLayout> pInputLayout;
+
+	const D3D11_INPUT_ELEMENT_DESC iDescs[] = {
+		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateInputLayout(
+		iDescs, static_cast<std::uint32_t>(std::size(iDescs)),
+		pBlob->GetBufferPointer(),
+		pBlob->GetBufferSize(),
+		&pInputLayout
+	));
+
+	m_pDeviceContext->IASetInputLayout(pInputLayout.Get());
+
+	// Configure viewport
+	D3D11_VIEWPORT vp = {};
+	vp.Width = 1280.0f;
+	vp.Height = 720.0f;
+	vp.MinDepth = 0;
+	vp.MaxDepth = 1;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+
+	m_pDeviceContext->RSSetViewports(1u, &vp);
+
+	// Pixel Shader
+	ComPtr<ID3D11PixelShader> pPixelShader;
+	GFX_THROW_FAILED(hr, D3DReadFileToBlob((shaderPath.str() + L"PixelShader.cso").c_str(), &pBlob));
+	GFX_THROW_FAILED(hr, m_pDevice->CreatePixelShader(
+		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
+		nullptr, &pPixelShader
+	));
+
+	m_pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+
+	m_pDeviceContext->OMSetRenderTargets(1u, m_pTargetView.GetAddressOf(), nullptr);
+
+	GFX_THROW_NO_HR(m_pDeviceContext->Draw(static_cast<std::uint32_t>(std::size(vertices)), 0u));
+}
+
 // Graphics Exception
 Graphics::HrException::HrException(int line, const char* file, HRESULT hr) noexcept
 	: Xception(line, file), m_hr(hr) {}
@@ -155,3 +250,51 @@ std::string Graphics::HrException::GetErrorString() const noexcept {
 std::string Graphics::HrException::GetErrorInfo() const noexcept {
 	return m_info;
 }
+
+Graphics::InfoException::InfoException(int line, const char* file,
+	const std::vector<std::string>& infoMsgs) noexcept
+	: Xception(line, file) {
+
+	for (const std::string msg : infoMsgs) {
+		m_info += msg;
+		m_info.append("\n");
+	}
+
+	if (!m_info.empty())
+		m_info.pop_back();
+}
+
+const char* Graphics::InfoException::what() const noexcept {
+	std::ostringstream oss;
+	oss << GetType() << "\n\n";
+	if (!m_info.empty())
+		oss << "[Error Info]\n" << GetErrorInfo() << "\n\n";
+	oss << GetOriginString();
+	m_whatBuffer = oss.str();
+
+	return m_whatBuffer.c_str();
+}
+
+const char* Graphics::InfoException::GetType() const noexcept {
+	return "Graphics Info Exception";
+}
+
+std::string Graphics::InfoException::GetErrorInfo() const noexcept {
+	return m_info;
+}
+
+// Utility
+void Graphics::GetFullProjectPath() noexcept {
+	m_ProjectPath = __FILE__;
+	for (int i = static_cast<int>(m_ProjectPath.length()) - 1; m_ProjectPath[i] != '\\'; i--)
+		m_ProjectPath.pop_back();
+}
+#ifdef _DEBUG
+constexpr char* Graphics::BuildType() const noexcept {
+	return "Debug";
+}
+#elif NDEBUG
+constexpr char* Graphics::BuildType() const noexcept {
+	return "Release";
+}
+#endif

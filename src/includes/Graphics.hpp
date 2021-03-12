@@ -24,13 +24,23 @@ public:
 	private:
 		HRESULT m_hr;
 		std::string m_info;
-
 	};
 
 	class DeviceRemovedException : public HrException {
 	public:
 		using HrException::HrException;
 		const char* GetType() const noexcept override;
+	};
+
+	class InfoException : public Xception {
+	public:
+		InfoException(int line, const char* file, const std::vector<std::string>& infoMsgs) noexcept;
+		const char* what() const noexcept override;
+		const char* GetType() const noexcept override;
+		std::string GetErrorInfo() const noexcept;
+
+	private:
+		std::string m_info;
 	};
 
 public:
@@ -41,6 +51,17 @@ public:
 
 	void EndFrame();
 	void ClearBuffer(float red, float green, float blue) noexcept;
+	void DrawTriangle();
+
+private:
+	void GetFullProjectPath() noexcept;
+
+public:
+#ifdef _DEBUG
+	constexpr char* BuildType() const noexcept;
+#elif NDEBUG
+	constexpr char* BuildType() const noexcept;
+#endif
 
 private:
 #ifdef _DEBUG
@@ -51,5 +72,6 @@ private:
 	ComPtr<ID3D11DeviceContext> m_pDeviceContext;
 	ComPtr<ID3D11RenderTargetView> m_pTargetView;
 
+	std::string m_ProjectPath;
 };
 #endif

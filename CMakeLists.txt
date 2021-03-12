@@ -24,7 +24,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE src/includes)
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    d3d11.lib dxgi.lib dxguid.lib uuid.lib
+    d3d11.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
 )
 
 if(MSVC)
@@ -38,3 +38,5 @@ if(MSVC)
 endif()
 
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+
+add_subdirectory(src/shaders)
