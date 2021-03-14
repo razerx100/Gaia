@@ -94,37 +94,77 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 }
 
 void Graphics::DrawTriangle() {
+	struct Position {
+		float x;
+		float y;
+	};
 
-	const float vertices[3][2] = {
-		{0.0f, 0.5f},
-		{0.35f, -0.5f},
-		{-0.35f, -0.5f}
+	struct Color {
+		std::uint8_t red;
+		std::uint8_t green;
+		std::uint8_t blue;
+		std::uint8_t alpha;
+	};
+
+	struct Vertex {
+		Position position;
+		Color color;
+	};
+
+	const Vertex vertices[] = {
+		{{-0.5f, 0.5f}, {0u, 0u, 155u, 255u}},
+		{{0.5f, 0.5f}, {0u, 250u, 155u, 255u}},
+		{{0.5f, -0.5f}, {250u, 155u, 0u, 255u}},
+		{{-0.5f, -0.5f}, {250u, 0u, 155u, 255u}}
 	};
 
 	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	const std::uint32_t stride = sizeof(float[2]);
+	const std::uint32_t stride = sizeof(Vertex);
 
 
 	// Vertex Buffer
 	ComPtr<ID3D11Buffer> pVertexBuffer;
-	D3D11_BUFFER_DESC desc = {};
-	desc.ByteWidth = sizeof(vertices);
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	desc.CPUAccessFlags = 0u;
-	desc.MiscFlags = 0u;
-	desc.StructureByteStride = stride;
+	D3D11_BUFFER_DESC vDesc = {};
+	vDesc.ByteWidth = sizeof(vertices);
+	vDesc.Usage = D3D11_USAGE_DEFAULT;
+	vDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vDesc.CPUAccessFlags = 0u;
+	vDesc.MiscFlags = 0u;
+	vDesc.StructureByteStride = stride;
 
-	D3D11_SUBRESOURCE_DATA sData = {};
-	sData.pSysMem = vertices;
+	D3D11_SUBRESOURCE_DATA vData = {};
+	vData.pSysMem = vertices;
 
 	HRESULT hr;
 
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&desc, &sData, &pVertexBuffer));
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&vDesc, &vData, &pVertexBuffer));
 
 	const std::uint32_t offSet = 0u;
 	m_pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offSet);
+
+	// Indices
+	const unsigned short indices[] = {
+		0u, 1u, 2u,
+		2u, 3u, 0u
+	};
+
+	// Index Buffer
+	ComPtr<ID3D11Buffer> pIndexBuffer;
+	D3D11_BUFFER_DESC iDesc;
+	iDesc.ByteWidth = sizeof(indices);
+	iDesc.Usage = D3D11_USAGE_DEFAULT;
+	iDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	iDesc.CPUAccessFlags = 0u;
+	iDesc.MiscFlags = 0u;
+	iDesc.StructureByteStride = sizeof(unsigned short);
+
+	D3D11_SUBRESOURCE_DATA iData = {};
+	iData.pSysMem = indices;
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&iDesc, &iData, &pIndexBuffer));
+
+	m_pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
 
 	// Shader Path
 	std::wstringstream shaderPath;
@@ -145,7 +185,8 @@ void Graphics::DrawTriangle() {
 	ComPtr<ID3D11InputLayout> pInputLayout;
 
 	const D3D11_INPUT_ELEMENT_DESC iDescs[] = {
-		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<std::uint32_t>(sizeof(Position)), D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
 	GFX_THROW_FAILED(hr, m_pDevice->CreateInputLayout(
@@ -180,7 +221,7 @@ void Graphics::DrawTriangle() {
 
 	m_pDeviceContext->OMSetRenderTargets(1u, m_pTargetView.GetAddressOf(), nullptr);
 
-	GFX_THROW_NO_HR(m_pDeviceContext->Draw(static_cast<std::uint32_t>(std::size(vertices)), 0u));
+	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(static_cast<std::uint32_t>(std::size(indices)), 0u, 0u));
 }
 
 // Graphics Exception
