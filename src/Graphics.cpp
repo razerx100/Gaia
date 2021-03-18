@@ -80,7 +80,7 @@ void Graphics::EndFrame() {
 #ifdef _DEBUG
 	m_infoManager.Set();
 #endif
-	if (FAILED(hr = m_pSwapChain->Present(1u, 0u))) {
+	if (FAILED(hr = m_pSwapChain->Present(0u, 0u))) {
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
 			throw GFX_DEVICE_REMOVED_EXCEPT(m_pDevice->GetDeviceRemovedReason());
 		else
@@ -93,7 +93,7 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
 }
 
-void Graphics::DrawTriangle() {
+void Graphics::DrawTriangle(float angle) {
 	struct Position {
 		float x;
 		float y;
@@ -112,10 +112,10 @@ void Graphics::DrawTriangle() {
 	};
 
 	const Vertex vertices[] = {
-		{{-0.5f, 0.5f}, {0u, 0u, 155u, 255u}},
-		{{0.5f, 0.5f}, {0u, 250u, 155u, 255u}},
-		{{0.5f, -0.5f}, {250u, 155u, 0u, 255u}},
-		{{-0.5f, -0.5f}, {250u, 0u, 155u, 255u}}
+		{{-0.75f, 0.5f}, {0u, 0u, 155u, 255u}},
+		{{0.75f, 0.5f}, {0u, 250u, 155u, 255u}},
+		{{0.75f, -0.5f}, {250u, 155u, 0u, 255u}},
+		{{-0.75f, -0.5f}, {250u, 0u, 155u, 255u}}
 	};
 
 	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -125,20 +125,20 @@ void Graphics::DrawTriangle() {
 
 	// Vertex Buffer
 	ComPtr<ID3D11Buffer> pVertexBuffer;
-	D3D11_BUFFER_DESC vDesc = {};
-	vDesc.ByteWidth = sizeof(vertices);
-	vDesc.Usage = D3D11_USAGE_DEFAULT;
-	vDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vDesc.CPUAccessFlags = 0u;
-	vDesc.MiscFlags = 0u;
-	vDesc.StructureByteStride = stride;
+	D3D11_BUFFER_DESC vertexDesc = {};
+	vertexDesc.ByteWidth = sizeof(vertices);
+	vertexDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexDesc.CPUAccessFlags = 0u;
+	vertexDesc.MiscFlags = 0u;
+	vertexDesc.StructureByteStride = stride;
 
-	D3D11_SUBRESOURCE_DATA vData = {};
-	vData.pSysMem = vertices;
+	D3D11_SUBRESOURCE_DATA vertexData = {};
+	vertexData.pSysMem = vertices;
 
 	HRESULT hr;
 
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&vDesc, &vData, &pVertexBuffer));
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&vertexDesc, &vertexData, &pVertexBuffer));
 
 	const std::uint32_t offSet = 0u;
 	m_pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offSet);
@@ -151,18 +151,18 @@ void Graphics::DrawTriangle() {
 
 	// Index Buffer
 	ComPtr<ID3D11Buffer> pIndexBuffer;
-	D3D11_BUFFER_DESC iDesc;
-	iDesc.ByteWidth = sizeof(indices);
-	iDesc.Usage = D3D11_USAGE_DEFAULT;
-	iDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	iDesc.CPUAccessFlags = 0u;
-	iDesc.MiscFlags = 0u;
-	iDesc.StructureByteStride = sizeof(unsigned short);
+	D3D11_BUFFER_DESC indexDesc;
+	indexDesc.ByteWidth = sizeof(indices);
+	indexDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexDesc.CPUAccessFlags = 0u;
+	indexDesc.MiscFlags = 0u;
+	indexDesc.StructureByteStride = sizeof(unsigned short);
 
-	D3D11_SUBRESOURCE_DATA iData = {};
-	iData.pSysMem = indices;
+	D3D11_SUBRESOURCE_DATA indexData = {};
+	indexData.pSysMem = indices;
 
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&iDesc, &iData, &pIndexBuffer));
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&indexDesc, &indexData, &pIndexBuffer));
 
 	m_pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
 
@@ -184,19 +184,51 @@ void Graphics::DrawTriangle() {
 	// Vertex Layout
 	ComPtr<ID3D11InputLayout> pInputLayout;
 
-	const D3D11_INPUT_ELEMENT_DESC iDescs[] = {
+	const D3D11_INPUT_ELEMENT_DESC inputDescs[] = {
 		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<std::uint32_t>(sizeof(Position)), D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
 	GFX_THROW_FAILED(hr, m_pDevice->CreateInputLayout(
-		iDescs, static_cast<std::uint32_t>(std::size(iDescs)),
+		inputDescs, static_cast<std::uint32_t>(std::size(inputDescs)),
 		pBlob->GetBufferPointer(),
 		pBlob->GetBufferSize(),
 		&pInputLayout
 	));
 
 	m_pDeviceContext->IASetInputLayout(pInputLayout.Get());
+
+	// Constant Buffer
+	struct ConstantBuffer {
+		struct {
+			float element[4][4];
+		}transformation;
+	};
+
+	const ConstantBuffer constBuffer = {
+		{
+			(9.0f / 16.0f) * std::cos(angle), -std::sin(angle), 0.0f, 0.0f,
+			(9.0f / 16.0f) * std::sin(angle), std::cos(angle), 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		}
+	};
+
+	ComPtr<ID3D11Buffer> pConstantBuffer;
+	D3D11_BUFFER_DESC constDesc;
+	constDesc.ByteWidth = sizeof(constBuffer);
+	constDesc.Usage = D3D11_USAGE_DYNAMIC;
+	constDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	constDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	constDesc.MiscFlags = 0u;
+	constDesc.StructureByteStride = 0u;
+
+	D3D11_SUBRESOURCE_DATA constData = {};
+	constData.pSysMem = &constBuffer;
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&constDesc, &constData , &pConstantBuffer));
+
+	m_pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
 
 	// Configure viewport
 	D3D11_VIEWPORT vp = {};
@@ -331,11 +363,11 @@ void Graphics::GetFullProjectPath() noexcept {
 		m_ProjectPath.pop_back();
 }
 #ifdef _DEBUG
-constexpr char* Graphics::BuildType() const noexcept {
+const char* Graphics::BuildType() const noexcept {
 	return "Debug";
 }
 #elif NDEBUG
-constexpr char* Graphics::BuildType() const noexcept {
+const char* Graphics::BuildType() const noexcept {
 	return "Release";
 }
 #endif

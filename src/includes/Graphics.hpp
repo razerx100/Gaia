@@ -51,16 +51,16 @@ public:
 
 	void EndFrame();
 	void ClearBuffer(float red, float green, float blue) noexcept;
-	void DrawTriangle();
+	void DrawTriangle(float angle);
 
 private:
 	void GetFullProjectPath() noexcept;
 
 public:
 #ifdef _DEBUG
-	constexpr char* BuildType() const noexcept;
+	const char* BuildType() const noexcept;
 #elif NDEBUG
-	constexpr char* BuildType() const noexcept;
+	const char* BuildType() const noexcept;
 #endif
 
 private:
