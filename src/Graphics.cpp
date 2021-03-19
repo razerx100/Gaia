@@ -1,6 +1,7 @@
 #include <Graphics.hpp>
 #include <sstream>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
 
 #ifdef _DEBUG
 #define GFX_THROW_NO_HR(funCall) m_infoManager.Set(); funCall; std::vector<std::string> vec = m_infoManager.GetMessages(); if(!vec.empty()) throw Graphics::InfoException(__LINE__, __FILE__, vec)
@@ -93,7 +94,7 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
 }
 
-void Graphics::DrawTriangle(float angle) {
+void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	struct Position {
 		float x;
 		float y;
@@ -200,17 +201,14 @@ void Graphics::DrawTriangle(float angle) {
 
 	// Constant Buffer
 	struct ConstantBuffer {
-		struct {
-			float element[4][4];
-		}transformation;
+		DirectX::XMMATRIX transform;
 	};
 
 	const ConstantBuffer constBuffer = {
 		{
-			(9.0f / 16.0f) * std::cos(angle), -std::sin(angle), 0.0f, 0.0f,
-			(9.0f / 16.0f) * std::sin(angle), std::cos(angle), 0.0f, 0.0f,
-			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
+			DirectX::XMMatrixRotationZ(angle) *
+			DirectX::XMMatrixScaling(9.0f / 16.0f, 1.0f, 1.0f) *
+			DirectX::XMMatrixTranslation(posX, posY, 0.0f)
 		}
 	};
 
