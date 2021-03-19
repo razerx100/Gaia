@@ -12,7 +12,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
 
-file(GLOB_RECURSE SRC src/*.cpp src/*.hpp)
+file(GLOB_RECURSE SRC src/*.cpp src/*.hpp src/*.hlsl src/*.ixx)
 
 add_executable(${PROJECT_NAME} WIN32
     ${SRC}
@@ -39,4 +39,3 @@ endif()
 
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
 
-add_subdirectory(src/shaders)

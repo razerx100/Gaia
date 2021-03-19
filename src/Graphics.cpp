@@ -22,7 +22,7 @@ Graphics::Graphics(HWND hwnd)
 	m_pDeviceContext(nullptr),
 	m_pTargetView(nullptr) {
 
-	GetFullProjectPath();
+	SetBinaryPath();
 
 	DXGI_SWAP_CHAIN_DESC desc = { };
 	desc.BufferDesc.Width = 0;
@@ -168,14 +168,11 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	m_pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
 
-	// Shader Path
-	std::wstringstream shaderPath;
-	shaderPath << m_ProjectPath.c_str() <<L"shaders\\precompiled\\" << BuildType() << L"\\";
-
 	// Vertex Shader
 	ComPtr<ID3D11VertexShader> pVertexShader;
 	ComPtr<ID3DBlob> pBlob;
-	GFX_THROW_FAILED(hr, D3DReadFileToBlob((shaderPath.str() + L"VertexShader.cso").c_str(), &pBlob));
+	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
+		(m_BinaryPath + L"VertexShader.cso").c_str(), &pBlob));
 	GFX_THROW_FAILED(hr, m_pDevice->CreateVertexShader(
 		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
 		nullptr, &pVertexShader
@@ -243,7 +240,8 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	// Pixel Shader
 	ComPtr<ID3D11PixelShader> pPixelShader;
-	GFX_THROW_FAILED(hr, D3DReadFileToBlob((shaderPath.str() + L"PixelShader.cso").c_str(), &pBlob));
+	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
+		(m_BinaryPath + L"PixelShader.cso").c_str(), &pBlob));
 	GFX_THROW_FAILED(hr, m_pDevice->CreatePixelShader(
 		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
 		nullptr, &pPixelShader
@@ -394,17 +392,12 @@ std::string Graphics::InfoException::GetErrorInfo() const noexcept {
 }
 
 // Utility
-void Graphics::GetFullProjectPath() noexcept {
-	m_ProjectPath = __FILE__;
-	for (int i = static_cast<int>(m_ProjectPath.length()) - 1; m_ProjectPath[i] != '\\'; i--)
-		m_ProjectPath.pop_back();
+void Graphics::SetBinaryPath() noexcept {
+	wchar_t path[MAX_PATH];
+	GetModuleFileNameW(nullptr, path, MAX_PATH);
+	m_BinaryPath = path;
+	for (int i = m_BinaryPath.size() - 1; m_BinaryPath[i] != L'\\'; i--)
+		m_BinaryPath.pop_back();
+	int x;
 }
-#ifdef _DEBUG
-const char* Graphics::BuildType() const noexcept {
-	return "Debug";
-}
-#elif NDEBUG
-const char* Graphics::BuildType() const noexcept {
-	return "Release";
-}
-#endif
+

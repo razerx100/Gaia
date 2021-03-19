@@ -54,7 +54,7 @@ public:
 	void DrawTriangle(float angle, float posX, float posY);
 
 private:
-	void GetFullProjectPath() noexcept;
+	void SetBinaryPath() noexcept;
 
 public:
 #ifdef _DEBUG
@@ -72,6 +72,6 @@ private:
 	ComPtr<ID3D11DeviceContext> m_pDeviceContext;
 	ComPtr<ID3D11RenderTargetView> m_pTargetView;
 
-	std::string m_ProjectPath;
+	std::wstring m_BinaryPath;
 };
 #endif
