@@ -98,25 +98,22 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	struct Position {
 		float x;
 		float y;
-	};
-
-	struct Color {
-		std::uint8_t red;
-		std::uint8_t green;
-		std::uint8_t blue;
-		std::uint8_t alpha;
+		float z;
 	};
 
 	struct Vertex {
 		Position position;
-		Color color;
 	};
 
 	const Vertex vertices[] = {
-		{{-0.75f, 0.5f}, {0u, 0u, 155u, 255u}},
-		{{0.75f, 0.5f}, {0u, 250u, 155u, 255u}},
-		{{0.75f, -0.5f}, {250u, 155u, 0u, 255u}},
-		{{-0.75f, -0.5f}, {250u, 0u, 155u, 255u}}
+		{-1.0f, -1.0f, -1.0f},
+		{1.0f, -1.0f, -1.0f},
+		{-1.0f, 1.0f, -1.0f},
+		{1.0f, 1.0f, -1.0f},
+		{-1.0f, -1.0f, 1.0f},
+		{1.0f, -1.0f, 1.0f},
+		{-1.0f, 1.0f, 1.0f},
+		{1.0f, 1.0f, 1.0f},
 	};
 
 	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -146,8 +143,12 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	// Indices
 	const unsigned short indices[] = {
-		0u, 1u, 2u,
-		2u, 3u, 0u
+		0u, 2u, 1u,		2u, 3u, 1u,
+		1u, 3u, 5u,		3u, 7u, 5u,
+		2u, 6u, 3u,		6u, 7u, 3u,
+		4u, 5u, 7u,		4u, 7u, 6u,
+		0u, 4u, 2u,		2u, 4u, 6u,
+		0u, 1u, 4u,		1u, 5u, 4u
 	};
 
 	// Index Buffer
@@ -186,8 +187,7 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	ComPtr<ID3D11InputLayout> pInputLayout;
 
 	const D3D11_INPUT_ELEMENT_DESC inputDescs[] = {
-		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"Color", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, static_cast<std::uint32_t>(sizeof(Position)), D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 
 	GFX_THROW_FAILED(hr, m_pDevice->CreateInputLayout(
@@ -199,34 +199,36 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	m_pDeviceContext->IASetInputLayout(pInputLayout.Get());
 
-	// Constant Buffer
-	struct ConstantBuffer {
+	// Constant Buffer Vertex Transform
+	struct ConstantBufferTransform {
 		DirectX::XMMATRIX transform;
 	};
 
-	const ConstantBuffer constBuffer = {
+	const ConstantBufferTransform constBufferT = {
 		{
+			DirectX::XMMatrixRotationX(angle) *
+			DirectX::XMMatrixRotationY(angle) *
 			DirectX::XMMatrixRotationZ(angle) *
-			DirectX::XMMatrixScaling(9.0f / 16.0f, 1.0f, 1.0f) *
-			DirectX::XMMatrixTranslation(posX, posY, 0.0f)
+			DirectX::XMMatrixTranslation(posX, posY, 4.0f) *
+			DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 5.0f)
 		}
 	};
 
-	ComPtr<ID3D11Buffer> pConstantBuffer;
-	D3D11_BUFFER_DESC constDesc;
-	constDesc.ByteWidth = sizeof(constBuffer);
-	constDesc.Usage = D3D11_USAGE_DYNAMIC;
-	constDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	constDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	constDesc.MiscFlags = 0u;
-	constDesc.StructureByteStride = 0u;
+	ComPtr<ID3D11Buffer> pConstantBufferTransform;
+	D3D11_BUFFER_DESC transformDesc;
+	transformDesc.ByteWidth = sizeof(constBufferT);
+	transformDesc.Usage = D3D11_USAGE_DYNAMIC;
+	transformDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	transformDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	transformDesc.MiscFlags = 0u;
+	transformDesc.StructureByteStride = 0u;
 
-	D3D11_SUBRESOURCE_DATA constData = {};
-	constData.pSysMem = &constBuffer;
+	D3D11_SUBRESOURCE_DATA transformData = {};
+	transformData.pSysMem = &constBufferT;
 
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&constDesc, &constData , &pConstantBuffer));
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&transformDesc, &transformData , &pConstantBufferTransform));
 
-	m_pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBuffer.GetAddressOf());
+	m_pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBufferTransform.GetAddressOf());
 
 	// Configure viewport
 	D3D11_VIEWPORT vp = {};
@@ -248,6 +250,43 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	));
 
 	m_pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+
+	// Constant Buffer Face colors
+	struct Color {
+		float red;
+		float green;
+		float blue;
+		float alpha;
+	};
+
+	struct ConstantBufferColor {
+		Color color;
+	};
+
+	const ConstantBufferColor constBufferC[6] = {
+		{1.0f, 0.0f, 0.0f, 1.0f},
+		{0.0f, 1.0f, 1.0f, 1.0f},
+		{0.0f, 1.0f, 0.0f, 1.0f},
+		{0.0f, 0.0f, 1.0f, 1.0f},
+		{1.0f, 0.0f, 1.0f, 1.0f},
+		{0.0f, 0.75f, 0.5f, 1.0f}
+	};
+
+	ComPtr<ID3D11Buffer> pConstantBufferColor;
+	D3D11_BUFFER_DESC colorDesc;
+	colorDesc.ByteWidth = sizeof(constBufferC);
+	colorDesc.Usage = D3D11_USAGE_DYNAMIC;
+	colorDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	colorDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	colorDesc.MiscFlags = 0u;
+	colorDesc.StructureByteStride = 0u;
+
+	D3D11_SUBRESOURCE_DATA colorData = {};
+	colorData.pSysMem = &constBufferC;
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&colorDesc, &colorData , &pConstantBufferColor));
+
+	m_pDeviceContext->PSSetConstantBuffers(0u, 1u, pConstantBufferColor.GetAddressOf());
 
 	m_pDeviceContext->OMSetRenderTargets(1u, m_pTargetView.GetAddressOf(), nullptr);
 
