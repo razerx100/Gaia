@@ -21,5 +21,13 @@ public:
 private:
 	std::uint64_t m_next;
 	ComPtr<IDXGIInfoQueue> m_pDxgiInfoQueue;
+
+#ifdef _DEBUG
+public:
+	static DxgiInfoManager& GetDXGIInfoManager() noexcept;
+
+private:
+	static DxgiInfoManager s_InfoManager;
+#endif
 };
 #endif

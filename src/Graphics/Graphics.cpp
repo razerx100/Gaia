@@ -2,27 +2,17 @@
 #include <sstream>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
-
-#ifdef _DEBUG
-#define GFX_THROW_NO_HR(funCall) m_infoManager.Set(); funCall; std::vector<std::string> vec = m_infoManager.GetMessages(); if(!vec.empty()) throw Graphics::InfoException(__LINE__, __FILE__, vec)
-#define GFX_THROW(hr) throw Graphics::HrException(__LINE__, __FILE__, hr, m_infoManager.GetMessages())
-#define GFX_THROW_FAILED(hr, hrCall) m_infoManager.Set(); if(FAILED(hr = (hrCall))) GFX_THROW(hr)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException(__LINE__, __FILE__, hr, m_infoManager.GetMessages())
-#else
-#define GFX_THROW_NO_HR(funCall) funCall
-#define GFX_THROW(hr) throw Graphics::HrException(__LINE__, __FILE__, hr)
-#define GFX_THROW_FAILED(hr, hrCall) if(FAILED(hr = (hrCall))) GFX_THROW(hr)
-#define GFX_DEVICE_REMOVED_EXCEPT(hr) Graphics::DeviceRemovedException(__LINE__, __FILE__, hr)
-#endif
+#include <GraphicsThrowMacros.hpp>
 
 // Graphics
-Graphics::Graphics(HWND hwnd)
+Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
 	m_pSwapChain(nullptr),
 	m_pDeviceContext(nullptr),
-	m_pTargetView(nullptr) {
+	m_pTargetView(nullptr),
+	m_width(width), m_height(height) {
 
-	SetBinaryPath();
+	SetShaderPath();
 
 	DXGI_SWAP_CHAIN_DESC desc = { };
 	desc.BufferDesc.Width = 0;
@@ -63,6 +53,16 @@ Graphics::Graphics(HWND hwnd)
 		&m_pDeviceContext
 	));
 
+	D3D11_VIEWPORT vp = {};
+	vp.Width = static_cast<float>(m_width);
+	vp.Height =static_cast<float>(m_height);
+	vp.MinDepth = 0;
+	vp.MaxDepth = 1;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+
+	m_pDeviceContext->RSSetViewports(1u, &vp);
+
 	ComPtr<ID3D11Resource> pBackBuffer = nullptr;
 	GFX_THROW_FAILED(hr, m_pSwapChain->GetBuffer(
 		0u,
@@ -73,13 +73,53 @@ Graphics::Graphics(HWND hwnd)
 	GFX_THROW_FAILED(hr, m_pDevice->CreateRenderTargetView(
 		pBackBuffer.Get(), nullptr, &m_pTargetView
 	));
+
+	// Depth Stencil
+	D3D11_DEPTH_STENCIL_DESC sStateDesc = {};
+	sStateDesc.DepthEnable = true;
+	sStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	sStateDesc.DepthFunc = D3D11_COMPARISON_LESS;
+
+	ComPtr<ID3D11DepthStencilState> pDsState;
+
+	m_pDevice->CreateDepthStencilState(&sStateDesc, &pDsState);
+
+	m_pDeviceContext->OMSetDepthStencilState(pDsState.Get(), 1u);
+
+	ComPtr<ID3D11Texture2D> pDepthTexture;
+	D3D11_TEXTURE2D_DESC descDepth = {};
+	descDepth.Width = m_width;
+	descDepth.Height = m_height;
+	descDepth.MipLevels = 1u;
+	descDepth.ArraySize = 1u;
+	descDepth.Format = DXGI_FORMAT_D32_FLOAT;
+	descDepth.SampleDesc.Count = 1u;
+	descDepth.SampleDesc.Quality = 0u;
+	descDepth.Usage = D3D11_USAGE_DEFAULT;
+	descDepth.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+	m_pDevice->CreateTexture2D(&descDepth, nullptr, &pDepthTexture);
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC sViewDesc = {};
+	sViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	sViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	sViewDesc.Texture2D.MipSlice = 0u;
+
+	GFX_THROW_FAILED(hr,
+		m_pDevice->CreateDepthStencilView(
+			pDepthTexture.Get(), &sViewDesc, &m_pDepthStencilView)
+	);
+
+	m_pDeviceContext->OMSetRenderTargets(
+		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
+		);
 }
 
 void Graphics::EndFrame() {
 	HRESULT hr;
 
 #ifdef _DEBUG
-	m_infoManager.Set();
+	DXGI_INFO_MAN.Set();
 #endif
 	if (FAILED(hr = m_pSwapChain->Present(0u, 0u))) {
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
@@ -87,11 +127,18 @@ void Graphics::EndFrame() {
 		else
 			GFX_THROW(hr);
 	}
+
+	m_pDeviceContext->OMSetRenderTargets(
+		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
+	);
 }
 
 void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 	const float color[] = { red, green, blue, 1.0f };
 	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
+	m_pDeviceContext->ClearDepthStencilView(
+		m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u
+	);
 }
 
 void Graphics::DrawTriangle(float angle, float posX, float posY) {
@@ -172,7 +219,7 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	ComPtr<ID3D11VertexShader> pVertexShader;
 	ComPtr<ID3DBlob> pBlob;
 	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-		(m_BinaryPath + L"VertexShader.cso").c_str(), &pBlob));
+		(m_ShaderPath + L"TVertexShader.cso").c_str(), &pBlob));
 	GFX_THROW_FAILED(hr, m_pDevice->CreateVertexShader(
 		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
 		nullptr, &pVertexShader
@@ -227,21 +274,10 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	m_pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBufferTransform.GetAddressOf());
 
-	// Configure viewport
-	D3D11_VIEWPORT vp = {};
-	vp.Width = 1280.0f;
-	vp.Height = 720.0f;
-	vp.MinDepth = 0;
-	vp.MaxDepth = 1;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
-
-	m_pDeviceContext->RSSetViewports(1u, &vp);
-
 	// Pixel Shader
 	ComPtr<ID3D11PixelShader> pPixelShader;
 	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-		(m_BinaryPath + L"PixelShader.cso").c_str(), &pBlob));
+		(m_ShaderPath + L"TPixelShader.cso").c_str(), &pBlob));
 	GFX_THROW_FAILED(hr, m_pDevice->CreatePixelShader(
 		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
 		nullptr, &pPixelShader
@@ -286,118 +322,17 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	m_pDeviceContext->PSSetConstantBuffers(0u, 1u, pConstantBufferColor.GetAddressOf());
 
-	m_pDeviceContext->OMSetRenderTargets(1u, m_pTargetView.GetAddressOf(), nullptr);
-
 	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(static_cast<std::uint32_t>(std::size(indices)), 0u, 0u));
 }
 
-// Graphics Exception
-Graphics::HrException::HrException(int line, const char* file, HRESULT hr) noexcept
-	: Xception(line, file), m_hr(hr) {}
-
-
-Graphics::HrException::HrException(int line, const char* file, HRESULT hr,
-	const std::vector<std::string>& infoMsgs) noexcept
-	: Xception(line, file), m_hr(hr) {
-	for (const std::string& m : infoMsgs) {
-		m_info += m;
-		m_info.append("\n");
-	}
-
-	if (!m_info.empty())
-		m_info.pop_back();
-}
-
-const char* Graphics::HrException::what() const noexcept {
-	std::ostringstream oss;
-	oss << GetType() << "\n"
-		<< "[Error code] 0x" << std::hex << std::uppercase << GetErrorCode()
-		<< std::dec << " (" << static_cast<std::uint64_t>(GetErrorCode()) << ")\n\n"
-		<< "[Error String] " << GetErrorString() << "\n";
-	if (!m_info.empty())
-		oss << "[Error Info]\n" << GetErrorInfo() << "\n\n";
-	oss << GetOriginString();
-	m_whatBuffer = oss.str();
-
-	return m_whatBuffer.c_str();
-}
-
-const char* Graphics::HrException::GetType() const noexcept {
-	return "Graphics Exception";
-}
-
-const char* Graphics::DeviceRemovedException::GetType() const noexcept {
-	return "Graphics Exception [Device Removed]";
-}
-
-HRESULT Graphics::HrException::GetErrorCode() const noexcept {
-	return m_hr;
-}
-
-std::string Graphics::HrException::TranslateErrorCode(HRESULT hr) noexcept {
-	char* pMsgBuf = nullptr;
-	DWORD nMsgLen = FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		nullptr, static_cast<DWORD>(hr), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
-	);
-
-	if (!nMsgLen)
-		return "Unidentified error code";
-
-	std::string errorString = pMsgBuf;
-	LocalFree(pMsgBuf);
-	return errorString;
-}
-
-std::string Graphics::HrException::GetErrorString() const noexcept {
-	return TranslateErrorCode(m_hr);
-}
-
-std::string Graphics::HrException::GetErrorInfo() const noexcept {
-	return m_info;
-}
-
-Graphics::InfoException::InfoException(int line, const char* file,
-	const std::vector<std::string>& infoMsgs) noexcept
-	: Xception(line, file) {
-
-	for (const std::string msg : infoMsgs) {
-		m_info += msg;
-		m_info.append("\n");
-	}
-
-	if (!m_info.empty())
-		m_info.pop_back();
-}
-
-const char* Graphics::InfoException::what() const noexcept {
-	std::ostringstream oss;
-	oss << GetType() << "\n\n";
-	if (!m_info.empty())
-		oss << "[Error Info]\n" << GetErrorInfo() << "\n\n";
-	oss << GetOriginString();
-	m_whatBuffer = oss.str();
-
-	return m_whatBuffer.c_str();
-}
-
-const char* Graphics::InfoException::GetType() const noexcept {
-	return "Graphics Info Exception";
-}
-
-std::string Graphics::InfoException::GetErrorInfo() const noexcept {
-	return m_info;
-}
-
 // Utility
-void Graphics::SetBinaryPath() noexcept {
+void Graphics::SetShaderPath() noexcept {
 	wchar_t path[MAX_PATH];
 	GetModuleFileNameW(nullptr, path, MAX_PATH);
-	m_BinaryPath = path;
-	for (int i = m_BinaryPath.size() - 1; m_BinaryPath[i] != L'\\'; i--)
-		m_BinaryPath.pop_back();
-	int x;
+	m_ShaderPath = path;
+	for (int i = static_cast<int>(m_ShaderPath.size() - 1); m_ShaderPath[i] != L'\\'; i--)
+		m_ShaderPath.pop_back();
+
+	m_ShaderPath.append(L"shaders\\");
 }
 

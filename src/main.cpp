@@ -1,4 +1,5 @@
 #include <App.hpp>
+#include <Exception.hpp>
 
 int CALLBACK WinMain(
 	_In_ HINSTANCE,
@@ -9,7 +10,7 @@ int CALLBACK WinMain(
 	try {
 		return App().Go();
 	}
-	catch (const Xception& e) {
+	catch (const Exception& e) {
 		MessageBox(nullptr, e.what(), e.GetType(), MB_OK | MB_ICONEXCLAMATION);
 	}
 	catch (const std::exception& e) {

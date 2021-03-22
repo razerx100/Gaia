@@ -1,6 +1,7 @@
 #include <Window.hpp>
 #include <sstream>
 #include <resource.hpp>
+#include <WindowThrowMacros.hpp>
 
 // WindowClass
 Window::WindowClass Window::WindowClass::s_wndClass;
@@ -61,7 +62,9 @@ Window::Window(int width, int height, const char* name)
 
 	ShowWindow(m_hWnd, SW_SHOWDEFAULT);
 
-	m_pGfx = std::make_unique<Graphics>(m_hWnd);
+	m_pGfx = std::make_unique<Graphics>(
+		m_hWnd, static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)
+		);
 }
 
 Window::~Window() {
@@ -199,49 +202,3 @@ Graphics& Window::GetGfx() const {
 	return *m_pGfx;
 }
 
-// Window Exception
-Window::Exception::Exception(int line, const char* file, HRESULT hr) noexcept
-	: Xception(line, file), m_hr(hr) {}
-
-const char* Window::Exception::what() const noexcept {
-	std::ostringstream oss;
-	oss << GetType() << "\n"
-		<< "[Error Code] " << GetErrorCode() << "\n"
-		<< "[Description] " << GetErrorString() << "\n"
-		<< GetOriginString();
-	m_whatBuffer = oss.str();
-	return m_whatBuffer.c_str();
-}
-
-const char* Window::Exception::GetType() const noexcept {
-	return "Window Exception";
-}
-
-const char* Window::NoGfxException::GetType() const noexcept {
-	return "Window Exception [No Graphics]";
-}
-
-std::string Window::Exception::TranslateErrorCode(HRESULT hr) noexcept {
-	char* pMsgBuf = nullptr;
-	DWORD nMsgLen = FormatMessage(
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-		nullptr, static_cast<DWORD>(hr), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		reinterpret_cast<LPSTR>(&pMsgBuf), 0, nullptr
-	);
-
-	if (!nMsgLen)
-		return "Unidentified error code";
-
-	std::string errorString = pMsgBuf;
-	LocalFree(pMsgBuf);
-	return errorString;
-}
-
-HRESULT Window::Exception::GetErrorCode() const noexcept {
-	return m_hr;
-}
-
-std::string Window::Exception::GetErrorString() const noexcept {
-	return TranslateErrorCode(m_hr);
-}

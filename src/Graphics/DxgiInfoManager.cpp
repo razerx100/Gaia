@@ -1,9 +1,8 @@
 #include <DxgiInfoManager.hpp>
-#include <Window.hpp>
 #include <memory>
 #include <functional>
-
-#define GFX_THROW_NOINFO(hr, hrCall) if(FAILED(hr = (hrCall))) throw Graphics::HrException(__LINE__, __FILE__, hr)
+#include <WindowThrowMacros.hpp>
+#include <GraphicsThrowMacros.hpp>
 
 DxgiInfoManager::DxgiInfoManager()
 	: m_next(0u), m_pDxgiInfoQueue(nullptr) {
@@ -52,3 +51,14 @@ std::vector<std::string> DxgiInfoManager::GetMessages() const {
 
 	return messages;
 }
+
+
+#ifdef _DEBUG
+
+DxgiInfoManager DxgiInfoManager::s_InfoManager;
+
+DxgiInfoManager& DxgiInfoManager::GetDXGIInfoManager() noexcept {
+	return s_InfoManager;
+}
+
+#endif

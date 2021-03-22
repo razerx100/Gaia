@@ -1,11 +1,12 @@
-#ifndef __XCEPTION_HPP__
-#define __XCEPTION_HPP__
+#ifndef __EXCEPTION_HPP__
+#define __EXCEPTION_HPP__
+
 #include <exception>
 #include <string>
 
-class Xception : public std::exception {
+class Exception : public std::exception {
 public:
-	Xception(int line, const char* file) noexcept;
+	Exception(int line, const char* file) noexcept;
 	const char* what() const noexcept override;
 	virtual const char* GetType() const noexcept;
 	int GetLine() const noexcept;

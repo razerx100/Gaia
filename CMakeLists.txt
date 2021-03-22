@@ -8,18 +8,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/CMake")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
-file(GLOB_RECURSE SRC src/*.cpp src/*.hpp src/*.hlsl src/*.ixx)
+file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp)
 
 add_executable(${PROJECT_NAME} WIN32
     ${SRC}
     resources/resource.rc
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE src/includes)
+target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/Exceptions  includes/Graphics includes/Graphics/Bindable includes/Graphics/Drawable includes/Macros includes/Utility includes/Window)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
 
@@ -34,8 +34,10 @@ if(MSVC)
 endif()
 
 if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast /MP /EHa /experimental:module /Ot)
+    target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast /MP /EHa /Ot)
 endif()
 
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+
+add_subdirectory(src/shaders)
 
