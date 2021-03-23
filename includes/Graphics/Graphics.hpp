@@ -5,6 +5,7 @@
 #include <d3d11.h>
 #include <wrl.h>
 #include <memory>
+#include <vector>
 
 using Microsoft::WRL::ComPtr;
 
@@ -20,6 +21,7 @@ public:
 
 	void EndFrame();
 	void ClearBuffer(float red, float green, float blue) noexcept;
+	void DrawIndexed(std::uint32_t count) noexcept(!IS_DEBUG);
 	void DrawTriangle(float angle, float posX, float posY);
 
 private:
@@ -36,7 +38,7 @@ private:
 	std::uint32_t m_width;
 	std::uint32_t m_height;
 
+	std::vector<Bindable*> m_Binds;
 	Bindable* m_pCVbuffer;
-	Bindable* m_pCPbuffer;
 };
 #endif

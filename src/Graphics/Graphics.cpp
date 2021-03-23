@@ -1,9 +1,13 @@
 #include <Graphics.hpp>
 #include <sstream>
-#include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
 #include <ConstantBuffers.hpp>
+#include <Shaders.hpp>
+#include <VertexLayout.hpp>
+#include <Topology.hpp>
+#include <VertexBuffer.hpp>
+#include <IndexBuffer.hpp>
 
 struct ConstantBufferTransform {
 	DirectX::XMMATRIX transform;
@@ -21,9 +25,9 @@ struct ConstantBufferColor {
 Graphics::~Graphics() {
 	if (m_pCVbuffer)
 		delete m_pCVbuffer;
-
-	if (m_pCPbuffer)
-		delete m_pCPbuffer;
+	for (Bindable* bind : m_Binds)
+		if (bind)
+			delete bind;
 }
 
 // Graphics
@@ -33,7 +37,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pDeviceContext(nullptr),
 	m_pTargetView(nullptr),
 	m_width(width), m_height(height),
-	m_pCPbuffer(nullptr), m_pCVbuffer(nullptr) {
+	m_pCVbuffer(nullptr) {
 
 	SetShaderPath();
 
@@ -138,17 +142,14 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 		);
 
 	// TEST
-	struct Position {
+
+	struct Vertex {
 		float x;
 		float y;
 		float z;
 	};
 
-	struct Vertex {
-		Position position;
-	};
-
-	const Vertex vertices[] = {
+	const std::vector<Vertex> vertices = {
 		{-1.0f, -1.0f, -1.0f},
 		{1.0f, -1.0f, -1.0f},
 		{-1.0f, 1.0f, -1.0f},
@@ -159,33 +160,11 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 		{1.0f, 1.0f, 1.0f},
 	};
 
-	m_pDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	const std::uint32_t stride = sizeof(Vertex);
-
-
 	// Vertex Buffer
-	ComPtr<ID3D11Buffer> pVertexBuffer;
-	D3D11_BUFFER_DESC vertexDesc = {};
-	vertexDesc.ByteWidth = sizeof(vertices);
-	vertexDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexDesc.CPUAccessFlags = 0u;
-	vertexDesc.MiscFlags = 0u;
-	vertexDesc.StructureByteStride = stride;
-
-	D3D11_SUBRESOURCE_DATA vertexData = {};
-	vertexData.pSysMem = vertices;
-
-	//HRESULT hr;
-
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&vertexDesc, &vertexData, &pVertexBuffer));
-
-	const std::uint32_t offSet = 0u;
-	m_pDeviceContext->IASetVertexBuffers(0u, 1u, pVertexBuffer.GetAddressOf(), &stride, &offSet);
+	m_Binds.emplace_back(new VertexBuffer(*this, vertices));
 
 	// Indices
-	const unsigned short indices[] = {
+	const std::vector<unsigned short> indices = {
 		0u, 2u, 1u,		2u, 3u, 1u,
 		1u, 3u, 5u,		3u, 7u, 5u,
 		2u, 6u, 3u,		6u, 7u, 3u,
@@ -195,21 +174,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	};
 
 	// Index Buffer
-	ComPtr<ID3D11Buffer> pIndexBuffer;
-	D3D11_BUFFER_DESC indexDesc;
-	indexDesc.ByteWidth = sizeof(indices);
-	indexDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	indexDesc.CPUAccessFlags = 0u;
-	indexDesc.MiscFlags = 0u;
-	indexDesc.StructureByteStride = sizeof(unsigned short);
-
-	D3D11_SUBRESOURCE_DATA indexData = {};
-	indexData.pSysMem = indices;
-
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&indexDesc, &indexData, &pIndexBuffer));
-
-	m_pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
+	m_Binds.emplace_back(new IndexBuffer(*this, indices));
 
 	m_pCVbuffer = new VertexConstantBuffer<ConstantBufferTransform>(*this);
 	m_pCVbuffer->Bind(*this);
@@ -227,20 +192,21 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 		}
 	};
 
-	m_pCPbuffer = new PixelConstantBuffer<ConstantBufferColor>(*this, constBufferC);
-	m_pCPbuffer->Bind(*this);
+	m_Binds.emplace_back(new PixelConstantBuffer<ConstantBufferColor>(*this, constBufferC));
+	m_Binds.emplace_back(new PixelShader(*this, m_ShaderPath + L"TPixelShader.cso"));
 
-	// Pixel Shader
-	ComPtr<ID3D10Blob> pBlob;
-	ComPtr<ID3D11PixelShader> pPixelShader;
-	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-		(m_ShaderPath + L"TPixelShader.cso").c_str(), &pBlob));
-	GFX_THROW_FAILED(hr, m_pDevice->CreatePixelShader(
-		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
-		nullptr, &pPixelShader
-	));
+	VertexShader* vshader = new VertexShader(*this, m_ShaderPath + L"TVertexShader.cso");
 
-	m_pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+	const std::vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = {
+		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+	};
+
+	m_Binds.emplace_back(new VertexLayout(*this, inputDescs, vshader->GetByteCode()));
+	m_Binds.emplace_back(vshader);
+	m_Binds.emplace_back(new Topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
+
+	for (Bindable* bind : m_Binds)
+		bind->Bind(*this);
 }
 
 void Graphics::EndFrame() {
@@ -270,35 +236,6 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 }
 
 void Graphics::DrawTriangle(float angle, float posX, float posY) {
-	HRESULT hr;
-	// Vertex Shader
-	ComPtr<ID3D11VertexShader> pVertexShader;
-	ComPtr<ID3DBlob> pBlob;
-	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-		(m_ShaderPath + L"TVertexShader.cso").c_str(), &pBlob));
-	GFX_THROW_FAILED(hr, m_pDevice->CreateVertexShader(
-		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
-		nullptr, &pVertexShader
-	));
-
-	m_pDeviceContext->VSSetShader(pVertexShader.Get(), nullptr, 0u);
-
-	// Vertex Layout
-	ComPtr<ID3D11InputLayout> pInputLayout;
-
-	const D3D11_INPUT_ELEMENT_DESC inputDescs[] = {
-		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	};
-
-	GFX_THROW_FAILED(hr, m_pDevice->CreateInputLayout(
-		inputDescs, static_cast<std::uint32_t>(std::size(inputDescs)),
-		pBlob->GetBufferPointer(),
-		pBlob->GetBufferSize(),
-		&pInputLayout
-	));
-
-	m_pDeviceContext->IASetInputLayout(pInputLayout.Get());
-
 	// Constant Buffer Vertex Transform
 
 	const ConstantBufferTransform constBufferT = {
@@ -315,8 +252,11 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 		*this, constBufferT
 	);
 
-	//GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(static_cast<std::uint32_t>(std::size(indices)), 0u, 0u));
-	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(36u, 0u, 0u));
+	DrawIndexed(36u);
+}
+
+void Graphics::DrawIndexed(std::uint32_t count) noexcept(!IS_DEBUG) {
+	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(count, 0u, 0u));
 }
 
 // Utility
