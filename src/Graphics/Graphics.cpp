@@ -3,6 +3,28 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
+#include <ConstantBuffers.hpp>
+
+struct ConstantBufferTransform {
+	DirectX::XMMATRIX transform;
+};
+
+struct ConstantBufferColor {
+	struct {
+		float red;
+		float green;
+		float blue;
+		float alpha;
+	}face_color[6];
+};
+
+Graphics::~Graphics() {
+	if (m_pCVbuffer)
+		delete m_pCVbuffer;
+
+	if (m_pCPbuffer)
+		delete m_pCPbuffer;
+}
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -10,7 +32,8 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pSwapChain(nullptr),
 	m_pDeviceContext(nullptr),
 	m_pTargetView(nullptr),
-	m_width(width), m_height(height) {
+	m_width(width), m_height(height),
+	m_pCPbuffer(nullptr), m_pCVbuffer(nullptr) {
 
 	SetShaderPath();
 
@@ -113,35 +136,8 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pDeviceContext->OMSetRenderTargets(
 		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
 		);
-}
 
-void Graphics::EndFrame() {
-	HRESULT hr;
-
-#ifdef _DEBUG
-	DXGI_INFO_MAN.Set();
-#endif
-	if (FAILED(hr = m_pSwapChain->Present(0u, 0u))) {
-		if (hr == DXGI_ERROR_DEVICE_REMOVED)
-			throw GFX_DEVICE_REMOVED_EXCEPT(m_pDevice->GetDeviceRemovedReason());
-		else
-			GFX_THROW(hr);
-	}
-
-	m_pDeviceContext->OMSetRenderTargets(
-		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
-	);
-}
-
-void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
-	const float color[] = { red, green, blue, 1.0f };
-	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
-	m_pDeviceContext->ClearDepthStencilView(
-		m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u
-	);
-}
-
-void Graphics::DrawTriangle(float angle, float posX, float posY) {
+	// TEST
 	struct Position {
 		float x;
 		float y;
@@ -181,7 +177,7 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	D3D11_SUBRESOURCE_DATA vertexData = {};
 	vertexData.pSysMem = vertices;
 
-	HRESULT hr;
+	//HRESULT hr;
 
 	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&vertexDesc, &vertexData, &pVertexBuffer));
 
@@ -215,6 +211,66 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 	m_pDeviceContext->IASetIndexBuffer(pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
 
+	m_pCVbuffer = new VertexConstantBuffer<ConstantBufferTransform>(*this);
+	m_pCVbuffer->Bind(*this);
+
+	// Constant Buffer Face colors
+
+	const ConstantBufferColor constBufferC = {
+		{
+		{1.0f, 0.0f, 0.0f, 1.0f},
+		{0.0f, 1.0f, 1.0f, 1.0f},
+		{0.0f, 1.0f, 0.0f, 1.0f},
+		{0.0f, 0.0f, 1.0f, 1.0f},
+		{1.0f, 0.0f, 1.0f, 1.0f},
+		{0.0f, 0.75f, 0.5f, 1.0f}
+		}
+	};
+
+	m_pCPbuffer = new PixelConstantBuffer<ConstantBufferColor>(*this, constBufferC);
+	m_pCPbuffer->Bind(*this);
+
+	// Pixel Shader
+	ComPtr<ID3D10Blob> pBlob;
+	ComPtr<ID3D11PixelShader> pPixelShader;
+	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
+		(m_ShaderPath + L"TPixelShader.cso").c_str(), &pBlob));
+	GFX_THROW_FAILED(hr, m_pDevice->CreatePixelShader(
+		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
+		nullptr, &pPixelShader
+	));
+
+	m_pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
+}
+
+void Graphics::EndFrame() {
+	HRESULT hr;
+
+#ifdef _DEBUG
+	DXGI_INFO_MAN.Set();
+#endif
+	if (FAILED(hr = m_pSwapChain->Present(0u, 0u))) {
+		if (hr == DXGI_ERROR_DEVICE_REMOVED)
+			throw GFX_DEVICE_REMOVED_EXCEPT(m_pDevice->GetDeviceRemovedReason());
+		else
+			GFX_THROW(hr);
+	}
+
+	m_pDeviceContext->OMSetRenderTargets(
+		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
+	);
+}
+
+void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
+	const float color[] = { red, green, blue, 1.0f };
+	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
+	m_pDeviceContext->ClearDepthStencilView(
+		m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u
+	);
+}
+
+void Graphics::DrawTriangle(float angle, float posX, float posY) {
+	HRESULT hr;
 	// Vertex Shader
 	ComPtr<ID3D11VertexShader> pVertexShader;
 	ComPtr<ID3DBlob> pBlob;
@@ -244,9 +300,6 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	m_pDeviceContext->IASetInputLayout(pInputLayout.Get());
 
 	// Constant Buffer Vertex Transform
-	struct ConstantBufferTransform {
-		DirectX::XMMATRIX transform;
-	};
 
 	const ConstantBufferTransform constBufferT = {
 		{
@@ -258,71 +311,12 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 		}
 	};
 
-	ComPtr<ID3D11Buffer> pConstantBufferTransform;
-	D3D11_BUFFER_DESC transformDesc;
-	transformDesc.ByteWidth = sizeof(constBufferT);
-	transformDesc.Usage = D3D11_USAGE_DYNAMIC;
-	transformDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	transformDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	transformDesc.MiscFlags = 0u;
-	transformDesc.StructureByteStride = 0u;
+	reinterpret_cast<ConstantBuffer<ConstantBufferTransform>*>(m_pCVbuffer)->Update(
+		*this, constBufferT
+	);
 
-	D3D11_SUBRESOURCE_DATA transformData = {};
-	transformData.pSysMem = &constBufferT;
-
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&transformDesc, &transformData , &pConstantBufferTransform));
-
-	m_pDeviceContext->VSSetConstantBuffers(0u, 1u, pConstantBufferTransform.GetAddressOf());
-
-	// Pixel Shader
-	ComPtr<ID3D11PixelShader> pPixelShader;
-	GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-		(m_ShaderPath + L"TPixelShader.cso").c_str(), &pBlob));
-	GFX_THROW_FAILED(hr, m_pDevice->CreatePixelShader(
-		pBlob->GetBufferPointer(), pBlob->GetBufferSize(),
-		nullptr, &pPixelShader
-	));
-
-	m_pDeviceContext->PSSetShader(pPixelShader.Get(), nullptr, 0u);
-
-	// Constant Buffer Face colors
-	struct Color {
-		float red;
-		float green;
-		float blue;
-		float alpha;
-	};
-
-	struct ConstantBufferColor {
-		Color color;
-	};
-
-	const ConstantBufferColor constBufferC[6] = {
-		{1.0f, 0.0f, 0.0f, 1.0f},
-		{0.0f, 1.0f, 1.0f, 1.0f},
-		{0.0f, 1.0f, 0.0f, 1.0f},
-		{0.0f, 0.0f, 1.0f, 1.0f},
-		{1.0f, 0.0f, 1.0f, 1.0f},
-		{0.0f, 0.75f, 0.5f, 1.0f}
-	};
-
-	ComPtr<ID3D11Buffer> pConstantBufferColor;
-	D3D11_BUFFER_DESC colorDesc;
-	colorDesc.ByteWidth = sizeof(constBufferC);
-	colorDesc.Usage = D3D11_USAGE_DYNAMIC;
-	colorDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	colorDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	colorDesc.MiscFlags = 0u;
-	colorDesc.StructureByteStride = 0u;
-
-	D3D11_SUBRESOURCE_DATA colorData = {};
-	colorData.pSysMem = &constBufferC;
-
-	GFX_THROW_FAILED(hr, m_pDevice->CreateBuffer(&colorDesc, &colorData , &pConstantBufferColor));
-
-	m_pDeviceContext->PSSetConstantBuffers(0u, 1u, pConstantBufferColor.GetAddressOf());
-
-	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(static_cast<std::uint32_t>(std::size(indices)), 0u, 0u));
+	//GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(static_cast<std::uint32_t>(std::size(indices)), 0u, 0u));
+	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(36u, 0u, 0u));
 }
 
 // Utility
