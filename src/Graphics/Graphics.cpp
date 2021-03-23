@@ -9,37 +9,13 @@
 #include <VertexBuffer.hpp>
 #include <IndexBuffer.hpp>
 
-struct ConstantBufferTransform {
-	DirectX::XMMATRIX transform;
-};
-
-struct ConstantBufferColor {
-	struct {
-		float red;
-		float green;
-		float blue;
-		float alpha;
-	}face_color[6];
-};
-
-Graphics::~Graphics() {
-	if (m_pCVbuffer)
-		delete m_pCVbuffer;
-	for (Bindable* bind : m_Binds)
-		if (bind)
-			delete bind;
-}
-
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
 	m_pSwapChain(nullptr),
 	m_pDeviceContext(nullptr),
 	m_pTargetView(nullptr),
-	m_width(width), m_height(height),
-	m_pCVbuffer(nullptr) {
-
-	SetShaderPath();
+	m_width(width), m_height(height) {
 
 	DXGI_SWAP_CHAIN_DESC desc = { };
 	desc.BufferDesc.Width = 0;
@@ -140,73 +116,6 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pDeviceContext->OMSetRenderTargets(
 		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
 		);
-
-	// TEST
-
-	struct Vertex {
-		float x;
-		float y;
-		float z;
-	};
-
-	const std::vector<Vertex> vertices = {
-		{-1.0f, -1.0f, -1.0f},
-		{1.0f, -1.0f, -1.0f},
-		{-1.0f, 1.0f, -1.0f},
-		{1.0f, 1.0f, -1.0f},
-		{-1.0f, -1.0f, 1.0f},
-		{1.0f, -1.0f, 1.0f},
-		{-1.0f, 1.0f, 1.0f},
-		{1.0f, 1.0f, 1.0f},
-	};
-
-	// Vertex Buffer
-	m_Binds.emplace_back(new VertexBuffer(*this, vertices));
-
-	// Indices
-	const std::vector<unsigned short> indices = {
-		0u, 2u, 1u,		2u, 3u, 1u,
-		1u, 3u, 5u,		3u, 7u, 5u,
-		2u, 6u, 3u,		6u, 7u, 3u,
-		4u, 5u, 7u,		4u, 7u, 6u,
-		0u, 4u, 2u,		2u, 4u, 6u,
-		0u, 1u, 4u,		1u, 5u, 4u
-	};
-
-	// Index Buffer
-	m_Binds.emplace_back(new IndexBuffer(*this, indices));
-
-	m_pCVbuffer = new VertexConstantBuffer<ConstantBufferTransform>(*this);
-	m_pCVbuffer->Bind(*this);
-
-	// Constant Buffer Face colors
-
-	const ConstantBufferColor constBufferC = {
-		{
-		{1.0f, 0.0f, 0.0f, 1.0f},
-		{0.0f, 1.0f, 1.0f, 1.0f},
-		{0.0f, 1.0f, 0.0f, 1.0f},
-		{0.0f, 0.0f, 1.0f, 1.0f},
-		{1.0f, 0.0f, 1.0f, 1.0f},
-		{0.0f, 0.75f, 0.5f, 1.0f}
-		}
-	};
-
-	m_Binds.emplace_back(new PixelConstantBuffer<ConstantBufferColor>(*this, constBufferC));
-	m_Binds.emplace_back(new PixelShader(*this, m_ShaderPath + L"TPixelShader.cso"));
-
-	VertexShader* vshader = new VertexShader(*this, m_ShaderPath + L"TVertexShader.cso");
-
-	const std::vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = {
-		{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-	};
-
-	m_Binds.emplace_back(new VertexLayout(*this, inputDescs, vshader->GetByteCode()));
-	m_Binds.emplace_back(vshader);
-	m_Binds.emplace_back(new Topology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
-
-	for (Bindable* bind : m_Binds)
-		bind->Bind(*this);
 }
 
 void Graphics::EndFrame() {
@@ -235,38 +144,6 @@ void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
 	);
 }
 
-void Graphics::DrawTriangle(float angle, float posX, float posY) {
-	// Constant Buffer Vertex Transform
-
-	const ConstantBufferTransform constBufferT = {
-		{
-			DirectX::XMMatrixRotationX(angle) *
-			DirectX::XMMatrixRotationY(angle) *
-			DirectX::XMMatrixRotationZ(angle) *
-			DirectX::XMMatrixTranslation(posX, posY, 4.0f) *
-			DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 5.0f)
-		}
-	};
-
-	reinterpret_cast<ConstantBuffer<ConstantBufferTransform>*>(m_pCVbuffer)->Update(
-		*this, constBufferT
-	);
-
-	DrawIndexed(36u);
-}
-
 void Graphics::DrawIndexed(std::uint32_t count) noexcept(!IS_DEBUG) {
 	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(count, 0u, 0u));
 }
-
-// Utility
-void Graphics::SetShaderPath() noexcept {
-	wchar_t path[MAX_PATH];
-	GetModuleFileNameW(nullptr, path, MAX_PATH);
-	m_ShaderPath = path;
-	for (int i = static_cast<int>(m_ShaderPath.size() - 1); m_ShaderPath[i] != L'\\'; i--)
-		m_ShaderPath.pop_back();
-
-	m_ShaderPath.append(L"shaders\\");
-}
-

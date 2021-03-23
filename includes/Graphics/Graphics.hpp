@@ -4,12 +4,9 @@
 #include <DxgiInfoManager.hpp>
 #include <d3d11.h>
 #include <wrl.h>
-#include <memory>
 #include <vector>
 
 using Microsoft::WRL::ComPtr;
-
-class Bindable;
 
 class Graphics {
 	friend class Bindable;
@@ -17,15 +14,11 @@ public:
 	Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height);
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
-	~Graphics();
+	~Graphics() = default;
 
 	void EndFrame();
 	void ClearBuffer(float red, float green, float blue) noexcept;
 	void DrawIndexed(std::uint32_t count) noexcept(!IS_DEBUG);
-	void DrawTriangle(float angle, float posX, float posY);
-
-private:
-	void SetShaderPath() noexcept;
 
 private:
 	ComPtr<ID3D11Device> m_pDevice;
@@ -34,11 +27,7 @@ private:
 	ComPtr<ID3D11RenderTargetView> m_pTargetView;
 	ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
 
-	std::wstring m_ShaderPath;
 	std::uint32_t m_width;
 	std::uint32_t m_height;
-
-	std::vector<Bindable*> m_Binds;
-	Bindable* m_pCVbuffer;
 };
 #endif

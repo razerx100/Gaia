@@ -1,10 +1,10 @@
 #ifndef __CONSTANT_BUFFERS_HPP__
 #define __CONSTANT_BUFFERS_HPP__
-#include <Bindable.hpp>
+#include <Mutable.hpp>
 #include <GraphicsThrowMacros.hpp>
 
 template <typename T>
-class ConstantBuffer : public Bindable {
+class ConstantBuffer : public Mutable {
 public:
 	ConstantBuffer(Graphics& gfx) {
 
@@ -43,8 +43,9 @@ public:
 		);
 	}
 
-	void Update(Graphics& gfx, const T& cBuffer) {
+	void Update(Graphics& gfx, void* vcBuffer) override {
 
+		const T& cBuffer = *(reinterpret_cast<T*>(vcBuffer));
 		D3D11_MAPPED_SUBRESOURCE mRes;
 		GFX_THROW_FAILED(hr, GetDeviceContext(gfx)->Map(
 			m_pConstantBuffer.Get(), 0u,

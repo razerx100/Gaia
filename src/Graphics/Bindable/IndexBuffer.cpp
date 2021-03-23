@@ -1,10 +1,11 @@
 #include <IndexBuffer.hpp>
 #include <GraphicsThrowMacros.hpp>
 
-IndexBuffer::IndexBuffer(Graphics& gfx, const std::vector<std::uint16_t>& indices) {
+IndexBuffer::IndexBuffer(Graphics& gfx, const std::vector<std::uint16_t>& indices)
+	: m_IndexCount(static_cast<std::uint32_t>(std::size(indices))) {
 
 	D3D11_BUFFER_DESC indexDesc;
-	indexDesc.ByteWidth = static_cast<std::uint32_t>(std::size(indices) * sizeof(std::uint16_t));
+	indexDesc.ByteWidth = static_cast<std::uint32_t>(m_IndexCount * sizeof(std::uint16_t));
 	indexDesc.Usage = D3D11_USAGE_DEFAULT;
 	indexDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexDesc.CPUAccessFlags = 0u;
@@ -21,4 +22,8 @@ IndexBuffer::IndexBuffer(Graphics& gfx, const std::vector<std::uint16_t>& indice
 
 void IndexBuffer::Bind(Graphics& gfx) noexcept {
 	GetDeviceContext(gfx)->IASetIndexBuffer(m_pIndexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0u);
+}
+
+std::uint32_t IndexBuffer::GetIndexCount() const noexcept {
+	return m_IndexCount;
 }
