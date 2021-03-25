@@ -7,24 +7,27 @@
 
 class Drawable {
 public:
-	Drawable() noexcept;
+	Drawable() = default;
 	virtual ~Drawable() = default;
 
 	virtual void Update(Graphics& gfx, float deltaTime) noexcept = 0;
 
 	void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
 	void AddBind(std::unique_ptr<Bindable> bind) noexcept;
-	void AddIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer) noexcept;
-	void AddCVertexBuffer(std::unique_ptr<Mutable> vCBuffer) noexcept;
 
-private:
-	void SetShaderPath() noexcept;
+	void AddIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer) noexcept;
+
+	static void SetShaderPath() noexcept;
 
 protected:
-	Mutable* m_VertexCBuffer;
-	std::wstring m_ShaderPath;
+	virtual const std::vector<std::unique_ptr<Bindable>>& GetStaticBindables() const noexcept = 0;
+	virtual Mutable* GetVertexCBuffer() const noexcept = 0;
 
-private:
+	virtual std::uint32_t GetIndexCount() const noexcept = 0;
+
+protected:
+	static std::wstring s_ShaderPath;
+
 	std::uint32_t m_IndexCount;
 	std::vector<std::unique_ptr<Bindable>> m_Binds;
 
