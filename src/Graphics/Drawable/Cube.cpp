@@ -103,11 +103,13 @@ void Cube::Update(Graphics& gfx, float deltaTime) noexcept {
 	chi += dchi * deltaTime;
 
 	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-			DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-			DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-			DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-			DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
+			DirectX::XMMatrixTranspose(
+				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
+				);
 
 	GetVertexCBuffer()->Update(
 		gfx, &constBufferT

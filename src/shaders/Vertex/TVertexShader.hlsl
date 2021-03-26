@@ -3,5 +3,5 @@ cbuffer CVertexBuf {
 };
 
 float4 main(float3 data : Position) : SV_POSITION {
-	return mul(transform, float4(data, 1.0f));
+	return mul(float4(data, 1.0f), transform);
 }
