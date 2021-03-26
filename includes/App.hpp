@@ -2,7 +2,7 @@
 #define __APP_HPP__
 #include <Window.hpp>
 #include <Timer.hpp>
-#include <Cube.hpp>
+#include <3DObject.hpp>
 
 class App {
 public:
@@ -17,7 +17,7 @@ private:
 private:
 	Window m_wnd;
 	Timer m_timer;
-	std::vector<std::unique_ptr<Cube>> m_cubes;
+	std::vector<std::unique_ptr<D3Object>> m_cubes;
 
 };
 #endif
