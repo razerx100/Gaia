@@ -7,8 +7,8 @@ class IndexedTriangleList {
 public:
 	IndexedTriangleList() = default;
 	IndexedTriangleList(
-		std::vector<DirectX::XMFLOAT3>& vertices_input,
-		std::vector<std::uint16_t>& indices_input);
+		std::vector<DirectX::XMFLOAT3>&& vertices_input,
+		std::vector<std::uint16_t>&& indices_input);
 
 	void Transform(DirectX::FXMMATRIX matrix);
 

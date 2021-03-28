@@ -24,7 +24,7 @@ IndexedTriangleList Cube::Make() {
 	};
 
 	return IndexedTriangleList(
-		vertices,
-		indices
+		std::move(vertices),
+		std::move(indices)
 	);
 }

@@ -1,5 +1,5 @@
 #include <3DObject.hpp>
-#include <Cube.hpp>
+#include <Prism.hpp>
 
 D3Object::D3Object(Graphics& gfx,
 		std::mt19937& rng,
@@ -24,7 +24,7 @@ D3Object::D3Object(Graphics& gfx,
 
 	if (!IsDataInitialized()) {
 
-		IndexedTriangleList model = Cube::Make();
+		IndexedTriangleList model = Prism::Make();
 
 		AddStaticBind(std::make_unique<VertexBuffer>(gfx, model.m_Vertices));
 
