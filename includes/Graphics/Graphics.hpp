@@ -2,7 +2,8 @@
 #define __GRAPHICS_HPP__
 #include <CleanWin.hpp>
 #include <DxgiInfoManager.hpp>
-#include <d3d11.h>
+#include <d3d12.h>
+#include <dxgi1_6.h>
 #include <wrl.h>
 
 using Microsoft::WRL::ComPtr;
@@ -23,11 +24,14 @@ private:
 	void SetShaderPath() noexcept;
 
 private:
-	ComPtr<ID3D11Device> m_pDevice;
-	ComPtr<IDXGISwapChain> m_pSwapChain;
-	ComPtr<ID3D11DeviceContext> m_pDeviceContext;
-	ComPtr<ID3D11RenderTargetView> m_pTargetView;
-	ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
+
+	ComPtr<ID3D12Device> m_pDevice;
+	ComPtr<IDXGISwapChain3> m_pSwapChain;
+	ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+	ComPtr<ID3D12CommandAllocator> m_pCommandAllocator;
+	ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+	//ComPtr<ID3D11RenderTargetView> m_pTargetView;
+	//ComPtr<ID3D11DepthStencilView> m_pDepthStencilView;
 
 	std::wstring m_ShaderPath;
 	std::uint32_t m_width;

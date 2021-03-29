@@ -8,50 +8,67 @@
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
 	m_pSwapChain(nullptr),
-	m_pDeviceContext(nullptr),
-	m_pTargetView(nullptr),
 	m_width(width), m_height(height) {
 
 	SetShaderPath();
 
-	DXGI_SWAP_CHAIN_DESC desc = { };
-	desc.BufferDesc.Width = 0;
-	desc.BufferDesc.Height = 0;
-	desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	desc.BufferDesc.RefreshRate.Numerator = 0;
-	desc.BufferDesc.RefreshRate.Denominator = 0;
-	desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	HRESULT hr;
+	UINT factoryCreateFlag = 0u;
+
+#ifdef _DEBUG
+	factoryCreateFlag |= DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
+	ComPtr<IDXGIFactory4> pfactory;
+
+	GFX_THROW_FAILED(hr,
+		CreateDXGIFactory2(factoryCreateFlag, __uuidof(pfactory.Get()), &pfactory)
+	);
+
+	ComPtr<IDXGIAdapter1> pAdapter;
+
+	GFX_THROW_FAILED(hr, pfactory->EnumAdapters1(
+		0u, &pAdapter
+	));
+
+	GFX_THROW_FAILED(hr, D3D12CreateDevice(
+		pAdapter.Get(),
+		D3D_FEATURE_LEVEL_12_0,
+		__uuidof(m_pDevice.Get()),
+		&m_pDevice
+	));
+
+	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateCommandQueue(
+		&queueDesc, __uuidof(m_pCommandQueue.Get()), &m_pCommandQueue
+	));
+
+	DXGI_SWAP_CHAIN_DESC1 desc = { };
+	desc.Width = 0;
+	desc.Height = 0;
+	desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	desc.BufferCount = 2;
-	desc.OutputWindow = hwnd;
-	desc.Windowed = TRUE;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 	desc.Flags = 0;
 
-	HRESULT hr;
-	UINT swapCreateFlag = 0u;
+	ComPtr<IDXGISwapChain1> pSwapChain;
 
-#ifdef _DEBUG
-	swapCreateFlag |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-	GFX_THROW_FAILED(hr, D3D11CreateDeviceAndSwapChain(
-		nullptr,
-		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
-		swapCreateFlag,
-		nullptr,
-		0,
-		D3D11_SDK_VERSION,
+	GFX_THROW_FAILED(hr, pfactory->CreateSwapChainForHwnd(
+		m_pCommandQueue.Get(),
+		hwnd,
 		&desc,
-		&m_pSwapChain,
-		&m_pDevice,
 		nullptr,
-		&m_pDeviceContext
+		nullptr,
+		&pSwapChain
 	));
+
+	GFX_THROW_FAILED(hr, pSwapChain.As(&m_pSwapChain));
 
 	D3D11_VIEWPORT vp = {};
 	vp.Width = static_cast<float>(m_width);
