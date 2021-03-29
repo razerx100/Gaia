@@ -1,5 +1,4 @@
 #include <Sphere.hpp>
-#include <functional>
 
 IndexedTriangleList Sphere::MakeTesselated(std::uint16_t latDiv, std::uint16_t longDiv) {
 

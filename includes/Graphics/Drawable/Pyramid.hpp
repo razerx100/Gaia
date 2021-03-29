@@ -1,11 +1,11 @@
-#ifndef __3DOBJECT_HPP__
-#define __3DOBJECT_HPP__
+#ifndef __PYRAMID_HPP__
+#define __PYRAMID_HPP__
 #include <DrawableBase.hpp>
 #include <random>
 
-class D3Object : public DrawableBase<D3Object> {
+class Pyramid : public DrawableBase<Pyramid> {
 public:
-	D3Object(Graphics& gfx,
+	Pyramid(Graphics& gfx,
 		std::mt19937& rng,
 		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
@@ -31,4 +31,5 @@ private:
 	float dphi;
 	float dchi;
 };
+
 #endif

@@ -7,14 +7,19 @@
 
 class VertexBuffer : public Bindable {
 public:
-	VertexBuffer(Graphics& gfx, const std::vector<DirectX::XMFLOAT3>& vertices);
+	VertexBuffer(Graphics& gfx, std::vector<DirectX::XMFLOAT3>&& vertices);
+	VertexBuffer(
+			Graphics& gfx,
+			std::vector<DirectX::XMFLOAT3>&& positions,
+			std::vector<DirectX::XMFLOAT4>&& colors
+		);
 
 	void Bind(Graphics& gfx) noexcept override;
 
 protected:
 	ComPtr<ID3D11Buffer> m_pVertexBuffer;
 
-	const std::uint32_t m_Stride;
-	const std::uint32_t m_Offset;
+	std::uint32_t m_Stride;
+	std::uint32_t m_Offset;
 };
 #endif

@@ -7,6 +7,7 @@ public:
 	static IndexedTriangleList MakeTesselated(
 		std::uint16_t divisions_x, std::uint16_t divisions_y
 	);
+
 	static IndexedTriangleList Make();
 };
 

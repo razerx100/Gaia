@@ -5,6 +5,7 @@
 class Cone {
 public:
 	static IndexedTriangleList MakeTesselated(std::uint16_t longDiv);
+
 	static IndexedTriangleList Make();
 };
 #endif
