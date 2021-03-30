@@ -3,7 +3,7 @@
 #include <iomanip>
 
 App::App()
-	: m_wnd(1280, 720, "DirectX11 Window") {}
+	: m_wnd(1980, 1080, "DirectX11 Window") {}
 
 int App::Go() {
 	while (true) {

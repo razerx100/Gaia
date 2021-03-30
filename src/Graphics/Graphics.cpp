@@ -3,7 +3,6 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
-#include <d3dx12.h>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -108,7 +107,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 		&srvDesc, __uuidof(ID3D12DescriptorHeap), &m_pSRVHeap
 	));
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart());
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle = m_pRTVHeap->GetCPUDescriptorHandleForHeapStart();
 
 	for (std::uint32_t n = 0u; n < bufferCount; n++) {
 		GFX_THROW_FAILED(hr,
@@ -120,7 +119,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 			rtv_handle
 		));
 
-		rtv_handle.Offset(1, m_RTVSize);
+		OffsetRTVHandle(rtv_handle, 1, m_RTVSize);
 
 		GFX_THROW_FAILED(hr,
 			m_pDevice->CreateCommandAllocator(
@@ -237,10 +236,9 @@ void Graphics::ClearBuffer(float red, float green, float blue) {
 	m_pCommandList->ResourceBarrier(1, &rcBarrier);
 
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-		m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
-		m_CurrentBackBufferIndex, m_RTVSize
-	);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_pRTVHeap->GetCPUDescriptorHandleForHeapStart();
+
+	OffsetRTVHandle(rtvHandle, m_CurrentBackBufferIndex, m_RTVSize);
 
 	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
@@ -484,3 +482,14 @@ void Graphics::SetShaderPath() noexcept {
 	m_ShaderPath.append(L"shaders\\");
 }
 
+void Graphics::OffsetRTVHandle(
+	D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle,
+	std::uint32_t offset,
+	std::uint32_t increamentSize
+) noexcept {
+	rtvHandle.ptr = std::uint64_t(
+		std::int64_t(rtvHandle.ptr) +
+		std::int64_t(offset) *
+		std::int64_t(increamentSize)
+	);
+}

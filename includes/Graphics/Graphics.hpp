@@ -25,6 +25,10 @@ private:
 	void MoveToNextFrame();
 
 	void SetShaderPath() noexcept;
+	void OffsetRTVHandle(
+		D3D12_CPU_DESCRIPTOR_HANDLE& rtvHandle,
+		std::uint32_t offset,
+		std::uint32_t increamentSize) noexcept;
 
 private:
 	static constexpr std::uint16_t bufferCount = 2u;
