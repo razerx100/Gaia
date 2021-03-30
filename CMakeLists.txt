@@ -24,7 +24,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/Exceptions
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    d3d11.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
+    d3d12.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
 )
 
 if(MSVC)

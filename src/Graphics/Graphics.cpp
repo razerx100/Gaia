@@ -3,6 +3,7 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
+#include <d3dx12.h>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -12,17 +13,29 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 
 	SetShaderPath();
 
-	HRESULT hr;
+	m_ViewPort.Width = static_cast<float>(m_width);
+	m_ViewPort.Height = static_cast<float>(m_height);
+	m_ViewPort.MaxDepth = 1;
+
+	m_ScissorRect.right = static_cast<long>(m_width);
+	m_ScissorRect.bottom = static_cast<long>(m_height);
+
 	UINT factoryCreateFlag = 0u;
 
 #ifdef _DEBUG
-	factoryCreateFlag |= DXGI_CREATE_FACTORY_DEBUG;
+	{
+		ComPtr<ID3D12Debug> debugController;
+		D3D12GetDebugInterface(__uuidof(ID3D12Debug), &debugController);
+		debugController->EnableDebugLayer();
+
+		factoryCreateFlag |= DXGI_CREATE_FACTORY_DEBUG;
+	}
 #endif
 
 	ComPtr<IDXGIFactory4> pfactory;
 
 	GFX_THROW_FAILED(hr,
-		CreateDXGIFactory2(factoryCreateFlag, __uuidof(pfactory.Get()), &pfactory)
+		CreateDXGIFactory2(factoryCreateFlag, __uuidof(IDXGIFactory4), &pfactory)
 	);
 
 	ComPtr<IDXGIAdapter1> pAdapter;
@@ -31,10 +44,13 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 		0u, &pAdapter
 	));
 
+	ComPtr<IDXGIAdapter4> pAdapter4;
+	GFX_THROW_FAILED(hr, pAdapter.As(&pAdapter4));
+
 	GFX_THROW_FAILED(hr, D3D12CreateDevice(
-		pAdapter.Get(),
-		D3D_FEATURE_LEVEL_12_0,
-		__uuidof(m_pDevice.Get()),
+		pAdapter4.Get(),
+		D3D_FEATURE_LEVEL_11_0,
+		__uuidof(ID3D12Device2),
 		&m_pDevice
 	));
 
@@ -43,7 +59,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
 	GFX_THROW_FAILED(hr, m_pDevice->CreateCommandQueue(
-		&queueDesc, __uuidof(m_pCommandQueue.Get()), &m_pCommandQueue
+		&queueDesc, __uuidof(ID3D12CommandQueue), &m_pCommandQueue
 	));
 
 	DXGI_SWAP_CHAIN_DESC1 desc = { };
@@ -53,9 +69,9 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	desc.SampleDesc.Count = 1;
 	desc.SampleDesc.Quality = 0;
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	desc.BufferCount = 2;
+	desc.BufferCount = bufferCount;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	desc.Flags = 0;
+	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
 	ComPtr<IDXGISwapChain1> pSwapChain;
 
@@ -70,28 +86,52 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 
 	GFX_THROW_FAILED(hr, pSwapChain.As(&m_pSwapChain));
 
-	D3D11_VIEWPORT vp = {};
-	vp.Width = static_cast<float>(m_width);
-	vp.Height =static_cast<float>(m_height);
-	vp.MinDepth = 0;
-	vp.MaxDepth = 1;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
+	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-	m_pDeviceContext->RSSetViewports(1u, &vp);
+	D3D12_DESCRIPTOR_HEAP_DESC rtvDesc = {};
+	rtvDesc.NumDescriptors = bufferCount;
+	rtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-	ComPtr<ID3D11Resource> pBackBuffer = nullptr;
-	GFX_THROW_FAILED(hr, m_pSwapChain->GetBuffer(
-		0u,
-		__uuidof(ID3D11Resource),
-		&pBackBuffer
+	GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
+		&rtvDesc, __uuidof(ID3D12DescriptorHeap), &m_pRTVHeap
 	));
 
-	GFX_THROW_FAILED(hr, m_pDevice->CreateRenderTargetView(
-		pBackBuffer.Get(), nullptr, &m_pTargetView
+	m_RTVSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+	D3D12_DESCRIPTOR_HEAP_DESC srvDesc = {};
+	rtvDesc.NumDescriptors = 1;
+	rtvDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	rtvDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
+		&srvDesc, __uuidof(ID3D12DescriptorHeap), &m_pSRVHeap
 	));
 
-	// Depth Stencil
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart());
+
+	for (std::uint32_t n = 0u; n < bufferCount; n++) {
+		GFX_THROW_FAILED(hr,
+			m_pSwapChain->GetBuffer(n, __uuidof(ID3D12Resource), &m_pRenderTargets[n])
+		);
+		GFX_THROW_NO_HR(m_pDevice->CreateRenderTargetView(
+			m_pRenderTargets[n].Get(),
+			nullptr,
+			rtv_handle
+		));
+
+		rtv_handle.Offset(1, m_RTVSize);
+
+		GFX_THROW_FAILED(hr,
+			m_pDevice->CreateCommandAllocator(
+					D3D12_COMMAND_LIST_TYPE_DIRECT,
+					__uuidof(ID3D12CommandAllocator),
+					&m_pCommandAllocator[n]
+				)
+			);
+	}
+
+	/*// Depth Stencil
 	D3D11_DEPTH_STENCIL_DESC sStateDesc = {};
 	sStateDesc.DepthEnable = true;
 	sStateDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -125,40 +165,99 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	GFX_THROW_FAILED(hr,
 		m_pDevice->CreateDepthStencilView(
 			pDepthTexture.Get(), &sViewDesc, &m_pDepthStencilView)
-	);
+	);*/
 
-	m_pDeviceContext->OMSetRenderTargets(
-		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
-		);
+	GFX_THROW_FAILED(hr, m_pDevice->CreateCommandList(
+		0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+		m_pCommandAllocator[m_CurrentBackBufferIndex].Get(),
+		nullptr,
+		__uuidof(ID3D12CommandList),
+		&m_pCommandList
+	));
+
+	GFX_THROW_FAILED(hr, m_pCommandList->Close());
+
+	GFX_THROW_FAILED(hr,
+		m_pDevice->CreateFence(
+			m_FenceValues[m_CurrentBackBufferIndex],
+			D3D12_FENCE_FLAG_NONE,
+			__uuidof(ID3D12Fence),
+			&m_Fence
+		)
+	);
+	m_FenceValues[m_CurrentBackBufferIndex]++;
+
+	m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+	WaitForGPU();
+}
+
+Graphics::~Graphics() {
+	WaitForGPU();
+
+	CloseHandle(m_FenceEvent);
 }
 
 void Graphics::EndFrame() {
-	HRESULT hr;
-
 #ifdef _DEBUG
 	DXGI_INFO_MAN.Set();
 #endif
-	if (FAILED(hr = m_pSwapChain->Present(0u, 0u))) {
+	ID3D12CommandList* ppCommandLists[] = { m_pCommandList.Get() };
+	m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	if (FAILED(hr = m_pSwapChain->Present(0u, DXGI_PRESENT_ALLOW_TEARING))) {
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
 			throw GFX_DEVICE_REMOVED_EXCEPT(m_pDevice->GetDeviceRemovedReason());
 		else
 			GFX_THROW(hr);
 	}
 
-	m_pDeviceContext->OMSetRenderTargets(
-		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
-	);
+	MoveToNextFrame();
 }
 
-void Graphics::ClearBuffer(float red, float green, float blue) noexcept {
+void Graphics::ClearBuffer(float red, float green, float blue) {
 	const float color[] = { red, green, blue, 1.0f };
-	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
-	m_pDeviceContext->ClearDepthStencilView(
-		m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u
+	GFX_THROW_FAILED(hr, m_pCommandAllocator[m_CurrentBackBufferIndex]->Reset());
+
+	GFX_THROW_FAILED(hr, m_pCommandList->Reset(
+		m_pCommandAllocator[m_CurrentBackBufferIndex].Get(),
+		nullptr
+	));
+
+	m_pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+	m_pCommandList->RSSetViewports(1, &m_ViewPort);
+
+	D3D12_RESOURCE_BARRIER rcBarrier = {};
+	rcBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	rcBarrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	rcBarrier.Transition.pResource = m_pRenderTargets[m_CurrentBackBufferIndex].Get();
+	rcBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	rcBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	m_pCommandList->ResourceBarrier(1, &rcBarrier);
+
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+		m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
+		m_CurrentBackBufferIndex, m_RTVSize
 	);
+
+	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	m_pCommandList->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
+	/*m_pDeviceContext->ClearDepthStencilView(
+		m_pDepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0u
+	);*/
+
+	rcBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	rcBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	m_pCommandList->ResourceBarrier(1, &rcBarrier);
+
+	m_pCommandList->Close();
 }
 
-void Graphics::DrawTriangle(float angle, float posX, float posY) {
+/*void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	struct Position {
 		float x;
 		float y;
@@ -186,7 +285,8 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
 
 	// Vertex Buffer
-	ComPtr<ID3D11Buffer> pVertexBuffer;
+	ComPtr<ID3D12Resource> pVertexBuffer;
+
 	D3D11_BUFFER_DESC vertexDesc = {};
 	vertexDesc.ByteWidth = sizeof(vertices);
 	vertexDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -340,6 +440,37 @@ void Graphics::DrawTriangle(float angle, float posX, float posY) {
 	m_pDeviceContext->PSSetConstantBuffers(0u, 1u, pConstantBufferColor.GetAddressOf());
 
 	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(static_cast<std::uint32_t>(std::size(indices)), 0u, 0u));
+}*/
+
+void Graphics::WaitForGPU() {
+	GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
+		m_Fence.Get(), m_FenceValues[m_CurrentBackBufferIndex]
+	));
+
+	GFX_THROW_FAILED(hr, m_Fence->SetEventOnCompletion(
+		m_FenceValues[m_CurrentBackBufferIndex], m_FenceEvent
+	));
+	WaitForSingleObjectEx(m_FenceEvent, INFINITE, FALSE);
+
+	m_FenceValues[m_CurrentBackBufferIndex]++;
+}
+
+void Graphics::MoveToNextFrame() {
+	const std::uint64_t currentFenceValue = m_FenceValues[m_CurrentBackBufferIndex];
+	GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
+		m_Fence.Get(), currentFenceValue
+	));
+
+	m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	if (m_Fence->GetCompletedValue() < m_FenceValues[m_CurrentBackBufferIndex]) {
+		GFX_THROW_FAILED(hr, m_Fence->SetEventOnCompletion(
+			m_FenceValues[m_CurrentBackBufferIndex], m_FenceEvent
+		));
+		WaitForSingleObjectEx(m_FenceEvent, INFINITE, FALSE);
+	}
+
+	m_FenceValues[m_CurrentBackBufferIndex] = currentFenceValue + 1;
 }
 
 // Utility
