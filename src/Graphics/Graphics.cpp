@@ -17,6 +17,32 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pTargetView(nullptr),
 	m_width(width), m_height(height) {
 
+	HRESULT hr;
+	ComPtr<IDXGIFactory> pFactory;
+	GFX_THROW_FAILED(hr, CreateDXGIFactory(
+		__uuidof(pFactory.Get()),
+		&pFactory
+	));
+
+	UINT createDeviceFlags = 0u;
+
+#ifdef _DEBUG
+	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+	GFX_THROW_FAILED(hr, D3D11CreateDevice(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		createDeviceFlags,
+		nullptr,
+		0,
+		D3D11_SDK_VERSION,
+		&m_pDevice,
+		nullptr,
+		&m_pDeviceContext
+	));
+
 	DXGI_SWAP_CHAIN_DESC desc = { };
 	desc.BufferDesc.Width = 0;
 	desc.BufferDesc.Height = 0;
@@ -32,28 +58,12 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	desc.OutputWindow = hwnd;
 	desc.Windowed = TRUE;
 	desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	desc.Flags = 0;
+	desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 
-	HRESULT hr;
-	UINT swapCreateFlag = 0u;
-
-#ifdef _DEBUG
-	swapCreateFlag |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
-	GFX_THROW_FAILED(hr, D3D11CreateDeviceAndSwapChain(
-		nullptr,
-		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
-		swapCreateFlag,
-		nullptr,
-		0,
-		D3D11_SDK_VERSION,
+	GFX_THROW_FAILED(hr, pFactory->CreateSwapChain(
+		m_pDevice.Get(),
 		&desc,
-		&m_pSwapChain,
-		&m_pDevice,
-		nullptr,
-		&m_pDeviceContext
+		&m_pSwapChain
 	));
 
 	D3D11_VIEWPORT vp = {};
@@ -124,7 +134,7 @@ void Graphics::EndFrame() {
 #ifdef _DEBUG
 	DXGI_INFO_MAN.Set();
 #endif
-	if (FAILED(hr = m_pSwapChain->Present(0u, 0u))) {
+	if (FAILED(hr = m_pSwapChain->Present(0u, DXGI_PRESENT_ALLOW_TEARING))) {
 		if (hr == DXGI_ERROR_DEVICE_REMOVED)
 			throw GFX_DEVICE_REMOVED_EXCEPT(m_pDevice->GetDeviceRemovedReason());
 		else
