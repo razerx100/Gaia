@@ -185,42 +185,10 @@ void Graphics::LoadPipeline(HWND hwnd) {
     GFX_THROW_FAILED(hr, m_pCommandList->Close());
 
     {
-        D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
-        featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-
-        if (FAILED(m_pDevice->CheckFeatureSupport(
-            D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)
-        )))
-            featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-
-        D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags =
-            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-            D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-
-        CD3DX12_ROOT_PARAMETER1 rootParams[2] = {};
-        rootParams[0].InitAsConstants(
-            sizeof(DirectX::XMMATRIX) / 4, 0u, 0u, D3D12_SHADER_VISIBILITY_VERTEX
-        );
-        rootParams[1].InitAsConstants(
-            sizeof(DirectX::XMFLOAT4[6]) / 4, 1u, 0u, D3D12_SHADER_VISIBILITY_PIXEL
-        );
-
-        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
-        rootSigDesc.Init_1_1(
-            static_cast<std::uint32_t>(std::size(rootParams)),
-            rootParams,
-            0u,
-            nullptr,
-            rootSigFlags
-        );
-
         ComPtr<ID3DBlob> signature;
-        ComPtr<ID3DBlob> error;
-        GFX_THROW_FAILED(hr, D3DX12SerializeVersionedRootSignature(
-            &rootSigDesc, featureData.HighestVersion, &signature, &error)
-        );
+        GFX_THROW_FAILED(hr, D3DReadFileToBlob(
+            (m_ShaderPath + L"RS_VS_PS_CBuff.cso").c_str(), &signature
+        ));
 
         GFX_THROW_FAILED(hr, m_pDevice->CreateRootSignature(
             0, signature->GetBufferPointer(),
@@ -251,9 +219,9 @@ void Graphics::LoadTriangle() {
         ComPtr<ID3DBlob> pixelShader;
 
         GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-            (m_ShaderPath + L"TVertexShader.cso").c_str(), &vertexShader));
+            (m_ShaderPath + L"VSFaceColor.cso").c_str(), &vertexShader));
         GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-            (m_ShaderPath + L"TPixelShader.cso").c_str(), &pixelShader));
+            (m_ShaderPath + L"PSFaceColor.cso").c_str(), &pixelShader));
 
         D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
         {

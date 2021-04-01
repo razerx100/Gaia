@@ -1,4 +1,4 @@
-cbuffer CVertexBuf : register(b0) {
+cbuffer CVertexBuf : register(b0, space0) {
 	matrix transform;
 };
 
