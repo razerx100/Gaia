@@ -46,12 +46,16 @@ private:
     ComPtr<ID3D12CommandQueue> m_pCommandQueue;
     ComPtr<ID3D12RootSignature> m_pRootSignature;
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
+    ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
     ComPtr<ID3D12PipelineState> m_pPipelineState;
     ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
     std::uint32_t m_RTVHeapSize;
 
     ComPtr<ID3D12Resource> m_pVertexBuffer;
     D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
+
+    ComPtr<ID3D12Resource> m_pIndexBuffer;
+    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 
     std::uint32_t m_CurrentBackBufferIndex;
     HANDLE m_FenceEvent;
@@ -61,6 +65,8 @@ private:
 	std::wstring m_ShaderPath;
 	std::uint32_t m_width;
 	std::uint32_t m_height;
+
+    std::uint32_t m_triangleIndicesCount;
 
 	float m_color[4];
 	HRESULT hr;

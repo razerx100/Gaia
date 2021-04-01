@@ -17,7 +17,8 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_width(width), m_height(height), m_color{0.0f, 0.0f, 0.0f, 1.0f},
 	m_FenceValues{}, m_RTVHeapSize(0), m_CurrentBackBufferIndex(0),
     m_Viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) },
-    m_ScissorRect{0, 0, static_cast<LONG>(width), static_cast<LONG>(height)} {
+    m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
+    m_triangleIndicesCount(0u) {
 
 	SetShaderPath();
 
@@ -106,7 +107,19 @@ void Graphics::LoadPipeline(HWND hwnd) {
             &rtvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pRTVHeap
         ));
 
-        m_RTVHeapSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        m_RTVHeapSize = m_pDevice->GetDescriptorHandleIncrementSize(
+            D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    }
+
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+        dsvHeapDesc.NumDescriptors = bufferCount;
+        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+        GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
+            &dsvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pDSVHeap
+        ));
     }
 
     {
@@ -117,7 +130,9 @@ void Graphics::LoadPipeline(HWND hwnd) {
                 n, __uuidof(ID3D12Resource), &m_pRenderTargets[n])
             );
 
-            m_pDevice->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle);
+            GFX_THROW_NO_HR(
+                m_pDevice->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle)
+            )
             rtvHandle.Offset(1, m_RTVHeapSize);
 
             GFX_THROW_FAILED(hr, m_pDevice->CreateCommandAllocator(
@@ -177,17 +192,23 @@ void Graphics::LoadTriangle() {
         ComPtr<ID3DBlob> vertexShader;
         ComPtr<ID3DBlob> pixelShader;
 
-        GFX_THROW_FAILED(hr, D3DReadFileToBlob((m_ShaderPath + L"TVertexShader.cso").c_str(), &vertexShader));
-        GFX_THROW_FAILED(hr, D3DReadFileToBlob((m_ShaderPath + L"TPixelShader.cso").c_str(), &pixelShader));
+        GFX_THROW_FAILED(hr, D3DReadFileToBlob(
+            (m_ShaderPath + L"TVertexShader.cso").c_str(), &vertexShader));
+        GFX_THROW_FAILED(hr, D3DReadFileToBlob(
+            (m_ShaderPath + L"TPixelShader.cso").c_str(), &pixelShader));
 
         D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
         {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
+            0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,
+            12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+        psoDesc.InputLayout = {
+            inputElementDescs, static_cast<std::uint32_t>(std::size(inputElementDescs))
+        };
         psoDesc.pRootSignature = m_pRootSignature.Get();
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
@@ -208,15 +229,13 @@ void Graphics::LoadTriangle() {
     {
         Vertex triangleVertices[] =
         {
-            { { -0.25f, 0.25f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-            { { 0.25f, 0.25f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-            { { -0.25f, -0.25f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } },
-            { { -0.25f, -0.25f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-            { { 0.25f, 0.25f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-            { { 0.25f, -0.25f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+            { { -0.35f, 0.35f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+            { { 0.35f, 0.35f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+            { { -0.35f, -0.35f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+            { { 0.35f, -0.35f, 0.0f }, { 1.0f, 0.0f, 1.0f, 1.0f } }
         };
 
-        const UINT vertexBufferSize = sizeof(triangleVertices);
+        const std::uint32_t vertexBufferSize = sizeof(triangleVertices);
         CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
         CD3DX12_RESOURCE_DESC rcDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
@@ -241,6 +260,40 @@ void Graphics::LoadTriangle() {
         m_VertexBufferView.StrideInBytes = sizeof(Vertex);
         m_VertexBufferView.SizeInBytes = vertexBufferSize;
     }
+
+    {
+        std::uint16_t triangleIndices[] =
+        {
+            0u, 1u, 2u, 2u, 1u, 3u
+        };
+
+        m_triangleIndicesCount = static_cast<std::uint32_t>(std::size(triangleIndices));
+
+        const std::uint32_t indexBufferSize = sizeof(triangleIndices);
+        CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+
+        CD3DX12_RESOURCE_DESC rcDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
+        GFX_THROW_FAILED(hr, m_pDevice->CreateCommittedResource(
+            &heapProp,
+            D3D12_HEAP_FLAG_NONE,
+            &rcDesc,
+            D3D12_RESOURCE_STATE_GENERIC_READ,
+            nullptr,
+            __uuidof(ID3D12Resource),
+            &m_pIndexBuffer
+        ));
+
+        UINT8* pIndexDataBegin;
+        CD3DX12_RANGE readRange(0, 0);
+        GFX_THROW_FAILED(hr, m_pIndexBuffer->Map(
+            0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+        memcpy(pIndexDataBegin, triangleIndices, indexBufferSize);
+        m_pIndexBuffer->Unmap(0, nullptr);
+
+        m_IndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
+        m_IndexBufferView.SizeInBytes = indexBufferSize;
+        m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
+    }
 }
 
 void Graphics::ClearBuffer(float red, float green, float blue) {
@@ -264,7 +317,8 @@ void Graphics::DrawTriangle() {
 
     m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_pCommandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-    m_pCommandList->DrawInstanced(6, 1, 0, 0);
+    m_pCommandList->IASetIndexBuffer(&m_IndexBufferView);
+    m_pCommandList->DrawIndexedInstanced(m_triangleIndicesCount, 1u, 0u, 0u, 0u);
 }
 
 void Graphics::ResetCommandList() {
@@ -322,7 +376,9 @@ void Graphics::EndFrame() {
     GFX_THROW_FAILED(hr, m_pCommandList->Close());
 
     ID3D12CommandList* ppCommandLists[] = { m_pCommandList.Get() };
-    m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+    m_pCommandQueue->ExecuteCommandLists(
+        static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
+    );
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
