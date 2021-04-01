@@ -387,6 +387,9 @@ void Graphics::ClearBuffer(float red, float green, float blue) {
 
 void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
+    m_pCommandList->SetGraphicsRootSignature(m_pRootSignature.Get());
+    m_pCommandList->SetPipelineState(m_pPipelineState.Get());
+
     const DirectX::XMMATRIX constBufferT = {
         DirectX::XMMatrixRotationY(angle) *
         DirectX::XMMatrixRotationY(angle) *
@@ -420,9 +423,8 @@ void Graphics::ResetCommandList() {
     GFX_THROW_FAILED(hr, m_pCommandAllocators[m_CurrentBackBufferIndex]->Reset());
 
     GFX_THROW_FAILED(hr, m_pCommandList->Reset(
-        m_pCommandAllocators[m_CurrentBackBufferIndex].Get(), m_pPipelineState.Get()));
+        m_pCommandAllocators[m_CurrentBackBufferIndex].Get(), nullptr));
 
-    m_pCommandList->SetGraphicsRootSignature(m_pRootSignature.Get());
     m_pCommandList->RSSetViewports(1, &m_Viewport);
     m_pCommandList->RSSetScissorRects(1, &m_ScissorRect);
 
