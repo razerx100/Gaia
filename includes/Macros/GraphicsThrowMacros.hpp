@@ -13,7 +13,7 @@
 #define GFX_THROW_FAILED(hr, hrCall) DEBUG_INFO_MAN.Set(); if(FAILED(hr = (hrCall))) GFX_THROW(hr)
 #define GFX_DEVICE_REMOVED_EXCEPT(hr) DeviceRemovedException(__LINE__, __FILE__, hr, DEBUG_INFO_MAN.GetMessages())
 #else
-#define GFX_THROW_NO_HR(funCall) funCall
+#define GFX_THROW_NO_HR(funCall) funCall;
 #define GFX_THROW(hr) throw HrException(__LINE__, __FILE__, hr)
 #define GFX_THROW_FAILED(hr, hrCall) GFX_THROW_NOINFO(hr, hrCall)
 #define GFX_DEVICE_REMOVED_EXCEPT(hr) DeviceRemovedException(__LINE__, __FILE__, hr)

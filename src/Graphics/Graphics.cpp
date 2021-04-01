@@ -4,12 +4,6 @@
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
 
-struct Vertex
-{
-	DirectX::XMFLOAT3 position;
-	DirectX::XMFLOAT4 color;
-};
-
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
@@ -97,6 +91,7 @@ void Graphics::LoadPipeline(HWND hwnd) {
     GFX_THROW_FAILED(hr, swapChain.As(&m_pSwapChain));
     m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
+    // RTV
     {
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
         rtvHeapDesc.NumDescriptors = bufferCount;
@@ -109,17 +104,6 @@ void Graphics::LoadPipeline(HWND hwnd) {
 
         m_RTVHeapSize = m_pDevice->GetDescriptorHandleIncrementSize(
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-    }
-
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-        dsvHeapDesc.NumDescriptors = bufferCount;
-        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-        GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
-            &dsvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pDSVHeap
-        ));
     }
 
     {
@@ -143,6 +127,53 @@ void Graphics::LoadPipeline(HWND hwnd) {
         }
     }
 
+    // DSV
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+        dsvHeapDesc.NumDescriptors = 1;
+        dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+        dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+        GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
+            &dsvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pDSVHeap
+        ));
+
+        D3D12_CLEAR_VALUE depthValue = {};
+        depthValue.Format = DXGI_FORMAT_D32_FLOAT;
+        depthValue.DepthStencil = { 1.0f, 0 };
+
+        CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+        CD3DX12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+            DXGI_FORMAT_D32_FLOAT, m_width, m_height,
+            1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+        );
+
+        GFX_THROW_FAILED(hr, m_pDevice->CreateCommittedResource(
+            &heapProp,
+            D3D12_HEAP_FLAG_NONE,
+            &rsDesc,
+            D3D12_RESOURCE_STATE_DEPTH_WRITE,
+            &depthValue,
+            __uuidof(ID3D12Resource),
+            &m_pDepthBuffer
+        ));
+
+        D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+        dsv.Format = DXGI_FORMAT_D32_FLOAT;
+        dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+        dsv.Texture2D.MipSlice = 0;
+        dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+        GFX_THROW_NO_HR(
+            m_pDevice->CreateDepthStencilView(
+                m_pDepthBuffer.Get(), &dsv,
+                m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
+            )
+        )
+    }
+
+    // Command List
     GFX_THROW_FAILED(hr, m_pDevice->CreateCommandList(
         0, D3D12_COMMAND_LIST_TYPE_DIRECT,
         m_pCommandAllocators[m_CurrentBackBufferIndex].Get(),
@@ -154,16 +185,43 @@ void Graphics::LoadPipeline(HWND hwnd) {
     GFX_THROW_FAILED(hr, m_pCommandList->Close());
 
     {
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-        rootSignatureDesc.Init(0,
-            nullptr, 0, nullptr,
-            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+        featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+        if (FAILED(m_pDevice->CheckFeatureSupport(
+            D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData)
+        )))
+            featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+
+        D3D12_ROOT_SIGNATURE_FLAGS rootSigFlags =
+            D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+            D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+
+        CD3DX12_ROOT_PARAMETER1 rootParams[2] = {};
+        rootParams[0].InitAsConstants(
+            sizeof(DirectX::XMMATRIX) / 4, 0u, 0u, D3D12_SHADER_VISIBILITY_VERTEX
+        );
+        rootParams[1].InitAsConstants(
+            sizeof(DirectX::XMFLOAT4[6]) / 4, 1u, 0u, D3D12_SHADER_VISIBILITY_PIXEL
+        );
+
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
+        rootSigDesc.Init_1_1(
+            static_cast<std::uint32_t>(std::size(rootParams)),
+            rootParams,
+            0u,
+            nullptr,
+            rootSigFlags
+        );
 
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
-        GFX_THROW_FAILED(hr, D3D12SerializeRootSignature(
-            &rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+        GFX_THROW_FAILED(hr, D3DX12SerializeVersionedRootSignature(
+            &rootSigDesc, featureData.HighestVersion, &signature, &error)
         );
+
         GFX_THROW_FAILED(hr, m_pDevice->CreateRootSignature(
             0, signature->GetBufferPointer(),
             signature->GetBufferSize(),
@@ -200,9 +258,7 @@ void Graphics::LoadTriangle() {
         D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
-            0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0,
-            12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+            0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
         };
 
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -214,12 +270,15 @@ void Graphics::LoadTriangle() {
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
         psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        psoDesc.DepthStencilState.DepthEnable = FALSE;
+        psoDesc.DepthStencilState.DepthEnable = TRUE;
+        psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+        psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
         psoDesc.DepthStencilState.StencilEnable = FALSE;
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         psoDesc.NumRenderTargets = 1;
         psoDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
+        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         psoDesc.SampleDesc.Count = 1;
         GFX_THROW_FAILED(hr, m_pDevice->CreateGraphicsPipelineState(
             &psoDesc, __uuidof(ID3D12PipelineState), &m_pPipelineState
@@ -227,12 +286,17 @@ void Graphics::LoadTriangle() {
     }
 
     {
-        Vertex triangleVertices[] =
+        float side = 1.0f / 2.0f;
+        DirectX::XMFLOAT3 triangleVertices[] =
         {
-            { { -0.35f, 0.35f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-            { { 0.35f, 0.35f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-            { { -0.35f, -0.35f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-            { { 0.35f, -0.35f, 0.0f }, { 1.0f, 0.0f, 1.0f, 1.0f } }
+            { -side, -side, -side },
+            { side, -side, -side },
+            { -side, side, -side },
+            { side, side, -side },
+            { -side, -side, side },
+            { side, -side, side },
+            { -side, side, side },
+            { side, side, side }
         };
 
         const std::uint32_t vertexBufferSize = sizeof(triangleVertices);
@@ -257,14 +321,19 @@ void Graphics::LoadTriangle() {
         m_pVertexBuffer->Unmap(0, nullptr);
 
         m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
-        m_VertexBufferView.StrideInBytes = sizeof(Vertex);
+        m_VertexBufferView.StrideInBytes = sizeof(DirectX::XMFLOAT3);
         m_VertexBufferView.SizeInBytes = vertexBufferSize;
     }
 
     {
         std::uint16_t triangleIndices[] =
         {
-            0u, 1u, 2u, 2u, 1u, 3u
+           0u, 2u, 1u,		2u, 3u, 1u,
+           1u, 3u, 5u,		3u, 7u, 5u,
+           2u, 6u, 3u,		6u, 7u, 3u,
+           4u, 5u, 7u,		4u, 7u, 6u,
+           0u, 4u, 2u,		2u, 4u, 6u,
+           0u, 1u, 4u,		1u, 5u, 4u
         };
 
         m_triangleIndicesCount = static_cast<std::uint32_t>(std::size(triangleIndices));
@@ -306,14 +375,40 @@ void Graphics::ClearBuffer(float red, float green, float blue) {
     m_color[2] = blue;
 
     m_pCommandList->ClearRenderTargetView(rtvHandle, m_color, 0, nullptr);
+
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
+
+    m_pCommandList->ClearDepthStencilView(
+        dsvHandle,
+        D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+    m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }
 
-void Graphics::DrawTriangle() {
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-        m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
-        m_CurrentBackBufferIndex, m_RTVHeapSize);
+void Graphics::DrawTriangle(float angle, float posX, float posY) {
 
-    m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+    const DirectX::XMMATRIX constBufferT = {
+        DirectX::XMMatrixRotationY(angle) *
+        DirectX::XMMatrixRotationY(angle) *
+        DirectX::XMMatrixRotationZ(angle) *
+        DirectX::XMMatrixTranslation(posX, 0.0f, 4.0f + posY) *
+        DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 10.0f)
+    };
+
+    m_pCommandList->SetGraphicsRoot32BitConstants(
+        0, sizeof(DirectX::XMMATRIX) / 4, &constBufferT, 0u);
+
+    const DirectX::XMFLOAT4 constBufferC[6] = {
+        {1.0f, 0.0f, 0.0f, 1.0f},
+        {0.0f, 1.0f, 1.0f, 1.0f},
+        {0.0f, 1.0f, 0.0f, 1.0f},
+        {0.50f, 0.50f, 0.0f, 1.0f},
+        {1.0f, 0.0f, 1.0f, 1.0f},
+        {0.0f, 0.75f, 0.5f, 1.0f}
+    };
+
+    m_pCommandList->SetGraphicsRoot32BitConstants(
+        1, sizeof(DirectX::XMFLOAT4[6]) / 4, &constBufferC, 0u);
 
     m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_pCommandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
