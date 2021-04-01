@@ -1,4 +1,4 @@
-3D Engine with DirectX11 and Win32.
+3D Engine with DirectX12 and Win32.
 
 # Requirements
 Visual Studio 19.\
