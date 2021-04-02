@@ -14,8 +14,6 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
     m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
     m_triangleIndicesCount(0u) {
 
-	SetShaderPath();
-
     Initialize(hwnd);
 }
 
@@ -283,15 +281,4 @@ void Graphics::EndFrame() {
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
     MoveToNextFrame();
-}
-
-// Utility
-void Graphics::SetShaderPath() noexcept {
-	wchar_t path[MAX_PATH];
-	GetModuleFileNameW(nullptr, path, MAX_PATH);
-	m_ShaderPath = path;
-	for (int i = static_cast<int>(m_ShaderPath.size() - 1); m_ShaderPath[i] != L'\\'; i--)
-		m_ShaderPath.pop_back();
-
-	m_ShaderPath.append(L"shaders\\");
 }

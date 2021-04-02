@@ -23,13 +23,10 @@ public:
     void DrawIndexed(std::uint32_t indexCount) noexcept;
 
 private:
-
     void Initialize(HWND hwnd);
 
 	void WaitForGPU();
 	void MoveToNextFrame();
-
-	void SetShaderPath() noexcept;
 
 private:
 	static constexpr std::uint16_t bufferCount = 2u;

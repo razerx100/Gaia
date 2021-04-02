@@ -38,3 +38,9 @@
 #define STRICT
 
 #include <Windows.h>
+
+#ifdef _DEBUG
+#define IS_DEBUG 1
+#else
+#define IS_DEBUG 0
+#endif
