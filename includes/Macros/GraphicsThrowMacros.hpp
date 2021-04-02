@@ -7,6 +7,7 @@
 
 
 #ifdef _DEBUG
+#include <DebugInfoManager.hpp>
 #define DEBUG_INFO_MAN DebugInfoManager::GetDebugInfoManager()
 #define GFX_THROW_NO_HR(funCall) DEBUG_INFO_MAN.Set(); try {funCall;} catch(...){ std::vector<std::string> vec = DEBUG_INFO_MAN.GetMessages(); if(!vec.empty()) throw InfoException(__LINE__, __FILE__, vec);}
 #define GFX_THROW(hr) throw HrException(__LINE__, __FILE__, hr, DEBUG_INFO_MAN.GetMessages())

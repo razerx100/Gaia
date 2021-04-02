@@ -10,7 +10,7 @@
 using Microsoft::WRL::ComPtr;
 
 class Graphics {
-
+    friend class Bindable;
 public:
 	Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height);
 	Graphics(const Graphics&) = delete;
@@ -20,14 +20,11 @@ public:
 	void EndFrame();
     void ResetCommandList();
     void ClearBuffer(float red, float green, float blue);
-    void DrawTriangle(float angle, float posX, float posY);
+    void DrawIndexed(std::uint32_t indexCount) noexcept;
 
 private:
 
-    void LoadPipeline(HWND hwnd);
-
-    void LoadTriangle();
-
+    void Initialize(HWND hwnd);
 
 	void WaitForGPU();
 	void MoveToNextFrame();
@@ -44,8 +41,6 @@ private:
     ComPtr<ID3D12Resource> m_pRenderTargets[bufferCount];
     ComPtr<ID3D12CommandAllocator> m_pCommandAllocators[bufferCount];
     ComPtr<ID3D12CommandQueue> m_pCommandQueue;
-    ComPtr<ID3D12RootSignature> m_pRootSignature;
-    ComPtr<ID3D12PipelineState> m_pPipelineState;
     ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
 
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
@@ -54,12 +49,6 @@ private:
     std::uint32_t m_RTVHeapSize;
 
     ComPtr<ID3D12Resource> m_pDepthBuffer;
-
-    ComPtr<ID3D12Resource> m_pVertexBuffer;
-    D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
-
-    ComPtr<ID3D12Resource> m_pIndexBuffer;
-    D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 
     ComPtr<ID3D12Fence> m_pFence;
     HANDLE m_FenceEvent;

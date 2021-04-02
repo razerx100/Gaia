@@ -18,14 +18,5 @@ void App::DoFrame() {
 	const float c = sin(m_timer.Peek()) / 2.0f + 0.5f;
 	m_wnd.GetGfx().ResetCommandList();
 	m_wnd.GetGfx().ClearBuffer(c, c, 1.0f);
-	m_wnd.GetGfx().DrawTriangle(
-		-m_timer.Peek(),
-		0.0f, 0.0f
-	);
-	m_wnd.GetGfx().DrawTriangle(
-		m_timer.Peek(),
-		m_wnd.m_mouse.GetPosX() / 640.0f - 1,
-		-m_wnd.m_mouse.GetPosY() / 360.0f + 1
-	);
 	m_wnd.GetGfx().EndFrame();
 }

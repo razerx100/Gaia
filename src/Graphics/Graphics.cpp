@@ -16,8 +16,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 
 	SetShaderPath();
 
-    LoadPipeline(hwnd);
-    LoadTriangle();
+    Initialize(hwnd);
 }
 
 Graphics::~Graphics() {
@@ -26,7 +25,7 @@ Graphics::~Graphics() {
 	CloseHandle(m_FenceEvent);
 }
 
-void Graphics::LoadPipeline(HWND hwnd) {
+void Graphics::Initialize(HWND hwnd) {
     std::uint32_t dxgiFactoryFlags = 0;
 
 #ifdef _DEBUG
@@ -184,20 +183,6 @@ void Graphics::LoadPipeline(HWND hwnd) {
 
     GFX_THROW_FAILED(hr, m_pCommandList->Close());
 
-    {
-        ComPtr<ID3DBlob> signature;
-        GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-            (m_ShaderPath + L"RS_VS_PS_CBuff.cso").c_str(), &signature
-        ));
-
-        GFX_THROW_FAILED(hr, m_pDevice->CreateRootSignature(
-            0, signature->GetBufferPointer(),
-            signature->GetBufferSize(),
-            __uuidof(ID3D12RootSignature),
-            &m_pRootSignature
-        ));
-    }
-
     GFX_THROW_FAILED(hr, m_pDevice->CreateFence(
         m_FenceValues[m_CurrentBackBufferIndex],
         D3D12_FENCE_FLAG_NONE,
@@ -211,126 +196,6 @@ void Graphics::LoadPipeline(HWND hwnd) {
         GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 
     WaitForGPU();
-}
-
-void Graphics::LoadTriangle() {
-    {
-        ComPtr<ID3DBlob> vertexShader;
-        ComPtr<ID3DBlob> pixelShader;
-
-        GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-            (m_ShaderPath + L"VSFaceColor.cso").c_str(), &vertexShader));
-        GFX_THROW_FAILED(hr, D3DReadFileToBlob(
-            (m_ShaderPath + L"PSFaceColor.cso").c_str(), &pixelShader));
-
-        D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
-        {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,
-            0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-        };
-
-        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-        psoDesc.InputLayout = {
-            inputElementDescs, static_cast<std::uint32_t>(std::size(inputElementDescs))
-        };
-        psoDesc.pRootSignature = m_pRootSignature.Get();
-        psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
-        psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
-        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-        psoDesc.DepthStencilState.DepthEnable = TRUE;
-        psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-        psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-        psoDesc.DepthStencilState.StencilEnable = FALSE;
-        psoDesc.SampleMask = UINT_MAX;
-        psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-        psoDesc.NumRenderTargets = 1;
-        psoDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
-        psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-        psoDesc.SampleDesc.Count = 1;
-        GFX_THROW_FAILED(hr, m_pDevice->CreateGraphicsPipelineState(
-            &psoDesc, __uuidof(ID3D12PipelineState), &m_pPipelineState
-        ));
-    }
-
-    {
-        float side = 1.0f / 2.0f;
-        DirectX::XMFLOAT3 triangleVertices[] =
-        {
-            { -side, -side, -side },
-            { side, -side, -side },
-            { -side, side, -side },
-            { side, side, -side },
-            { -side, -side, side },
-            { side, -side, side },
-            { -side, side, side },
-            { side, side, side }
-        };
-
-        const std::uint32_t vertexBufferSize = sizeof(triangleVertices);
-        CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
-        CD3DX12_RESOURCE_DESC rcDesc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
-        GFX_THROW_FAILED(hr, m_pDevice->CreateCommittedResource(
-            &heapProp,
-            D3D12_HEAP_FLAG_NONE,
-            &rcDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            __uuidof(ID3D12Resource),
-            &m_pVertexBuffer
-        ));
-
-        UINT8* pVertexDataBegin;
-        CD3DX12_RANGE readRange(0, 0);
-        GFX_THROW_FAILED(hr, m_pVertexBuffer->Map(
-            0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-        memcpy(pVertexDataBegin, triangleVertices, sizeof(triangleVertices));
-        m_pVertexBuffer->Unmap(0, nullptr);
-
-        m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
-        m_VertexBufferView.StrideInBytes = sizeof(DirectX::XMFLOAT3);
-        m_VertexBufferView.SizeInBytes = vertexBufferSize;
-    }
-
-    {
-        std::uint16_t triangleIndices[] =
-        {
-           0u, 2u, 1u,		2u, 3u, 1u,
-           1u, 3u, 5u,		3u, 7u, 5u,
-           2u, 6u, 3u,		6u, 7u, 3u,
-           4u, 5u, 7u,		4u, 7u, 6u,
-           0u, 4u, 2u,		2u, 4u, 6u,
-           0u, 1u, 4u,		1u, 5u, 4u
-        };
-
-        m_triangleIndicesCount = static_cast<std::uint32_t>(std::size(triangleIndices));
-
-        const std::uint32_t indexBufferSize = sizeof(triangleIndices);
-        CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
-        CD3DX12_RESOURCE_DESC rcDesc = CD3DX12_RESOURCE_DESC::Buffer(indexBufferSize);
-        GFX_THROW_FAILED(hr, m_pDevice->CreateCommittedResource(
-            &heapProp,
-            D3D12_HEAP_FLAG_NONE,
-            &rcDesc,
-            D3D12_RESOURCE_STATE_GENERIC_READ,
-            nullptr,
-            __uuidof(ID3D12Resource),
-            &m_pIndexBuffer
-        ));
-
-        UINT8* pIndexDataBegin;
-        CD3DX12_RANGE readRange(0, 0);
-        GFX_THROW_FAILED(hr, m_pIndexBuffer->Map(
-            0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-        memcpy(pIndexDataBegin, triangleIndices, indexBufferSize);
-        m_pIndexBuffer->Unmap(0, nullptr);
-
-        m_IndexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-        m_IndexBufferView.SizeInBytes = indexBufferSize;
-        m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-    }
 }
 
 void Graphics::ClearBuffer(float red, float green, float blue) {
@@ -353,38 +218,8 @@ void Graphics::ClearBuffer(float red, float green, float blue) {
     m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }
 
-void Graphics::DrawTriangle(float angle, float posX, float posY) {
-
-    m_pCommandList->SetGraphicsRootSignature(m_pRootSignature.Get());
-    m_pCommandList->SetPipelineState(m_pPipelineState.Get());
-
-    const DirectX::XMMATRIX constBufferT = {
-        DirectX::XMMatrixRotationY(angle) *
-        DirectX::XMMatrixRotationY(angle) *
-        DirectX::XMMatrixRotationZ(angle) *
-        DirectX::XMMatrixTranslation(posX, 0.0f, 4.0f + posY) *
-        DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 10.0f)
-    };
-
-    m_pCommandList->SetGraphicsRoot32BitConstants(
-        0, sizeof(DirectX::XMMATRIX) / 4, &constBufferT, 0u);
-
-    const DirectX::XMFLOAT4 constBufferC[6] = {
-        {1.0f, 0.0f, 0.0f, 1.0f},
-        {0.0f, 1.0f, 1.0f, 1.0f},
-        {0.0f, 1.0f, 0.0f, 1.0f},
-        {0.50f, 0.50f, 0.0f, 1.0f},
-        {1.0f, 0.0f, 1.0f, 1.0f},
-        {0.0f, 0.75f, 0.5f, 1.0f}
-    };
-
-    m_pCommandList->SetGraphicsRoot32BitConstants(
-        1, sizeof(DirectX::XMFLOAT4[6]) / 4, &constBufferC, 0u);
-
-    m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_pCommandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-    m_pCommandList->IASetIndexBuffer(&m_IndexBufferView);
-    m_pCommandList->DrawIndexedInstanced(m_triangleIndicesCount, 1u, 0u, 0u, 0u);
+void Graphics::DrawIndexed(std::uint32_t indexCount) noexcept {
+    m_pCommandList->DrawIndexedInstanced(indexCount, 1u, 0u, 0u, 0u);
 }
 
 void Graphics::ResetCommandList() {
