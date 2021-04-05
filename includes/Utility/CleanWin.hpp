@@ -1,6 +1,7 @@
 #define _WIN32_WINNT 0x0601
 #include <sdkddkver.h>
 
+#ifndef FULL_WIN
 #define WIN32_LEAN_AND_MEAN
 #define NOGDICAPMASKS
 #define NOSYSMETRICS
@@ -18,7 +19,6 @@
 #define NONLS
 #define NOMEMMGR
 #define NOMETAFILE
-#define NOMINMAX
 #define NOOPENFILE
 #define NOSCROLL
 #define NOSERVICE
@@ -34,6 +34,9 @@
 #define NOPROXYSTUB
 #define NOIMAGE
 #define NOTAPE
+#endif
+
+#define NOMINMAX
 
 #define STRICT
 

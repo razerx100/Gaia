@@ -4,7 +4,7 @@ cbuffer CVertexBuf {
 
 struct PSInput {
 	float4 color : Color;
-	float4 position : SV_POSITION;
+	float4 position : SV_Position;
 };
 
 PSInput main(float3 data : Position, float4 color : Color) {

@@ -2,6 +2,6 @@ cbuffer CVertexBuf {
 	matrix transform;
 };
 
-float4 main(float3 data : Position) : SV_POSITION {
+float4 main(float3 data : Position) : SV_Position {
 	return mul(float4(data, 1.0f), transform);
 }

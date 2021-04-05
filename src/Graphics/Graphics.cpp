@@ -1,5 +1,4 @@
 #include <Graphics.hpp>
-#include <sstream>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
 #include <ConstantBuffers.hpp>
