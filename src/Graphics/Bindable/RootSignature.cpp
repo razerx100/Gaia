@@ -1,5 +1,6 @@
 #include <RootSignature.hpp>
 #include <GraphicsThrowMacros.hpp>
+#include <Graphics.hpp>
 
 RootSignature::RootSignature(Graphics& gfx, const std::wstring& fileName)
 	: PreCompiled(fileName) {

@@ -1,5 +1,6 @@
 #include <PipelineState.hpp>
 #include <GraphicsThrowMacros.hpp>
+#include <Graphics.hpp>
 
 PipelineState::PipelineState(Graphics& gfx, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) {
 	GFX_THROW_FAILED(hr,

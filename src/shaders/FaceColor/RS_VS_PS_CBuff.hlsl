@@ -2,7 +2,7 @@
 								"DENY_DOMAIN_SHADER_ROOT_ACCESS | " \
 								"DENY_HULL_SHADER_ROOT_ACCESS | " \
 								"DENY_GEOMETRY_SHADER_ROOT_ACCESS ), " \
-					 "RootConstants(num32BitConstants = 16, b0, space=0, "\
+			 "RootConstants(num32BitConstants = 16, b0, space=0, "\
 									"visibility=SHADER_VISIBILITY_VERTEX),"\
-					 "RootConstants(num32BitConstants = 24, b0, space=1, "\
-									"visibility=SHADER_VISIBILITY_PIXEL)"\
+			 "RootConstants(num32BitConstants = 24, b0, space=1, "\
+									"visibility=SHADER_VISIBILITY_PIXEL)"

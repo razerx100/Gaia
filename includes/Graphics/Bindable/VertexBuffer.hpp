@@ -11,6 +11,11 @@ public:
 		std::vector<DirectX::XMFLOAT3>&& vertices,
 		std::vector<DirectX::XMFLOAT4>&& colors
 	);
+	VertexBuffer(Graphics& gfx,
+		std::vector<DirectX::XMFLOAT3>&& vertices,
+		std::vector<DirectX::XMFLOAT2>&& uvs
+	);
+
 	void BindCommand(Graphics& gfx) noexcept override;
 
 private:

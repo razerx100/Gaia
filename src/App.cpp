@@ -4,6 +4,10 @@
 #include <Pyramid.hpp>
 #include <Melon.hpp>
 #include <algorithm>
+#include <Sheet.hpp>
+#include <GDIPlusManager.hpp>
+
+GDIPlusManager gdim;
 
 App::App()
 	: m_wnd(1980, 1080, "DirectX12 Window") {
@@ -33,6 +37,11 @@ App::App()
 					m_gfx, rng, adist, ddist,
 					odist, rdist, longdist, latdist
 					);
+			case 3:
+				return std::make_unique<Sheet>(
+					m_gfx, rng, adist, ddist,
+					odist, rdist
+					);
 			default:
 				assert(false && "bad drawable type in factory");
 				return {};
@@ -46,17 +55,20 @@ App::App()
 		std::uniform_real_distribution<float> adist{ 0.0f, DirectX::XM_PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f, DirectX::XM_PI * 0.5f };
 		std::uniform_real_distribution<float> odist{ 0.0f, DirectX::XM_PI * 0.08f };
-		std::uniform_real_distribution<float> rdist{ 6.0f,20.0f };
-		std::uniform_real_distribution<float> bdist{ 0.4f,3.0f };
-		std::uniform_int_distribution<int> latdist{ 5,20 };
-		std::uniform_int_distribution<int> longdist{ 10,40 };
-		std::uniform_int_distribution<int> typedist{ 0,2 };
+		std::uniform_real_distribution<float> rdist{ 6.0f, 20.0f };
+		std::uniform_real_distribution<float> bdist{ 0.4f, 3.0f };
+		std::uniform_int_distribution<int> latdist{ 5, 20 };
+		std::uniform_int_distribution<int> longdist{ 10, 40 };
+		std::uniform_int_distribution<int> typedist{ 0, 3 };
 	};
 
 	Factory f(m_wnd.GetGfx());
 	m_drawables.reserve(nDrawables);
 
 	std::generate_n(std::back_inserter(m_drawables), nDrawables, f);
+
+	m_wnd.GetGfx().ExecuteCommandList();
+    m_wnd.GetGfx().WaitForGPU();
 }
 
 App::~App() {}

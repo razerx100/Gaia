@@ -10,7 +10,7 @@
 using Microsoft::WRL::ComPtr;
 
 class Graphics {
-    friend class Bindable;
+    friend class GraphicsExtractor;
 public:
 	Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height);
 	Graphics(const Graphics&) = delete;
@@ -19,13 +19,14 @@ public:
 
 	void EndFrame();
     void ResetCommandList();
+    void ExecuteCommandList();
     void ClearBuffer(float red, float green, float blue);
     void DrawIndexed(std::uint32_t indexCount) noexcept;
+	void WaitForGPU();
 
 private:
     void Initialize(HWND hwnd);
 
-	void WaitForGPU();
 	void MoveToNextFrame();
 
 private:
@@ -42,6 +43,7 @@ private:
 
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
     ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
+    ComPtr<ID3D12DescriptorHeap> m_pSRVHeap;
 
     std::uint32_t m_RTVHeapSize;
 

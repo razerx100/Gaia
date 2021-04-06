@@ -2,13 +2,6 @@
 #include <d3dx12.h>
 #include <GraphicsThrowMacros.hpp>
 
-ID3D12Device2* Bindable::GetDevice(Graphics& gfx) noexcept {
-	return gfx.m_pDevice.Get();
-}
-ID3D12GraphicsCommandList* Bindable::GetCommandList(Graphics& gfx) noexcept {
-	return gfx.m_pCommandList.Get();
-}
-
 void BindableResource::CreateResource(
     Graphics& gfx, void* data, std::uint32_t dataSize, void** buffer,
     D3D12_HEAP_TYPE heapType,

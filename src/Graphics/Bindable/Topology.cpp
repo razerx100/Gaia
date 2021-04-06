@@ -1,4 +1,5 @@
 #include <Topology.hpp>
+#include <Graphics.hpp>
 
 Topology::Topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE PSOTopology, D3D_PRIMITIVE_TOPOLOGY IATopology)
 	: m_IATopology(IATopology), m_PSOTopology(PSOTopology) {}

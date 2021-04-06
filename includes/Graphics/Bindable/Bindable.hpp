@@ -1,17 +1,18 @@
 #ifndef __BINDABLE_HPP__
 #define __BINDABLE_HPP__
-#include <Graphics.hpp>
+#include <CleanWin.hpp>
+#include <GraphicsExtractor.hpp>
+#include <cstdint>
+#include <wrl.h>
 
-class Bindable {
+using Microsoft::WRL::ComPtr;
+
+class Bindable : public GraphicsExtractor {
 public:
 	Bindable() = default;
 	virtual ~Bindable() = default;
 
 	virtual void BindCommand(Graphics& gfx) noexcept = 0;
-
-protected:
-	static ID3D12Device2* GetDevice(Graphics& gfx) noexcept;
-	static ID3D12GraphicsCommandList* GetCommandList(Graphics& gfx) noexcept;
 
 protected:
 	HRESULT hr;
