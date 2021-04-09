@@ -83,13 +83,13 @@ ID3D12DescriptorHeap*const* HeapMan::GetHeap() const {
 
 void HeapMan::CreateHeap(std::uint32_t descriptorCount) {
 
-    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-    srvHeapDesc.NumDescriptors = descriptorCount;
-    srvHeapDesc.Type = m_HeapType;
-    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+    heapDesc.NumDescriptors = descriptorCount;
+    heapDesc.Type = m_HeapType;
+    heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
     GFX_THROW_FAILED(hr, GetDevice(m_GfxRef)->CreateDescriptorHeap(
-        &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pGPUHeap
+        &heapDesc, __uuidof(ID3D12DescriptorHeap), &m_pGPUHeap
     ));
 
     m_CurrentDescCount = descriptorCount;
