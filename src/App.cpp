@@ -5,6 +5,7 @@
 #include <Pyramid.hpp>
 #include <algorithm>
 #include <Sheet.hpp>
+#include <SkinnedBox.hpp>
 #include <GDIPlusManager.hpp>
 
 GDIPlusManager gdipm;
@@ -42,6 +43,11 @@ App::App()
 					m_gfx, rng, adist, ddist,
 					odist, rdist
 					);
+			case 4:
+				return std::make_unique<SkinnedBox>(
+					m_gfx, rng, adist, ddist,
+					odist, rdist
+					);
 			default:
 				assert(false && "bad drawable type in factory");
 				return {};
@@ -59,7 +65,7 @@ App::App()
 		std::uniform_real_distribution<float> bdist{ 0.4f, 3.0f };
 		std::uniform_int_distribution<int> latdist{ 5, 20 };
 		std::uniform_int_distribution<int> longdist{ 10, 40 };
-		std::uniform_int_distribution<int> typedist{ 0, 3 };
+		std::uniform_int_distribution<int> typedist{ 0, 4 };
 	};
 
 	Factory f(m_wnd.GetGfx());

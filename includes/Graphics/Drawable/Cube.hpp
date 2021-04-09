@@ -5,6 +5,7 @@
 class Cube {
 public:
 	static IndexedTriangleList Make();
+	static IndexedTriangleList MakeSkinned();
 };
 
 #endif

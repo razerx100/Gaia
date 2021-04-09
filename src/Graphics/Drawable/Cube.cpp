@@ -28,3 +28,38 @@ IndexedTriangleList Cube::Make() {
 		std::move(indices)
 	);
 }
+
+IndexedTriangleList Cube::MakeSkinned() {
+
+	constexpr float side = 1.0f / 2.0f;
+
+	std::vector<DirectX::XMFLOAT3> vertices;
+	vertices.emplace_back(-side, -side, -side);
+	vertices.emplace_back(side, -side, -side);
+	vertices.emplace_back(-side, side, -side);
+	vertices.emplace_back(side, side, -side);
+	vertices.emplace_back(-side, -side, side);
+	vertices.emplace_back(side, -side, side);
+	vertices.emplace_back(-side, side, side);
+	vertices.emplace_back(side, side, side);
+	vertices.emplace_back(-side, -side, -side);
+	vertices.emplace_back(side, -side, -side);
+	vertices.emplace_back(-side, -side, -side);
+	vertices.emplace_back(-side, -side, side);
+	vertices.emplace_back(side, -side, -side);
+	vertices.emplace_back(side, -side, side);
+
+	std::vector<std::uint16_t> indices = {
+			0u, 2u, 1u,		2u, 3u, 1u,
+			4u, 8u, 5u,		5u, 8u, 9u,
+			2u, 6u, 3u,		3u, 6u, 7u,
+			4u, 5u, 7u,		4u, 7u, 6u,
+			2u, 10u, 11u,	2u, 11u, 6u,
+			12u, 3u, 7u,	12u, 7u, 13u
+	};
+
+	return IndexedTriangleList(
+		std::move(vertices),
+		std::move(indices)
+	);
+}
