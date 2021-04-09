@@ -1,13 +1,14 @@
 #ifndef __APP_HPP__
 #define __APP_HPP__
 #include <Window.hpp>
-#include <Timer.hpp>
 #include <Drawable.hpp>
+#include <Timer.hpp>
+#include <vector>
 
 class App {
 public:
 	App();
-	~App();
+	~App() = default;
 
 	int Go();
 

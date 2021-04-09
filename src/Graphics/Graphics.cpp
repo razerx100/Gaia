@@ -1,5 +1,4 @@
 #include <Graphics.hpp>
-#include <sstream>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
@@ -9,7 +8,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
 	m_pSwapChain(nullptr),
 	m_width(width), m_height(height), m_color{0.0f, 0.0f, 0.0f, 1.0f},
-	m_FenceValues{}, m_RTVHeapSize(0), m_CurrentBackBufferIndex(0),
+	m_FenceValues{}, m_RTVHeapIncSize(0), m_CurrentBackBufferIndex(0),
     m_Viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) },
     m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
     m_triangleIndicesCount(0u) {
@@ -99,7 +98,7 @@ void Graphics::Initialize(HWND hwnd) {
             &rtvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pRTVHeap
         ));
 
-        m_RTVHeapSize = m_pDevice->GetDescriptorHandleIncrementSize(
+        m_RTVHeapIncSize = m_pDevice->GetDescriptorHandleIncrementSize(
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
 
@@ -114,7 +113,7 @@ void Graphics::Initialize(HWND hwnd) {
             GFX_THROW_NO_HR(
                 m_pDevice->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle)
             )
-            rtvHandle.Offset(1, m_RTVHeapSize);
+            rtvHandle.Offset(1, m_RTVHeapIncSize);
 
             GFX_THROW_FAILED(hr, m_pDevice->CreateCommandAllocator(
                 D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -122,18 +121,6 @@ void Graphics::Initialize(HWND hwnd) {
                 &m_pCommandAllocators[n]
             ));
         }
-    }
-
-    // SRV Default
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-        srvHeapDesc.NumDescriptors = 1;
-        srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-
-        GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
-            &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pSRVHeap
-        ));
     }
 
     // DSV
@@ -202,12 +189,16 @@ void Graphics::Initialize(HWND hwnd) {
         __uuidof(ID3D12CommandList),
         &m_pCommandList
     ));
+
+    m_SRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, *this);
 }
 
 void Graphics::ClearBuffer(float red, float green, float blue) {
+    ResetCommandList();
+
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
         m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
-        m_CurrentBackBufferIndex, m_RTVHeapSize);
+        m_CurrentBackBufferIndex, m_RTVHeapIncSize);
 
     m_color[0] = red;
     m_color[1] = green;
@@ -234,7 +225,9 @@ void Graphics::ResetCommandList() {
     GFX_THROW_FAILED(hr, m_pCommandList->Reset(
         m_pCommandAllocators[m_CurrentBackBufferIndex].Get(), nullptr));
 
-    m_pCommandList->SetDescriptorHeaps(1, m_pSRVHeap.GetAddressOf());
+    m_pCommandList->SetDescriptorHeaps(
+        1, m_SRVHeapMan->GetHeap()
+    );
 
     m_pCommandList->RSSetViewports(1, &m_Viewport);
     m_pCommandList->RSSetScissorRects(1, &m_ScissorRect);
@@ -285,6 +278,8 @@ void Graphics::EndFrame() {
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
+    m_SRVHeapMan->ProcessRequests();
+
     MoveToNextFrame();
 }
 
@@ -295,4 +290,10 @@ void Graphics::ExecuteCommandList() {
     m_pCommandQueue->ExecuteCommandLists(
         static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
     );
+}
+
+void Graphics::InitialGPUSetup() {
+    ExecuteCommandList();
+    m_SRVHeapMan->ProcessRequests();
+    WaitForGPU();
 }

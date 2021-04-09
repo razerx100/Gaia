@@ -2,6 +2,7 @@
 #include <Surface.hpp>
 #include <GraphicsThrowMacros.hpp>
 #include <d3dx12.h>
+#include <HeapMan.hpp>
 
 Texture::Texture(Graphics& gfx, const Surface& s) {
 
@@ -81,17 +82,21 @@ Texture::Texture(Graphics& gfx, const Surface& s) {
 	GFX_THROW_NO_HR(GetDevice(gfx)->CreateShaderResourceView(
 		m_pTexture.Get(), &srvDesc, m_pSRVHeap->GetCPUDescriptorHandleForHeapStart()
 	))
+
+	m_SRVIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
+			m_pSRVHeap->GetCPUDescriptorHandleForHeapStart()
+		);
+}
+
+void Texture::OnDestroy(Graphics& gfx) noexcept {
+	GetSRVHeapMan(gfx).Free(m_SRVIndex);
 }
 
 void Texture::BindCommand(Graphics& gfx) noexcept {
-	GetDevice(gfx)->CopyDescriptorsSimple(
-		1, GetSRVHeap(gfx)->GetCPUDescriptorHandleForHeapStart(),
-		m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(),
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
-		);
+	D3D12_GPU_DESCRIPTOR_HANDLE m_SRVhandle = GetSRVHeapMan(gfx).RequestHandle(m_SRVIndex);
 
 	GetCommandList(gfx)->SetGraphicsRootDescriptorTable(
-		1, GetSRVHeap(gfx)->GetGPUDescriptorHandleForHeapStart()
+		1, m_SRVhandle
 	);
 }
 

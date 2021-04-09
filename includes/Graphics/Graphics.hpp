@@ -1,11 +1,11 @@
 #ifndef __GRAPHICS_HPP__
 #define __GRAPHICS_HPP__
 #include <CleanWin.hpp>
-#include <DebugInfoManager.hpp>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wrl.h>
 #include <d3dx12.h>
+#include <HeapMan.hpp>
 
 using Microsoft::WRL::ComPtr;
 
@@ -18,14 +18,15 @@ public:
 	~Graphics();
 
 	void EndFrame();
-    void ResetCommandList();
-    void ExecuteCommandList();
     void ClearBuffer(float red, float green, float blue);
     void DrawIndexed(std::uint32_t indexCount) noexcept;
 	void WaitForGPU();
+    void InitialGPUSetup();
 
 private:
     void Initialize(HWND hwnd);
+    void ExecuteCommandList();
+    void ResetCommandList();
 
 	void MoveToNextFrame();
 
@@ -43,9 +44,10 @@ private:
 
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
     ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
-    ComPtr<ID3D12DescriptorHeap> m_pSRVHeap;
 
-    std::uint32_t m_RTVHeapSize;
+    std::unique_ptr<HeapMan> m_SRVHeapMan;
+
+    std::uint32_t m_RTVHeapIncSize;
 
     ComPtr<ID3D12Resource> m_pDepthBuffer;
 
