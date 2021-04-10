@@ -2,6 +2,10 @@
 #include <sstream>
 #include <resource.hpp>
 #include <WindowThrowMacros.hpp>
+#include <imgui_impl_win32.h>
+
+// Forward Declaration of ImGui wndproc
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // WindowClass
 Window::WindowClass Window::WindowClass::s_wndClass;
@@ -62,12 +66,15 @@ Window::Window(int width, int height, const char* name)
 
 	ShowWindow(m_hWnd, SW_SHOWDEFAULT);
 
+	ImGui_ImplWin32_Init(m_hWnd);
+
 	m_pGfx = std::make_unique<Graphics>(
 		m_hWnd, static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)
 		);
 }
 
 Window::~Window() {
+	ImGui_ImplWin32_Shutdown();
 	DestroyWindow(m_hWnd);
 }
 
@@ -90,6 +97,9 @@ LRESULT CALLBACK Window::HandleMsgWrap(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 }
 
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		return true;
+
 	switch (msg) {
 	case WM_CLOSE: {
 		PostQuitMessage(0);

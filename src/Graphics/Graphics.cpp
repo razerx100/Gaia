@@ -2,6 +2,7 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
+#include <imgui_impl_dx12.h>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -14,12 +15,17 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
     m_triangleIndicesCount(0u) {
 
     Initialize(hwnd);
+    ImGui_ImplDX12_Init(
+        m_pDevice.Get(), bufferCount, DXGI_FORMAT_B8G8R8A8_UNORM, m_SRVHeapMan.get()
+    );
 }
 
 Graphics::~Graphics() {
 	WaitForGPU();
 
 	CloseHandle(m_FenceEvent);
+
+    ImGui_ImplDX12_Shutdown();
 }
 
 void Graphics::Initialize(HWND hwnd) {
@@ -225,8 +231,12 @@ void Graphics::ResetCommandList() {
     GFX_THROW_FAILED(hr, m_pCommandList->Reset(
         m_pCommandAllocators[m_CurrentBackBufferIndex].Get(), nullptr));
 
+    ID3D12DescriptorHeap* ppHeaps[] = {
+        m_SRVHeapMan->GetHeap()
+    };
+
     m_pCommandList->SetDescriptorHeaps(
-        1, m_SRVHeapMan->GetHeap()
+        1, ppHeaps
     );
 
     m_pCommandList->RSSetViewports(1, &m_Viewport);
@@ -268,6 +278,8 @@ void Graphics::MoveToNextFrame() {
 }
 
 void Graphics::EndFrame() {
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCommandList.Get());
+
     CD3DX12_RESOURCE_BARRIER postbar = CD3DX12_RESOURCE_BARRIER::Transition(
         m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -275,6 +287,11 @@ void Graphics::EndFrame() {
     m_pCommandList->ResourceBarrier(1, &postbar);
 
     ExecuteCommandList();
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)m_pCommandList.Get());
+	}
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 

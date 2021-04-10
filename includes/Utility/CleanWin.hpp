@@ -12,11 +12,9 @@
 #define OEMRESOURCE
 #define NOATOM
 #define NOCLIPBOARD
-#define NOCOLOR
 #define NOCLTMGR
 #define NODRAWTEXT
 #define NOKERNEL
-#define NONLS
 #define NOMEMMGR
 #define NOMETAFILE
 #define NOOPENFILE

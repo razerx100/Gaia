@@ -24,7 +24,7 @@ std::uint32_t HeapMan::RequestHandleIndex(D3D12_CPU_DESCRIPTOR_HANDLE cpuVisible
     return index;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE HeapMan::RequestHandle(std::uint32_t handleIndex) {
+D3D12_GPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleGPU(std::uint32_t handleIndex) {
 
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(
         m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
@@ -32,6 +32,16 @@ D3D12_GPU_DESCRIPTOR_HANDLE HeapMan::RequestHandle(std::uint32_t handleIndex) {
     );
 
     return gpuHandle;
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleCPU(std::uint32_t handleIndex) {
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(
+        m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
+        handleIndex, m_HeapIncrementSize
+    );
+
+    return cpuHandle;
 }
 
 void HeapMan::Free(std::uint32_t index) {
@@ -77,8 +87,8 @@ void HeapMan::ProcessRequests() {
     }
 }
 
-ID3D12DescriptorHeap*const* HeapMan::GetHeap() const {
-    return m_pGPUHeap.GetAddressOf();
+ID3D12DescriptorHeap* HeapMan::GetHeap() const {
+    return m_pGPUHeap.Get();
 }
 
 void HeapMan::CreateHeap(std::uint32_t descriptorCount) {

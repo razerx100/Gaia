@@ -7,6 +7,8 @@
 #include <Sheet.hpp>
 #include <SkinnedBox.hpp>
 #include <GDIPlusManager.hpp>
+#include <imgui_impl_win32.h>
+#include <imgui_impl_dx12.h>
 
 GDIPlusManager gdim;
 
@@ -93,5 +95,17 @@ void App::DoFrame() {
 		da->Update(deltaTime);
 		da->Draw(m_wnd.GetGfx());
 	}
+
+	ImGui_ImplDX12_GetSRVHeapData();
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	static bool demo_win = true;
+	if (demo_win)
+		ImGui::ShowDemoWindow(&demo_win);
+
+	ImGui::Render();
+
 	m_wnd.GetGfx().EndFrame();
 }

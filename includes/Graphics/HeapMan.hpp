@@ -12,12 +12,13 @@ public:
 	HeapMan(D3D12_DESCRIPTOR_HEAP_TYPE type, Graphics& gfx);
 
 	std::uint32_t RequestHandleIndex(D3D12_CPU_DESCRIPTOR_HANDLE cpuVisibleHandle);
-	D3D12_GPU_DESCRIPTOR_HANDLE RequestHandle(std::uint32_t handleIndex);
+	D3D12_GPU_DESCRIPTOR_HANDLE RequestHandleGPU(std::uint32_t handleIndex);
+	D3D12_CPU_DESCRIPTOR_HANDLE RequestHandleCPU(std::uint32_t handleIndex);
 
 	void Free(std::uint32_t index);
 	void ProcessRequests();
 
-	ID3D12DescriptorHeap*const* GetHeap() const;
+	ID3D12DescriptorHeap* GetHeap() const;
 
 private:
 	void CreateHeap(std::uint32_t descriptorCount);

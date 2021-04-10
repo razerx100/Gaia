@@ -4,6 +4,7 @@
 #include <Drawable.hpp>
 #include <Timer.hpp>
 #include <vector>
+#include <ImGuiMan.hpp>
 
 class App {
 public:
@@ -16,6 +17,7 @@ private:
 	void DoFrame();
 
 private:
+	ImGuiMan m_imgui;
 	Window m_wnd;
 	Timer m_timer;
 

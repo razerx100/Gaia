@@ -93,7 +93,7 @@ void Texture::OnDestroy(Graphics& gfx) noexcept {
 }
 
 void Texture::BindCommand(Graphics& gfx) noexcept {
-	D3D12_GPU_DESCRIPTOR_HANDLE m_SRVhandle = GetSRVHeapMan(gfx).RequestHandle(m_SRVIndex);
+	D3D12_GPU_DESCRIPTOR_HANDLE m_SRVhandle = GetSRVHeapMan(gfx).RequestHandleGPU(m_SRVIndex);
 
 	GetCommandList(gfx)->SetGraphicsRootDescriptorTable(
 		1, m_SRVhandle
