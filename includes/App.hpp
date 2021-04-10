@@ -24,5 +24,6 @@ private:
 	std::vector<std::unique_ptr<Drawable>> m_drawables;
 
 	static constexpr std::uint64_t nDrawables = 380u;
+	float m_speedFactor;
 };
 #endif

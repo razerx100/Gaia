@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
 #include <imgui_impl_dx12.h>
+#include <imgui_impl_win32.h>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -12,7 +13,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_FenceValues{}, m_RTVHeapIncSize(0), m_CurrentBackBufferIndex(0),
     m_Viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) },
     m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
-    m_triangleIndicesCount(0u) {
+    m_triangleIndicesCount(0u), m_imGuiEnabled(true), hr(0) {
 
     Initialize(hwnd);
     ImGui_ImplDX12_Init(
@@ -199,8 +200,10 @@ void Graphics::Initialize(HWND hwnd) {
     m_SRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, *this);
 }
 
-void Graphics::ClearBuffer(float red, float green, float blue) {
+void Graphics::BeginFrame(float red, float green, float blue) {
     ResetCommandList();
+
+    ImGuiBegin();
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
         m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -278,7 +281,8 @@ void Graphics::MoveToNextFrame() {
 }
 
 void Graphics::EndFrame() {
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCommandList.Get());
+    if (m_imGuiEnabled)
+        ImGuiEnd();
 
     CD3DX12_RESOURCE_BARRIER postbar = CD3DX12_RESOURCE_BARRIER::Transition(
         m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
@@ -287,11 +291,6 @@ void Graphics::EndFrame() {
     m_pCommandList->ResourceBarrier(1, &postbar);
 
     ExecuteCommandList();
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)m_pCommandList.Get());
-	}
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
@@ -313,4 +312,33 @@ void Graphics::InitialGPUSetup() {
     ExecuteCommandList();
     m_SRVHeapMan->ProcessRequests();
     WaitForGPU();
+}
+
+void Graphics::EnableImGui() noexcept {
+    m_imGuiEnabled = true;
+}
+
+void Graphics::DisableImGui() noexcept {
+    m_imGuiEnabled = false;
+}
+
+bool Graphics::IsImGuiEnabled() const noexcept {
+    return m_imGuiEnabled;
+}
+
+void Graphics::ImGuiBegin() {
+    ImGui_ImplDX12_GetSRVHeapData();
+	ImGui_ImplDX12_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+}
+
+void Graphics::ImGuiEnd() {
+	ImGui::Render();
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCommandList.Get());
+
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+		ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)m_pCommandList.Get());
+	}
 }

@@ -18,15 +18,22 @@ public:
 	~Graphics();
 
 	void EndFrame();
-    void ClearBuffer(float red, float green, float blue);
+    void BeginFrame(float red, float green, float blue);
     void DrawIndexed(std::uint32_t indexCount) noexcept;
 	void WaitForGPU();
     void InitialGPUSetup();
+
+    void EnableImGui() noexcept;
+    void DisableImGui() noexcept;
+    bool IsImGuiEnabled() const noexcept;
 
 private:
     void Initialize(HWND hwnd);
     void ExecuteCommandList();
     void ResetCommandList();
+
+    void ImGuiBegin();
+    void ImGuiEnd();
 
 	void MoveToNextFrame();
 
@@ -63,6 +70,7 @@ private:
     std::uint32_t m_triangleIndicesCount;
 
 	float m_color[4];
+    bool m_imGuiEnabled;
 	HRESULT hr;
 };
 #endif
