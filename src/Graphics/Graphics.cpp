@@ -7,6 +7,7 @@
 #include <Topology.hpp>
 #include <VertexBuffer.hpp>
 #include <IndexBuffer.hpp>
+#include <imgui_impl_dx11.h>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -41,6 +42,10 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 		nullptr,
 		&m_pDeviceContext
 	));
+
+	// ImGui
+	ImGui_ImplDX11_Init(m_pDevice.Get(), m_pDeviceContext.Get());
+	// ImGui
 
 	DXGI_SWAP_CHAIN_DESC desc = { };
 	desc.BufferDesc.Width = 0;
@@ -125,6 +130,10 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pDeviceContext->OMSetRenderTargets(
 		1u, m_pTargetView.GetAddressOf(), m_pDepthStencilView.Get()
 		);
+}
+
+Graphics::~Graphics() {
+	ImGui_ImplDX11_Shutdown();
 }
 
 void Graphics::EndFrame() {

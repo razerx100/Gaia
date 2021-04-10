@@ -14,7 +14,7 @@ public:
 	Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height);
 	Graphics(const Graphics&) = delete;
 	Graphics& operator=(const Graphics&) = delete;
-	~Graphics() = default;
+	~Graphics();
 
 	void EndFrame();
 	void ClearBuffer(float red, float green, float blue) noexcept;
