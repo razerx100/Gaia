@@ -8,13 +8,11 @@
 #include <SkinnedBox.hpp>
 #include <GDIPlusManager.hpp>
 #include <imgui.h>
-#include <imgui_impl_win32.h>
-#include <imgui_impl_dx11.h>
 
 GDIPlusManager gdipm;
 
 App::App()
-	: m_wnd(1980, 1080, "DirectX11 Window") {
+	: m_wnd(1980, 1080, "DirectX11 Window"), m_speedFactor(1.0f) {
 
 	Drawable::SetShaderPath();
 
@@ -89,29 +87,27 @@ int App::Go() {
 }
 
 void App::DoFrame() {
-	const float deltaTime = m_timer.Mark();
-	m_wnd.GetGfx().ClearBuffer(0.07f, 0.0f, 0.12f);
+	const float deltaTime = m_timer.Mark() * m_speedFactor;
+	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 
 	for (auto& da : m_drawables) {
-		da->Update(m_wnd.GetGfx(), deltaTime);
+		da->Update(m_wnd.GetGfx(), m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
 		da->Draw(m_wnd.GetGfx());
 	}
 
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-	static bool demo_win = true;
-	if (demo_win)
-		ImGui::ShowDemoWindow(&demo_win);
-
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
+	if (ImGui::Begin("Simulation Speed")) {
+		ImGui::SliderFloat("Speed Factor", &m_speedFactor, 0.0f, 4.0f);
+		ImGui::Text(
+			"Application average %.3f ms/frame (%.1f FPS)",
+			1000.0f / ImGui::GetIO().Framerate,
+			ImGui::GetIO().Framerate
+		);
+		ImGui::Text(
+			"Status: %s", m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? "PAUSED" : "RUNNING"
+		);
 	}
+
+	ImGui::End();
 
 	m_wnd.GetGfx().EndFrame();
 }

@@ -99,6 +99,8 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 		return true;
 
+	auto imIO = ImGui::GetIO();
+
 	switch (msg) {
 	case WM_CLOSE: {
 		PostQuitMessage(0);
@@ -112,22 +114,38 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	/************* KEYBOARD MESSAGES *************/
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureKeyboard)
+			break;
+
 		if (!(lParam & 0x40000000) || m_kb.IsAutoRepeatEnabled()) // filters autoRepeat
 			m_kb.OnKeyPressed(static_cast<unsigned char>(wParam));
 		break;
 	}
 	case WM_KEYUP:
 	case WM_SYSKEYUP: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureKeyboard)
+			break;
+
 		m_kb.OnKeyReleased(static_cast<unsigned char>(wParam));
 		break;
 	}
 	case WM_CHAR: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureKeyboard)
+			break;
+
 		m_kb.OnChar(static_cast<char>(wParam));
 		break;
 	}
 	/************* END KEYBOARD MESSAGES *************/
 	/************* MOUSE MESSAGES *************/
 	case WM_MOUSEMOVE: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		const POINTS pt = MAKEPOINTS(lParam);
 		// In client region
 		if (pt.x >= 0 && pt.x < m_width && pt.y >= 0 && pt.y < m_height) {
@@ -150,30 +168,58 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		break;
 	}
 	case WM_LBUTTONDOWN: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		m_mouse.OnLeftPress();
 		break;
 	}
 	case WM_LBUTTONUP: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		m_mouse.OnLeftRelease();
 		break;
 	}
 	case WM_MBUTTONDOWN: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		m_mouse.OnMiddlePress();
 		break;
 	}
 	case WM_MBUTTONUP: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		m_mouse.OnMiddleRelease();
 		break;
 	}
 	case WM_RBUTTONDOWN: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		m_mouse.OnRightPress();
 		break;
 	}
 	case WM_RBUTTONUP: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		m_mouse.OnRightRelease();
 		break;
 	}
 	case WM_MOUSEWHEEL: {
+		// Consume this message if ImGui wants to capture
+		if (imIO.WantCaptureMouse)
+			break;
+
 		int deltaWparam = GET_WHEEL_DELTA_WPARAM(wParam);
 
 		m_mouse.OnWheelDelta(deltaWparam);
