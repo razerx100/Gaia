@@ -54,7 +54,7 @@ Box::Box(Graphics& gfx,
 
 		PixelConstantBuffer<ConstantBufferColor>::SetBuffer(gfx, constBufferC);
 
-		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+		VertexConstantBuffer::SetBuffer(gfx);
 
 		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(*this));
 
@@ -73,7 +73,7 @@ Box::Box(Graphics& gfx,
 		AddStaticBind(std::make_unique<Topology>(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+	AddBind(std::make_unique<VertexConstantBuffer>(*this));
 
 	DirectX::XMStoreFloat3x3(
 		&mt,

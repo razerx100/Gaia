@@ -48,7 +48,7 @@ Melon::Melon(Graphics& gfx,
 
 		PixelConstantBuffer<ConstantBufferColor>::SetBuffer(gfx, constBufferC);
 
-		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+		VertexConstantBuffer::SetBuffer(gfx);
 
 		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(*this));
 
@@ -71,7 +71,7 @@ Melon::Melon(Graphics& gfx,
 		static_cast<std::uint16_t>(latdist(rng)), static_cast<std::uint16_t>(longdist(rng))
 	);
 
-	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+	AddBind(std::make_unique<VertexConstantBuffer>(*this));
 
 	AddBind(std::make_unique<VertexBuffer>(gfx, std::move(model.m_Vertices)));
 

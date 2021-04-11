@@ -43,7 +43,7 @@ Sheet::Sheet(Graphics& gfx,
 
 		AddStaticBind(std::make_unique<Texture>(gfx, Surface::FromFile("Image\\pupa_gun.png")));
 
-		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+		VertexConstantBuffer::SetBuffer(gfx);
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
 			gfx, std::move(model.m_Vertices), std::move(uvCoord)
@@ -73,7 +73,7 @@ Sheet::Sheet(Graphics& gfx,
 		AddStaticBind(std::make_unique<Topology>(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+	AddBind(std::make_unique<VertexConstantBuffer>(*this));
 }
 
 void Sheet::Update(float deltaTime) noexcept {

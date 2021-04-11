@@ -67,22 +67,11 @@ protected:
 template<typename T>
 ComPtr<ID3D11Buffer> ConstantBuffer<T>::s_pConstantBuffer;
 
-template<typename T>
-class VertexConstantBuffer : public ConstantBuffer<T> {
+class VertexConstantBuffer : public ConstantBuffer<DirectX::XMMATRIX> {
 public:
-	using ConstantBuffer<T>::ConstantBuffer;
+	using ConstantBuffer<DirectX::XMMATRIX>::ConstantBuffer;
 
-	void Bind(Graphics& gfx) noexcept override {
-		DirectX::XMMATRIX transform = DirectX::XMMatrixTranspose(
-			ConstantBuffer<T>::m_ParentRef.GetTranformationMatrix()
-		);
-
-		ConstantBuffer<T>::Update(gfx, transform);
-
-		Bindable::GetDeviceContext(gfx)->VSSetConstantBuffers(
-			0u, 1u, ConstantBuffer<T>::s_pConstantBuffer.GetAddressOf()
-		);
-	}
+	void Bind(Graphics& gfx) noexcept override;
 };
 
 template<typename T>

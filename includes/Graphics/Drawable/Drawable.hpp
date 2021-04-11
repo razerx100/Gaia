@@ -19,7 +19,7 @@ public:
 	void AddIndexBuffer(std::unique_ptr<class IndexBuffer> indexBuffer) noexcept;
 
 	static void SetShaderPath() noexcept;
-	DirectX::XMMATRIX GetTranformationMatrix() const noexcept;
+	DirectX::XMMATRIX GetTransformationMatrix() const noexcept;
 
 protected:
 	virtual const std::vector<std::unique_ptr<Bindable>>& GetStaticBindables() const noexcept = 0;

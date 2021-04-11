@@ -52,7 +52,7 @@ SkinnedBox::SkinnedBox(Graphics& gfx,
 
 		AddStaticBind(std::make_unique<Sampler>(gfx));
 
-		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+		VertexConstantBuffer::SetBuffer(gfx);
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
 			gfx, std::move(model.m_Vertices), std::move(uvCoord)));
@@ -77,7 +77,7 @@ SkinnedBox::SkinnedBox(Graphics& gfx,
 			));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+	AddBind(std::make_unique<VertexConstantBuffer>(*this));
 }
 
 void SkinnedBox::Update(float deltaTime) noexcept {

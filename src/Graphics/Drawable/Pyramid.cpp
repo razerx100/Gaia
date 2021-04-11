@@ -34,7 +34,7 @@ Pyramid::Pyramid(Graphics& gfx,
 		for (DirectX::XMFLOAT4& vColor : vertexColors)
 			vColor = {cdist(rng), cdist(rng), cdist(rng), 1.0f};
 
-		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+		VertexConstantBuffer::SetBuffer(gfx);
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
 			gfx, std::move(model.m_Vertices), std::move(vertexColors)
@@ -58,7 +58,7 @@ Pyramid::Pyramid(Graphics& gfx,
 		AddStaticBind(std::make_unique<Topology>(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+	AddBind(std::make_unique<VertexConstantBuffer>(*this));
 }
 
 void Pyramid::Update(float deltaTime) noexcept {
