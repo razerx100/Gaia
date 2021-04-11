@@ -4,6 +4,7 @@
 #include <Texture.hpp>
 #include <Surface.hpp>
 #include <Sampler.hpp>
+#include <BindableAll.hpp>
 
 SkinnedBox::SkinnedBox(Graphics& gfx,
 		std::mt19937& rng,
@@ -49,9 +50,9 @@ SkinnedBox::SkinnedBox(Graphics& gfx,
 
 		AddStaticBind(std::make_unique<Texture>(gfx, Surface::FromFile("Image\\cube.png")));
 
-		AddCVertexBuffer(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(gfx));
-
 		AddStaticBind(std::make_unique<Sampler>(gfx));
+
+		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
 			gfx, std::move(model.m_Vertices), std::move(uvCoord)));
@@ -75,9 +76,11 @@ SkinnedBox::SkinnedBox(Graphics& gfx,
 				D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
 			));
 	}
+
+	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
 }
 
-void SkinnedBox::Update(Graphics& gfx, float deltaTime) noexcept {
+void SkinnedBox::Update(float deltaTime) noexcept {
 
 	roll += droll * deltaTime;
 	pitch += dpitch * deltaTime;
@@ -86,16 +89,10 @@ void SkinnedBox::Update(Graphics& gfx, float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
-				);
-
-	GetVertexCBuffer()->Update(
-		gfx, &constBufferT
-	);
+	m_Transform =
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
 }

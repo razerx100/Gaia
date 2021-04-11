@@ -1,13 +1,16 @@
 #ifndef __CONSTANT_BUFFERS_HPP__
 #define __CONSTANT_BUFFERS_HPP__
-#include <Mutable.hpp>
+#include <Bindable.hpp>
+#include <Drawable.hpp>
 #include <GraphicsThrowMacros.hpp>
 
 template <typename T>
-class ConstantBuffer : public Mutable {
+class ConstantBuffer : public Bindable {
 public:
-	ConstantBuffer(Graphics& gfx) {
+	ConstantBuffer(Drawable& parent)
+		: m_ParentRef(parent) {}
 
+	static void SetBuffer(Graphics& gfx) {
 		D3D11_BUFFER_DESC cbDesc;
 		cbDesc.ByteWidth = sizeof(T);
 		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -16,51 +19,53 @@ public:
 		cbDesc.MiscFlags = 0u;
 		cbDesc.StructureByteStride = 0u;
 
-		GFX_THROW_FAILED(hr, GetDevice(gfx)->CreateBuffer(
-			&cbDesc, nullptr, &m_pConstantBuffer)
-		);
+		HRESULT s_hr;
 
-		GetDeviceContext(gfx)->VSSetConstantBuffers(
-			0u, 1u, m_pConstantBuffer.GetAddressOf()
+		GFX_THROW_FAILED(s_hr, GetDevice(gfx)->CreateBuffer(
+			&cbDesc, nullptr, &s_pConstantBuffer)
 		);
 	}
 
-	ConstantBuffer(Graphics& gfx, const T& cBuffer) {
-
+	static void SetBuffer(Graphics& gfx, const T& data) {
 		D3D11_BUFFER_DESC cbDesc;
-		cbDesc.ByteWidth = sizeof(cBuffer);
+		cbDesc.ByteWidth = sizeof(data);
 		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
 		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 		cbDesc.MiscFlags = 0u;
 		cbDesc.StructureByteStride = 0u;
 
-		D3D11_SUBRESOURCE_DATA cbData = {};
-		cbData.pSysMem = &cBuffer;
+		D3D11_SUBRESOURCE_DATA cData = {};
+		cData.pSysMem = &data;
 
-		GFX_THROW_FAILED(hr, GetDevice(gfx)->CreateBuffer(
-			&cbDesc, &cbData, &m_pConstantBuffer)
+		HRESULT s_hr;
+
+		GFX_THROW_FAILED(s_hr, GetDevice(gfx)->CreateBuffer(
+			&cbDesc, &cData, &s_pConstantBuffer)
 		);
 	}
 
-	void Update(Graphics& gfx, void* vcBuffer) override {
+	void Update(Graphics& gfx, const T& vcBuffer) {
 
-		const T& cBuffer = *(reinterpret_cast<T*>(vcBuffer));
 		D3D11_MAPPED_SUBRESOURCE mRes;
 		GFX_THROW_FAILED(hr, GetDeviceContext(gfx)->Map(
-			m_pConstantBuffer.Get(), 0u,
+			s_pConstantBuffer.Get(), 0u,
 			D3D11_MAP_WRITE_DISCARD, 0u,
 			&mRes
 		));
 
-		memcpy(mRes.pData, &cBuffer, sizeof(cBuffer));
+		memcpy(mRes.pData, &vcBuffer, sizeof(vcBuffer));
 
-		GetDeviceContext(gfx)->Unmap(m_pConstantBuffer.Get(), 0u);
+		GetDeviceContext(gfx)->Unmap(s_pConstantBuffer.Get(), 0u);
 	}
 
 protected:
-	ComPtr<ID3D11Buffer> m_pConstantBuffer;
+	static ComPtr<ID3D11Buffer> s_pConstantBuffer;
+	Drawable& m_ParentRef;
 };
+
+template<typename T>
+ComPtr<ID3D11Buffer> ConstantBuffer<T>::s_pConstantBuffer;
 
 template<typename T>
 class VertexConstantBuffer : public ConstantBuffer<T> {
@@ -68,8 +73,14 @@ public:
 	using ConstantBuffer<T>::ConstantBuffer;
 
 	void Bind(Graphics& gfx) noexcept override {
+		DirectX::XMMATRIX transform = DirectX::XMMatrixTranspose(
+			ConstantBuffer<T>::m_ParentRef.GetTranformationMatrix()
+		);
+
+		ConstantBuffer<T>::Update(gfx, transform);
+
 		Bindable::GetDeviceContext(gfx)->VSSetConstantBuffers(
-			0u, 1u, ConstantBuffer<T>::m_pConstantBuffer.GetAddressOf()
+			0u, 1u, ConstantBuffer<T>::s_pConstantBuffer.GetAddressOf()
 		);
 	}
 };
@@ -81,7 +92,7 @@ public:
 
 	void Bind(Graphics& gfx) noexcept override {
 		Bindable::GetDeviceContext(gfx)->PSSetConstantBuffers(
-			0u, 1u, ConstantBuffer<T>::m_pConstantBuffer.GetAddressOf()
+			0u, 1u, ConstantBuffer<T>::s_pConstantBuffer.GetAddressOf()
 		);
 	}
 };

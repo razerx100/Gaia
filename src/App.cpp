@@ -91,7 +91,7 @@ void App::DoFrame() {
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 
 	for (auto& da : m_drawables) {
-		da->Update(m_wnd.GetGfx(), m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
+		da->Update(m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
 		da->Draw(m_wnd.GetGfx());
 	}
 

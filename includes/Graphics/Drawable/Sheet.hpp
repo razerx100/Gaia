@@ -12,7 +12,7 @@ public:
 		std::uniform_real_distribution<float>& odist,
 		std::uniform_real_distribution<float>& rdist);
 
-	void Update(Graphics& gfx, float deltaTime) noexcept override;
+	void Update(float deltaTime) noexcept override;
 
 private:
 	// positional

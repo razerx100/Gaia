@@ -1,5 +1,6 @@
 #include <Melon.hpp>
 #include <Sphere.hpp>
+#include <BindableAll.hpp>
 
 Melon::Melon(Graphics& gfx,
 		std::mt19937& rng,
@@ -25,9 +26,6 @@ Melon::Melon(Graphics& gfx,
 	dchi(odist(rng)) {
 
 	if (!IsDataInitialized()) {
-
-		AddCVertexBuffer(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(gfx));
-
 		struct ConstantBufferColor {
 			struct {
 				float red;
@@ -48,7 +46,11 @@ Melon::Melon(Graphics& gfx,
 			}
 		};
 
-		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(gfx, constBufferC));
+		PixelConstantBuffer<ConstantBufferColor>::SetBuffer(gfx, constBufferC);
+
+		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+
+		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(*this));
 
 		AddStaticBind(std::make_unique<PixelShader>(gfx, s_ShaderPath + L"PConstantFaceColors.cso"));
 
@@ -69,12 +71,14 @@ Melon::Melon(Graphics& gfx,
 		static_cast<std::uint16_t>(latdist(rng)), static_cast<std::uint16_t>(longdist(rng))
 	);
 
+	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+
 	AddBind(std::make_unique<VertexBuffer>(gfx, std::move(model.m_Vertices)));
 
 	AddIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.m_Indices));
 }
 
-void Melon::Update(Graphics& gfx, float deltaTime) noexcept {
+void Melon::Update(float deltaTime) noexcept {
 
 	roll += droll * deltaTime;
 	pitch += dpitch * deltaTime;
@@ -83,18 +87,12 @@ void Melon::Update(Graphics& gfx, float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
-				);
-
-	GetVertexCBuffer()->Update(
-		gfx, &constBufferT
-	);
+	m_Transform =
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
 }
 
 std::uint32_t Melon::GetIndexCount() const noexcept {

@@ -12,6 +12,6 @@ protected:
 	static ID3D11Device* GetDevice(Graphics& gfx) noexcept;
 
 protected:
-	HRESULT hr;
+	 HRESULT hr;
 };
 #endif

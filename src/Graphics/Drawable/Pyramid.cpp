@@ -1,5 +1,6 @@
 #include <Pyramid.hpp>
 #include <Cone.hpp>
+#include <BindableAll.hpp>
 
 Pyramid::Pyramid(Graphics& gfx,
 		std::mt19937& rng,
@@ -33,11 +34,11 @@ Pyramid::Pyramid(Graphics& gfx,
 		for (DirectX::XMFLOAT4& vColor : vertexColors)
 			vColor = {cdist(rng), cdist(rng), cdist(rng), 1.0f};
 
+		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+
 		AddStaticBind(std::make_unique<VertexBuffer>(
 			gfx, std::move(model.m_Vertices), std::move(vertexColors)
 			));
-
-		AddCVertexBuffer(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(gfx));
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.m_Indices));
 
@@ -57,9 +58,10 @@ Pyramid::Pyramid(Graphics& gfx,
 		AddStaticBind(std::make_unique<Topology>(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	}
 
+	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
 }
 
-void Pyramid::Update(Graphics& gfx, float deltaTime) noexcept {
+void Pyramid::Update(float deltaTime) noexcept {
 
 	roll += droll * deltaTime;
 	pitch += dpitch * deltaTime;
@@ -68,16 +70,10 @@ void Pyramid::Update(Graphics& gfx, float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
-				);
-
-	GetVertexCBuffer()->Update(
-		gfx, &constBufferT
-	);
+	m_Transform =
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
 }

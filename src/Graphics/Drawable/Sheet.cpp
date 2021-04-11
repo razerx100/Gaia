@@ -3,6 +3,7 @@
 #include <Surface.hpp>
 #include <Texture.hpp>
 #include <Sampler.hpp>
+#include <BindableAll.hpp>
 
 Sheet::Sheet(Graphics& gfx,
 	std::mt19937& rng,
@@ -42,13 +43,13 @@ Sheet::Sheet(Graphics& gfx,
 
 		AddStaticBind(std::make_unique<Texture>(gfx, Surface::FromFile("Image\\pupa_gun.png")));
 
+		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+
 		AddStaticBind(std::make_unique<VertexBuffer>(
 			gfx, std::move(model.m_Vertices), std::move(uvCoord)
 			));
 
 		AddStaticBind(std::make_unique<Sampler>(gfx));
-
-		AddCVertexBuffer(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(gfx));
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.m_Indices));
 
@@ -71,9 +72,11 @@ Sheet::Sheet(Graphics& gfx,
 
 		AddStaticBind(std::make_unique<Topology>(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	}
+
+	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
 }
 
-void Sheet::Update(Graphics& gfx, float deltaTime) noexcept {
+void Sheet::Update(float deltaTime) noexcept {
 
 	roll += droll * deltaTime;
 	pitch += dpitch * deltaTime;
@@ -82,16 +85,10 @@ void Sheet::Update(Graphics& gfx, float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
-				);
-
-	GetVertexCBuffer()->Update(
-		gfx, &constBufferT
-	);
+	m_Transform =
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
 }

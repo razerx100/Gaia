@@ -14,7 +14,7 @@ public:
 		std::uniform_int_distribution<int>& longdist,
 		std::uniform_int_distribution<int>& latdist);
 
-	void Update(Graphics& gfx, float deltaTime) noexcept override;
+	void Update(float deltaTime) noexcept override;
 
 	std::uint32_t GetIndexCount() const noexcept override;
 

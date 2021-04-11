@@ -3,25 +3,26 @@
 #include <Graphics.hpp>
 #include <DirectXMath.h>
 #include <memory>
-#include <BindableAll.hpp>
+
+class Bindable;
 
 class Drawable {
 public:
 	Drawable() = default;
 	virtual ~Drawable() = default;
 
-	virtual void Update(Graphics& gfx, float deltaTime) noexcept = 0;
+	virtual void Update(float deltaTime) noexcept = 0;
 
 	void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
 	void AddBind(std::unique_ptr<Bindable> bind) noexcept;
 
-	void AddIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer) noexcept;
+	void AddIndexBuffer(std::unique_ptr<class IndexBuffer> indexBuffer) noexcept;
 
 	static void SetShaderPath() noexcept;
+	DirectX::XMMATRIX GetTranformationMatrix() const noexcept;
 
 protected:
 	virtual const std::vector<std::unique_ptr<Bindable>>& GetStaticBindables() const noexcept = 0;
-	virtual Mutable* GetVertexCBuffer() const noexcept = 0;
 
 	virtual std::uint32_t GetIndexCount() const noexcept = 0;
 
@@ -31,5 +32,6 @@ protected:
 	std::uint32_t m_IndexCount;
 	std::vector<std::unique_ptr<Bindable>> m_Binds;
 
+	DirectX::XMMATRIX m_Transform;
 };
 #endif

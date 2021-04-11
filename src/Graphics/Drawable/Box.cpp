@@ -1,5 +1,6 @@
 #include <Box.hpp>
 #include <Cube.hpp>
+#include <BindableAll.hpp>
 
 Box::Box(Graphics& gfx,
 		std::mt19937& rng,
@@ -29,8 +30,6 @@ Box::Box(Graphics& gfx,
 
 		AddStaticBind(std::make_unique<VertexBuffer>(gfx, std::move(model.m_Vertices)));
 
-		AddCVertexBuffer(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(gfx));
-
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, model.m_Indices));
 
 		struct ConstantBufferColor {
@@ -53,7 +52,11 @@ Box::Box(Graphics& gfx,
 			}
 		};
 
-		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(gfx, constBufferC));
+		PixelConstantBuffer<ConstantBufferColor>::SetBuffer(gfx, constBufferC);
+
+		VertexConstantBuffer<DirectX::XMMATRIX>::SetBuffer(gfx);
+
+		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(*this));
 
 		AddStaticBind(std::make_unique<PixelShader>(gfx, s_ShaderPath + L"PConstantFaceColors.cso"));
 
@@ -70,13 +73,15 @@ Box::Box(Graphics& gfx,
 		AddStaticBind(std::make_unique<Topology>(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST));
 	}
 
+	AddBind(std::make_unique<VertexConstantBuffer<DirectX::XMMATRIX>>(*this));
+
 	DirectX::XMStoreFloat3x3(
 		&mt,
 		DirectX::XMMatrixScaling(1.0f, 1.0f, bdist(rng))
 	);
 }
 
-void Box::Update(Graphics& gfx, float deltaTime) noexcept {
+void Box::Update(float deltaTime) noexcept {
 
 	roll += droll * deltaTime;
 	pitch += dpitch * deltaTime;
@@ -85,17 +90,11 @@ void Box::Update(Graphics& gfx, float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMLoadFloat3x3(&mt) *
-				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
-				);
-
-	GetVertexCBuffer()->Update(
-		gfx, &constBufferT
-	);
+	m_Transform =
+		DirectX::XMLoadFloat3x3(&mt) *
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
 }
