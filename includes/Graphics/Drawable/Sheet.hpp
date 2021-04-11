@@ -30,7 +30,5 @@ private:
 	float dtheta;
 	float dphi;
 	float dchi;
-
-	static ConstantBuffer<DirectX::XMMATRIX>* s_pVCBuffer;
 };
 #endif

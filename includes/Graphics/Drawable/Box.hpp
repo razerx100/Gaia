@@ -33,7 +33,6 @@ private:
 	float dchi;
 
 	DirectX::XMFLOAT3X3 mt;
-	static ConstantBuffer<DirectX::XMMATRIX>* s_pVCBuffer;
 };
 
 #endif

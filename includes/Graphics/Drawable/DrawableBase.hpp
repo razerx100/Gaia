@@ -1,6 +1,8 @@
 #ifndef __DRAWABLE_BASE_HPP__
 #define __DRAWABLE_BASE_HPP__
 #include <Drawable.hpp>
+#include <Bindable.hpp>
+#include <IndexBuffer.hpp>
 
 template<typename T>
 class DrawableBase : public Drawable {

@@ -1,4 +1,6 @@
 #include <Drawable.hpp>
+#include <Bindable.hpp>
+#include <IndexBuffer.hpp>
 
 std::wstring Drawable::s_ShaderPath;
 
@@ -30,4 +32,8 @@ void Drawable::AddBind(std::unique_ptr<Bindable> bind) noexcept {
 void Drawable::AddIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer) noexcept {
 	m_IndexCount = indexBuffer->GetIndexCount();
 	m_Binds.emplace_back(std::move(indexBuffer));
+}
+
+DirectX::XMMATRIX Drawable::GetTransformationMatrix() const noexcept {
+	return m_Transform;
 }

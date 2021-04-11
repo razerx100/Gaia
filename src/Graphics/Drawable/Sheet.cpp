@@ -2,8 +2,7 @@
 #include <Plane.hpp>
 #include <Surface.hpp>
 #include <Texture.hpp>
-
-ConstantBuffer<DirectX::XMMATRIX>* Sheet::s_pVCBuffer = nullptr;
+#include <BindAll.hpp>
 
 Sheet::Sheet(Graphics& gfx,
 	std::mt19937& rng,
@@ -93,14 +92,9 @@ Sheet::Sheet(Graphics& gfx,
 			));
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
-
-		std::unique_ptr<ConstantBuffer<DirectX::XMMATRIX>> vPTR =
-			std::make_unique<ConstantBuffer<DirectX::XMMATRIX>>();
-
-		s_pVCBuffer = vPTR.get();
-
-		AddStaticBind(std::move(vPTR));
 	}
+
+	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, *this));
 }
 
 void Sheet::Update(float deltaTime) noexcept {
@@ -112,16 +106,10 @@ void Sheet::Update(float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	DirectX::XMMATRIX constBufferT =
-			DirectX::XMMatrixTranspose(
-				DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-				DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-				DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-				DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-				DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f)
-				);
-
-	s_pVCBuffer->Update(0u,
-		16u , std::move(constBufferT)
-	);
+	m_Transform =
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
+		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
+		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
 }
