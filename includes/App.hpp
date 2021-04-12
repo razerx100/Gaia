@@ -5,6 +5,7 @@
 #include <Timer.hpp>
 #include <vector>
 #include <ImGuiMan.hpp>
+#include <Camera.hpp>
 
 class App {
 public:
@@ -20,6 +21,7 @@ private:
 	ImGuiMan m_imgui;
 	Window m_wnd;
 	Timer m_timer;
+	Camera m_camera;
 
 	std::vector<std::unique_ptr<Drawable>> m_drawables;
 
