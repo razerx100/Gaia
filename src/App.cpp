@@ -73,6 +73,10 @@ App::App()
 	m_drawables.reserve(nDrawables);
 
 	std::generate_n(std::back_inserter(m_drawables), nDrawables, f);
+
+	Camera::SetCamera(DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
+
+	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 }
 
 App::~App(){}

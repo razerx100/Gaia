@@ -138,7 +138,8 @@ Graphics::~Graphics() {
 
 void Graphics::EndFrame() {
 
-	ImGuiEnd();
+	if (m_imGuiEnabled)
+		ImGuiEnd();
 
 #ifdef _DEBUG
 	DXGI_INFO_MAN.Set();
@@ -156,7 +157,8 @@ void Graphics::EndFrame() {
 }
 
 void Graphics::BeginFrame(float red, float green, float blue) noexcept {
-	ImGuiBegin();
+	if (m_imGuiEnabled)
+		ImGuiBegin();
 
 	const float color[] = { red, green, blue, 1.0f };
 	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);

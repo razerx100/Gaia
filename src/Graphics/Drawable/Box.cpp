@@ -94,7 +94,5 @@ void Box::Update(float deltaTime) noexcept {
 		DirectX::XMLoadFloat3x3(&mt) *
 		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
 		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi) *
-		DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f) *
-		DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f);
+		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi);
 }
