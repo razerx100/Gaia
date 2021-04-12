@@ -1,17 +1,10 @@
 #include <ImGuiMan.hpp>
-#include <imgui.h>
+#include <ImGuiImpl.hpp>
 
 ImGuiMan::ImGuiMan() {
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGui::StyleColorsDark();
-
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGuiImpl::ImGuiInitContext();
 }
 
 ImGuiMan::~ImGuiMan() {
-	ImGui::DestroyContext();
+	ImGuiImpl::ImGuiDestroyContext();
 }

@@ -7,7 +7,12 @@
 #include <Sheet.hpp>
 #include <SkinnedBox.hpp>
 #include <GDIPlusManager.hpp>
-#include <imgui.h>
+#include <ImGuiImpl.hpp>
+
+#ifdef _IMGUI
+#include <ImGuiMan.hpp>
+ImGuiMan ImGuiMan::s_initObj;
+#endif
 
 GDIPlusManager gdim;
 
@@ -99,19 +104,7 @@ void App::DoFrame() {
 		da->Draw(m_wnd.GetGfx());
 	}
 
-	if (ImGui::Begin("Simulation Speed")) {
-		ImGui::SliderFloat("Speed Factor", &m_speedFactor, 0.0f, 4.0f);
-		ImGui::Text(
-			"Application average %.3f ms/frame (%.1f FPS)",
-			1000.0f / ImGui::GetIO().Framerate,
-			ImGui::GetIO().Framerate
-		);
-		ImGui::Text(
-			"Status: %s", m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? "PAUSED" : "RUNNING"
-		);
-	}
-
-	ImGui::End();
+	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
 
 	m_wnd.GetGfx().EndFrame();
 }

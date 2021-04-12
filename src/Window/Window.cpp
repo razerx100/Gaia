@@ -2,10 +2,12 @@
 #include <sstream>
 #include <resource.hpp>
 #include <WindowThrowMacros.hpp>
-#include <imgui_impl_win32.h>
+#include <ImGuiImpl.hpp>
 
+#ifdef _IMGUI
 // Forward Declaration of ImGui wndproc
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+#endif
 
 // WindowClass
 Window::WindowClass Window::WindowClass::s_wndClass;
@@ -66,7 +68,7 @@ Window::Window(int width, int height, const char* name)
 
 	ShowWindow(m_hWnd, SW_SHOWDEFAULT);
 
-	ImGui_ImplWin32_Init(m_hWnd);
+	ImGuiImpl::ImGuiWindowInit(m_hWnd);
 
 	m_pGfx = std::make_unique<Graphics>(
 		m_hWnd, static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)
@@ -74,7 +76,7 @@ Window::Window(int width, int height, const char* name)
 }
 
 Window::~Window() {
-	ImGui_ImplWin32_Shutdown();
+	ImGuiImpl::ImGuiWindowQuit();
 	DestroyWindow(m_hWnd);
 }
 
@@ -97,10 +99,12 @@ LRESULT CALLBACK Window::HandleMsgWrap(HWND hWnd, UINT msg, WPARAM wParam, LPARA
 }
 
 LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept {
+#ifdef _IMGUI
 	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
 		return true;
 
 	auto imIO = ImGui::GetIO();
+#endif
 
 	switch (msg) {
 	case WM_CLOSE: {
@@ -115,27 +119,32 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	/************* KEYBOARD MESSAGES *************/
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureKeyboard)
 			break;
-
+#endif
 		if (!(lParam & 0x40000000) || m_kb.IsAutoRepeatEnabled()) // filters autoRepeat
 			m_kb.OnKeyPressed(static_cast<unsigned char>(wParam));
 		break;
 	}
 	case WM_KEYUP:
 	case WM_SYSKEYUP: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureKeyboard)
 			break;
+#endif
 
 		m_kb.OnKeyReleased(static_cast<unsigned char>(wParam));
 		break;
 	}
 	case WM_CHAR: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureKeyboard)
 			break;
+#endif
 
 		m_kb.OnChar(static_cast<char>(wParam));
 		break;
@@ -143,9 +152,11 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	/************* END KEYBOARD MESSAGES *************/
 	/************* MOUSE MESSAGES *************/
 	case WM_MOUSEMOVE: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		const POINTS pt = MAKEPOINTS(lParam);
 		// In client region
@@ -169,57 +180,71 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		break;
 	}
 	case WM_LBUTTONDOWN: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		m_mouse.OnLeftPress();
 		break;
 	}
 	case WM_LBUTTONUP: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		m_mouse.OnLeftRelease();
 		break;
 	}
 	case WM_MBUTTONDOWN: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		m_mouse.OnMiddlePress();
 		break;
 	}
 	case WM_MBUTTONUP: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		m_mouse.OnMiddleRelease();
 		break;
 	}
 	case WM_RBUTTONDOWN: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		m_mouse.OnRightPress();
 		break;
 	}
 	case WM_RBUTTONUP: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		m_mouse.OnRightRelease();
 		break;
 	}
 	case WM_MOUSEWHEEL: {
+#ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
 			break;
+#endif
 
 		int deltaWparam = GET_WHEEL_DELTA_WPARAM(wParam);
 

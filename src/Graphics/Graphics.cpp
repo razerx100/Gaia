@@ -2,8 +2,7 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
-#include <imgui_impl_dx12.h>
-#include <imgui_impl_win32.h>
+#include <ImGuiImpl.hpp>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -13,10 +12,10 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_FenceValues{}, m_RTVHeapIncSize(0), m_CurrentBackBufferIndex(0),
     m_Viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) },
     m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
-    m_triangleIndicesCount(0u), m_imGuiEnabled(true), hr(0) {
+    m_triangleIndicesCount(0u), hr(0) {
 
     Initialize(hwnd);
-    ImGui_ImplDX12_Init(
+    ImGuiImpl::ImGuiDxInit(
         m_pDevice.Get(), bufferCount, DXGI_FORMAT_B8G8R8A8_UNORM, m_SRVHeapMan.get()
     );
 }
@@ -26,7 +25,7 @@ Graphics::~Graphics() {
 
 	CloseHandle(m_FenceEvent);
 
-    ImGui_ImplDX12_Shutdown();
+    ImGuiImpl::ImGuiDxQuit();
 }
 
 void Graphics::Initialize(HWND hwnd) {
@@ -203,7 +202,7 @@ void Graphics::Initialize(HWND hwnd) {
 void Graphics::BeginFrame(float red, float green, float blue) {
     ResetCommandList();
 
-    ImGuiBegin();
+    ImGuiImpl::ImGuiBeginFrame();
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
         m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
@@ -281,8 +280,7 @@ void Graphics::MoveToNextFrame() {
 }
 
 void Graphics::EndFrame() {
-    if (m_imGuiEnabled)
-        ImGuiEnd();
+    ImGuiImpl::ImGuiEndFrame(m_pCommandList.Get());
 
     CD3DX12_RESOURCE_BARRIER postbar = CD3DX12_RESOURCE_BARRIER::Transition(
         m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
@@ -311,34 +309,6 @@ void Graphics::ExecuteCommandList() {
 void Graphics::InitialGPUSetup() {
     ExecuteCommandList();
     m_SRVHeapMan->ProcessRequests();
+
     WaitForGPU();
-}
-
-void Graphics::EnableImGui() noexcept {
-    m_imGuiEnabled = true;
-}
-
-void Graphics::DisableImGui() noexcept {
-    m_imGuiEnabled = false;
-}
-
-bool Graphics::IsImGuiEnabled() const noexcept {
-    return m_imGuiEnabled;
-}
-
-void Graphics::ImGuiBegin() {
-    ImGui_ImplDX12_GetSRVHeapData();
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-}
-
-void Graphics::ImGuiEnd() {
-	ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCommandList.Get());
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault(nullptr, (void*)m_pCommandList.Get());
-	}
 }

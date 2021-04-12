@@ -5,6 +5,8 @@ class ImGuiMan {
 public:
 	ImGuiMan();
 	~ImGuiMan();
+
+	static ImGuiMan s_initObj;
 };
 
 #endif
