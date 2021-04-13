@@ -4,6 +4,7 @@
 #include <CleanWin.hpp>
 #include <d3d12.h>
 #include <HeapMan.hpp>
+#include <functional>
 
 namespace ImGuiImpl {
 	void ImGuiWindowInit(void* hwnd);
@@ -27,5 +28,11 @@ namespace ImGuiImpl {
 
 	// My Widgets
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused);
+
+	void ImGuiRenderCameraControl(
+		float& r, float& theta, float& phi,
+		float& roll, float& pitch, float& yaw,
+		std::function<void()> resetButton
+	);
 }
 #endif

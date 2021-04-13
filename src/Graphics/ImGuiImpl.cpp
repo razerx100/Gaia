@@ -68,6 +68,29 @@ namespace ImGuiImpl {
 
 		ImGui::End();
 	}
+
+	void ImGuiRenderCameraControl(
+		float& r, float& theta, float& phi,
+		float& roll, float& pitch, float& yaw,
+		std::function<void()> resetButton
+	) {
+		if (ImGui::Begin("Camera"))
+		{
+			ImGui::Text("Position");
+			ImGui::SliderFloat("R", &r, 0.0f, 80.0f, "%.1f");
+			ImGui::SliderAngle("Theta", &theta, -180.0f, 180.0f);
+			ImGui::SliderAngle("Phi", &phi, -89.0f, 89.0f);
+			ImGui::Text("Orientation");
+			ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
+			ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
+			ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
+			if (ImGui::Button("Reset"))
+			{
+				resetButton();
+			}
+		}
+		ImGui::End();
+	}
 }
 
 #else
@@ -93,6 +116,12 @@ namespace ImGuiImpl {
 	void ImGuiDestroyContext() {}
 
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {}
+
+	void ImGuiRenderCameraControl(
+		float& r, float& theta, float& phi,
+		float& roll, float& pitch, float& yaw,
+		std::function<void()> resetButton
+	) {}
 }
 
 #endif
