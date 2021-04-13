@@ -116,7 +116,8 @@ namespace ImGuiImpl {
 
 	void ImGuiRenderCameraControl(
 		float& r, float& theta, float& phi,
-		float& roll, float& pitch, float& yaw
+		float& roll, float& pitch, float& yaw,
+		std::function<void()> resetButton
 	) {}
 }
 
