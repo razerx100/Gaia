@@ -20,14 +20,6 @@ public:
 	void BeginFrame(float red, float green, float blue) noexcept;
 	void DrawIndexed(std::uint32_t count) noexcept(!IS_DEBUG);
 
-	void EnableImGui() noexcept;
-	void DisableImGui() noexcept;
-	bool IsImGuiEnabled() const noexcept;
-
-private:
-	void ImGuiBegin();
-	void ImGuiEnd();
-
 private:
 	ComPtr<ID3D11Device> m_pDevice;
 	ComPtr<IDXGISwapChain> m_pSwapChain;
@@ -38,7 +30,6 @@ private:
 	std::uint32_t m_width;
 	std::uint32_t m_height;
 
-	bool m_imGuiEnabled;
 	HRESULT hr;
 };
 #endif

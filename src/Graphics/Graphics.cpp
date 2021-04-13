@@ -7,8 +7,7 @@
 #include <Topology.hpp>
 #include <VertexBuffer.hpp>
 #include <IndexBuffer.hpp>
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
+#include <ImGuiImpl.hpp>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -16,7 +15,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	m_pSwapChain(nullptr),
 	m_pDeviceContext(nullptr),
 	m_pTargetView(nullptr),
-	m_width(width), m_height(height), m_imGuiEnabled(true), hr(0) {
+	m_width(width), m_height(height), hr(0) {
 
 	ComPtr<IDXGIFactory> pFactory;
 	GFX_THROW_FAILED(hr, CreateDXGIFactory(
@@ -44,7 +43,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	));
 
 	// ImGui
-	ImGui_ImplDX11_Init(m_pDevice.Get(), m_pDeviceContext.Get());
+	ImGuiImpl::ImGuiDxInit(m_pDevice.Get(), m_pDeviceContext.Get());
 	// ImGui
 
 	DXGI_SWAP_CHAIN_DESC desc = { };
@@ -133,13 +132,12 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 }
 
 Graphics::~Graphics() {
-	ImGui_ImplDX11_Shutdown();
+	ImGuiImpl::ImGuiDxQuit();
 }
 
 void Graphics::EndFrame() {
 
-	if (m_imGuiEnabled)
-		ImGuiEnd();
+	ImGuiImpl::ImGuiEndFrame();
 
 #ifdef _DEBUG
 	DXGI_INFO_MAN.Set();
@@ -157,8 +155,7 @@ void Graphics::EndFrame() {
 }
 
 void Graphics::BeginFrame(float red, float green, float blue) noexcept {
-	if (m_imGuiEnabled)
-		ImGuiBegin();
+	ImGuiImpl::ImGuiBeginFrame();
 
 	const float color[] = { red, green, blue, 1.0f };
 	m_pDeviceContext->ClearRenderTargetView(m_pTargetView.Get(), color);
@@ -169,32 +166,4 @@ void Graphics::BeginFrame(float red, float green, float blue) noexcept {
 
 void Graphics::DrawIndexed(std::uint32_t count) noexcept(!IS_DEBUG) {
 	GFX_THROW_NO_HR(m_pDeviceContext->DrawIndexed(count, 0u, 0u));
-}
-
-void Graphics::EnableImGui() noexcept {
-	m_imGuiEnabled = true;
-}
-
-void Graphics::DisableImGui() noexcept {
-	m_imGuiEnabled = false;
-}
-
-bool Graphics::IsImGuiEnabled() const noexcept {
-	return m_imGuiEnabled;
-}
-
-void Graphics::ImGuiBegin() {
-	ImGui_ImplDX11_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-}
-
-void Graphics::ImGuiEnd() {
-	ImGui::Render();
-	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-		ImGui::UpdatePlatformWindows();
-		ImGui::RenderPlatformWindowsDefault();
-	}
 }

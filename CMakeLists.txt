@@ -12,7 +12,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
-file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp)
+if(IMGUIFLAG STREQUAL "DISABLE")
+    file(GLOB_RECURSE SRC src/App.cpp src/main.cpp src/Exceptions/*.cpp src/Graphics/*.cpp src/shaders/*.cpp src/Utility/*.cpp src/Window/*.cpp includes/*.hpp)
+else()
+    file(GLOB_RECURSE SRC src/*.cpp includes/*.hpp)
+endif()
 
 add_executable(${PROJECT_NAME} WIN32
     ${SRC}
@@ -20,6 +24,10 @@ add_executable(${PROJECT_NAME} WIN32
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/Exceptions  includes/Graphics includes/Graphics/Bindable includes/Graphics/Drawable includes/Macros includes/Utility includes/Window includes/ImGui)
+
+if(IMGUIFLAG STREQUAL "ENABLE")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE _IMGUI)
+endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "$<$<CONFIG:RELEASE>:NDEBUG>")
 

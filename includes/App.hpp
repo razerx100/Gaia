@@ -3,7 +3,6 @@
 #include <Window.hpp>
 #include <Timer.hpp>
 #include <Drawable.hpp>
-#include <ImGuiMan.hpp>
 #include <Camera.hpp>
 
 class App {
@@ -17,7 +16,6 @@ private:
 	void DoFrame();
 
 private:
-	ImGuiMan m_imgui;
 	Window m_wnd;
 	Timer m_timer;
 	Camera m_camera;
