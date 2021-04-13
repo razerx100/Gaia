@@ -79,7 +79,7 @@ App::App()
 
 	std::generate_n(std::back_inserter(m_drawables), nDrawables, f);
 
-	Camera::SetCamera(DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
+	//Camera::SetCamera(DirectX::XMMatrixTranslation(0.0f, 0.0f, 20.0f));
 
 	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
 }
@@ -98,6 +98,7 @@ int App::Go() {
 void App::DoFrame() {
 	const float deltaTime = m_timer.Mark() * m_speedFactor;
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
+	m_camera.Update();
 
 	for (auto& da : m_drawables) {
 		da->Update(m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
@@ -105,6 +106,7 @@ void App::DoFrame() {
 	}
 
 	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
+	m_camera.ControlWindow();
 
 	m_wnd.GetGfx().EndFrame();
 }
