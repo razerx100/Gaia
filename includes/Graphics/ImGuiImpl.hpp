@@ -34,5 +34,7 @@ namespace ImGuiImpl {
 		float& roll, float& pitch, float& yaw,
 		std::function<void()> resetButton
 	);
+
+	void ImGuiLightSlider(float& x, float& y, float& z);
 }
 #endif

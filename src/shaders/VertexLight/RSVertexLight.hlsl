@@ -4,5 +4,5 @@
 								"DENY_GEOMETRY_SHADER_ROOT_ACCESS ), " \
 			 "RootConstants(num32BitConstants = 16, b0, space=0, "\
 									"visibility=SHADER_VISIBILITY_VERTEX),"\
-			 "RootConstants(num32BitConstants = 16, b1, space=0, "\
+			 "RootConstants(num32BitConstants = 3, b1, space=0, "\
 									"visibility=SHADER_VISIBILITY_VERTEX)"

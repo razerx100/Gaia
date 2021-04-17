@@ -1,6 +1,7 @@
 #include <Box.hpp>
 #include <Cube.hpp>
 #include <BindAll.hpp>
+#include <App.hpp>
 
 Box::Box(Graphics& gfx,
 	std::mt19937& rng,
@@ -113,8 +114,8 @@ Box::Box(Graphics& gfx,
 		0u, 16u, std::bind(&Box::GetTransformationMatrix, this)
 		));
 
-	AddBind(std::make_unique<VertexConstantBuffer>(
-		1u, 16u, std::bind(&Box::GetTransformationMatrix, this)
+	AddBind(std::make_unique<ConstantBuffer<DirectX::XMFLOAT3>>(
+		1u, 3u, std::bind(&App::GetLightDir)
 		));
 
 	DirectX::XMStoreFloat3x3(
