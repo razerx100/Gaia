@@ -46,6 +46,34 @@ VertexBuffer::VertexBuffer(Graphics& gfx,
 
 VertexBuffer::VertexBuffer(Graphics& gfx,
 	std::vector<DirectX::XMFLOAT3>&& vertices,
+	std::vector<DirectX::XMFLOAT3>&& normals
+) : m_VertexBufferView{} {
+
+	struct Vertex {
+		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT3 normal;
+	};
+
+	const std::uint32_t stride = static_cast<std::uint32_t>(sizeof(Vertex));
+
+	std::vector<Vertex> vVertices;
+
+	for (int i = 0; i < vertices.size(); i++)
+		vVertices.emplace_back(Vertex(std::move(vertices[i]), std::move(normals[i])));
+
+	const std::uint32_t verticesSize = static_cast<std::uint32_t>(
+			std::size(vVertices) * stride
+		);
+
+	CreateResource(gfx, vVertices.data(), verticesSize, &m_pVertexBuffer);
+
+	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.SizeInBytes = verticesSize;
+	m_VertexBufferView.StrideInBytes = stride;
+}
+
+VertexBuffer::VertexBuffer(Graphics& gfx,
+	std::vector<DirectX::XMFLOAT3>&& vertices,
 	std::vector<DirectX::XMFLOAT2>&& uvs
 ) : m_VertexBufferView{} {
 

@@ -94,7 +94,7 @@ Sheet::Sheet(Graphics& gfx,
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, *this));
+	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, std::bind(&Sheet::GetTransformationMatrix, this)));
 }
 
 void Sheet::Update(float deltaTime) noexcept {

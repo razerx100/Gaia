@@ -16,7 +16,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 
     Initialize(hwnd);
     ImGuiImpl::ImGuiDxInit(
-        m_pDevice.Get(), bufferCount, DXGI_FORMAT_B8G8R8A8_UNORM, m_SRVHeapMan.get()
+        m_pDevice.Get(), bufferCount, DXGI_FORMAT_B8G8R8A8_UNORM, m_pSRVHeapMan.get()
     );
 }
 
@@ -196,7 +196,7 @@ void Graphics::Initialize(HWND hwnd) {
         &m_pCommandList
     ));
 
-    m_SRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, *this);
+    m_pSRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, *this);
 }
 
 void Graphics::BeginFrame(float red, float green, float blue) {
@@ -234,7 +234,7 @@ void Graphics::ResetCommandList() {
         m_pCommandAllocators[m_CurrentBackBufferIndex].Get(), nullptr));
 
     ID3D12DescriptorHeap* ppHeaps[] = {
-        m_SRVHeapMan->GetHeap()
+        m_pSRVHeapMan->GetHeap()
     };
 
     m_pCommandList->SetDescriptorHeaps(
@@ -292,7 +292,7 @@ void Graphics::EndFrame() {
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
-    m_SRVHeapMan->ProcessRequests();
+    m_pSRVHeapMan->ProcessRequests();
 
     MoveToNextFrame();
 }
@@ -308,7 +308,7 @@ void Graphics::ExecuteCommandList() {
 
 void Graphics::InitialGPUSetup() {
     ExecuteCommandList();
-    m_SRVHeapMan->ProcessRequests();
+    m_pSRVHeapMan->ProcessRequests();
 
     WaitForGPU();
 }

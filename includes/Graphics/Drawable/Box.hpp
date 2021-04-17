@@ -15,6 +15,8 @@ public:
 
 	void Update(float deltaTime) noexcept override;
 
+	DirectX::XMMATRIX GetRotation() const noexcept;
+
 private:
 	// positional
 	float r;
@@ -33,6 +35,7 @@ private:
 	float dchi;
 
 	DirectX::XMFLOAT3X3 mt;
+	DirectX::XMMATRIX rotation;
 };
 
 #endif

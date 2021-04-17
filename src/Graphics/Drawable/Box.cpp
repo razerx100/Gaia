@@ -3,12 +3,12 @@
 #include <BindAll.hpp>
 
 Box::Box(Graphics& gfx,
-		std::mt19937& rng,
-		std::uniform_real_distribution<float>& adist,
-		std::uniform_real_distribution<float>& ddist,
-		std::uniform_real_distribution<float>& odist,
-		std::uniform_real_distribution<float>& rdist,
-		std::uniform_real_distribution<float>& bdist)
+	std::mt19937& rng,
+	std::uniform_real_distribution<float>& adist,
+	std::uniform_real_distribution<float>& ddist,
+	std::uniform_real_distribution<float>& odist,
+	std::uniform_real_distribution<float>& rdist,
+	std::uniform_real_distribution<float>& bdist)
 	:
 	r(rdist(rng)),
 	roll(0.0f),
@@ -28,17 +28,18 @@ Box::Box(Graphics& gfx,
 
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputDescs = {
 			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+			{"Normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 		};
 
 		InputLayout inputLayout = InputLayout(std::move(inputDescs));
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RS_VS_PS_CBuff.cso"
+			gfx, s_ShaderPath + L"RSVertexLight.cso"
 			);
 
-		Shader pixel = Shader(s_ShaderPath + L"PSFaceColor.cso");
+		Shader pixel = Shader(s_ShaderPath + L"PSVertexLight.cso");
 
-		Shader vertex = Shader(s_ShaderPath + L"VSFaceColor.cso");
+		Shader vertex = Shader(s_ShaderPath + L"VSVertexLight.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
@@ -69,13 +70,17 @@ Box::Box(Graphics& gfx,
 
 		AddStaticBind(std::move(topo));
 
-		IndexedTriangleList model = Cube::Make();
+		IndexedTriangleList model = Cube::MakeIndependent();
 
-		AddStaticBind(std::make_unique<VertexBuffer>(gfx, std::move(model.m_Vertices)));
+		model.SetNormalsIndependentFlat();
+
+		AddStaticBind(std::make_unique<VertexBuffer>(
+			gfx, std::move(model.m_Vertices), std::move(model.m_Normals)
+			));
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
 
-		struct ConstantBufferColor {
+		/*struct ConstantBufferColor {
 			struct {
 				float red;
 				float green;
@@ -84,25 +89,33 @@ Box::Box(Graphics& gfx,
 			}face_color[6];
 		};
 
-		ConstantBufferColor constBufferC = {
-			{
-			{1.0f, 0.0f, 0.0f, 1.0f},
-			{0.0f, 1.0f, 1.0f, 1.0f},
-			{0.0f, 1.0f, 0.0f, 1.0f},
-			{0.0f, 0.0f, 1.0f, 1.0f},
-			{1.0f, 0.0f, 1.0f, 1.0f},
-			{0.0f, 0.75f, 0.5f, 1.0f}
-			}
+		ConstantBufferColor FaceColor = {
+				{
+				{1.0f, 0.0f, 0.0f, 1.0f},
+				{0.0f, 1.0f, 1.0f, 1.0f},
+				{0.0f, 1.0f, 0.0f, 1.0f},
+				{0.0f, 0.0f, 1.0f, 1.0f},
+				{1.0f, 0.0f, 1.0f, 1.0f},
+				{0.0f, 0.75f, 0.5f, 1.0f}
+				}
 		};
 
-		ConstantBuffer<ConstantBufferColor>::SetData(std::move(constBufferC));
+		std::uint8_t* cpuPtr = nullptr;
 
 		AddStaticBind(std::make_unique<ConstantBuffer<ConstantBufferColor>>(
-			1u, 24u, *this
-			));
+				2u, static_cast<std::uint32_t>(256), &cpuPtr, gfx
+				));
+
+		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));*/
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, *this));
+	AddBind(std::make_unique<VertexConstantBuffer>(
+		0u, 16u, std::bind(&Box::GetTransformationMatrix, this)
+		));
+
+	AddBind(std::make_unique<VertexConstantBuffer>(
+		1u, 16u, std::bind(&Box::GetTransformationMatrix, this)
+		));
 
 	DirectX::XMStoreFloat3x3(
 		&mt,
@@ -119,9 +132,15 @@ void Box::Update(float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
+	rotation = DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
+
 	m_Transform =
 		DirectX::XMLoadFloat3x3(&mt) *
-		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
+		rotation *
 		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
 		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi);
+}
+
+DirectX::XMMATRIX Box::GetRotation() const noexcept {
+	return rotation;
 }

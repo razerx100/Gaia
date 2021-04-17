@@ -44,7 +44,7 @@ private:
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
     ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
 
-    std::unique_ptr<HeapMan> m_SRVHeapMan;
+    std::unique_ptr<HeapMan> m_pSRVHeapMan;
 
     std::uint32_t m_RTVHeapIncSize;
 

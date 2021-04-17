@@ -10,5 +10,5 @@ ID3D12GraphicsCommandList* GraphicsExtractor::GetCommandList(Graphics& gfx) noex
 }
 
 HeapMan& GraphicsExtractor::GetSRVHeapMan(Graphics& gfx) noexcept {
-	return *gfx.m_SRVHeapMan.get();
+	return *gfx.m_pSRVHeapMan.get();
 }

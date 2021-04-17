@@ -1,11 +1,7 @@
 #include <App.hpp>
 #include <random>
 #include <Box.hpp>
-#include <Pyramid.hpp>
-#include <Melon.hpp>
 #include <algorithm>
-#include <Sheet.hpp>
-#include <SkinnedBox.hpp>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
 
@@ -27,37 +23,10 @@ App::App()
 			: m_gfx(gfx) {}
 
 		std::unique_ptr<Drawable> operator()() {
-			switch (typedist(rng))
-			{
-			case 0:
-				return std::make_unique<Pyramid>(
-					m_gfx, rng, adist, ddist,
-					odist, rdist
-					);
-			case 1:
-				return std::make_unique<Box>(
-					m_gfx, rng, adist, ddist,
-					odist, rdist, bdist
-					);
-			case 2:
-				return std::make_unique<Melon>(
-					m_gfx, rng, adist, ddist,
-					odist, rdist, longdist, latdist
-					);
-			case 3:
-				return std::make_unique<Sheet>(
-					m_gfx, rng, adist, ddist,
-					odist, rdist
-					);
-			case 4:
-				return std::make_unique<SkinnedBox>(
-					m_gfx, rng, adist, ddist,
-					odist, rdist
-					);
-			default:
-				assert(false && "bad drawable type in factory");
-				return {};
-			}
+			return std::make_unique<Box>(
+				m_gfx, rng, adist, ddist,
+				odist, rdist, bdist
+				);
 		}
 
 	private:
@@ -69,9 +38,6 @@ App::App()
 		std::uniform_real_distribution<float> odist{ 0.0f, DirectX::XM_PI * 0.08f };
 		std::uniform_real_distribution<float> rdist{ 6.0f, 20.0f };
 		std::uniform_real_distribution<float> bdist{ 0.4f, 3.0f };
-		std::uniform_int_distribution<int> latdist{ 5, 20 };
-		std::uniform_int_distribution<int> longdist{ 10, 40 };
-		std::uniform_int_distribution<int> typedist{ 0, 4 };
 	};
 
 	Factory f(m_wnd.GetGfx());

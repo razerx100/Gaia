@@ -13,6 +13,10 @@ public:
 	);
 	VertexBuffer(Graphics& gfx,
 		std::vector<DirectX::XMFLOAT3>&& vertices,
+		std::vector<DirectX::XMFLOAT3>&& normals
+	);
+	VertexBuffer(Graphics& gfx,
+		std::vector<DirectX::XMFLOAT3>&& vertices,
 		std::vector<DirectX::XMFLOAT2>&& uvs
 	);
 

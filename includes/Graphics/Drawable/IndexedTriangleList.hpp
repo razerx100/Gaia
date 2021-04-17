@@ -11,10 +11,12 @@ public:
 		std::vector<std::uint16_t>&& indices_input);
 
 	void Transform(DirectX::FXMMATRIX matrix);
+	void SetNormalsIndependentFlat() noexcept;
 
 public:
 	std::vector<DirectX::XMFLOAT3> m_Vertices;
 	std::vector<std::uint16_t> m_Indices;
+	std::vector<DirectX::XMFLOAT3> m_Normals;
 };
 
 #endif
