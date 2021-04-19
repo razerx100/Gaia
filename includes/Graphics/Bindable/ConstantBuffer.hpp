@@ -65,7 +65,10 @@ public:
 			);
 		}
 		m_HeapIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
-			m_CopyHeap->GetCPUDescriptorHandleForHeapStart()
+			m_CopyHeap->GetCPUDescriptorHandleForHeapStart(),
+			[&](D3D12_GPU_DESCRIPTOR_HANDLE handle) {
+				m_GPUHandle = handle;
+			}
 		);
 
 		m_bindFunction = std::bind(&ConstantBuffer<T>::BindDescriptor, this, std::placeholders::_1);
@@ -83,7 +86,7 @@ public:
 
 	void BindDescriptor(Graphics& gfx) {
 		GetCommandList(gfx)->SetGraphicsRootDescriptorTable(
-			m_RSIndex, GetSRVHeapMan(gfx).RequestHandleGPU(m_HeapIndex)
+			m_RSIndex, m_GPUHandle
 		);
 	}
 
@@ -94,6 +97,8 @@ public:
 protected:
 	std::uint32_t m_RSIndex;
 	std::uint32_t m_HeapIndex;
+
+	D3D12_GPU_DESCRIPTOR_HANDLE m_GPUHandle;
 
 	std::function<void(Graphics&)> m_bindFunction;
 

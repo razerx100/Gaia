@@ -8,9 +8,21 @@ HeapMan::HeapMan(D3D12_DESCRIPTOR_HEAP_TYPE type, Graphics& gfx)
 
     m_HeapIncrementSize = GetDevice(m_GfxRef)->GetDescriptorHandleIncrementSize(m_HeapType);
 
+
+    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+    srvHeapDesc.NumDescriptors = 1;
+    srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+
+    GetDevice(gfx)->CreateDescriptorHeap(
+        &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pEmptyCPUHeap
+    );
 }
 
-std::uint32_t HeapMan::RequestHandleIndex(D3D12_CPU_DESCRIPTOR_HANDLE cpuVisibleHandle) {
+std::uint32_t HeapMan::RequestHandleIndex(
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuVisibleHandle,
+    std::function<void(D3D12_GPU_DESCRIPTOR_HANDLE)> setter
+) {
     std::uint32_t index;
     if (m_AvailableDescs.empty())
         index = m_NewDescCount++;
@@ -19,19 +31,20 @@ std::uint32_t HeapMan::RequestHandleIndex(D3D12_CPU_DESCRIPTOR_HANDLE cpuVisible
         m_AvailableDescs.pop();
     }
 
-    m_QueuedRequests.push({ cpuVisibleHandle, index });
+    if (index < m_InUseDescs.size()) {
+        m_InUseDescs[index] = true;
+        m_InUseDescsCPUHandles[index] = cpuVisibleHandle;
+        m_InUseDescsSetters[index] = setter;
+    }
+    else {
+        m_InUseDescs.push_back(true);
+        m_InUseDescsCPUHandles.push_back(cpuVisibleHandle);
+        m_InUseDescsSetters.emplace_back(setter);
+    }
+
+    m_QueuedRequests.push(index);
 
     return index;
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleGPU(std::uint32_t handleIndex) {
-
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(
-        m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
-        handleIndex, m_HeapIncrementSize
-    );
-
-    return gpuHandle;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleCPU(std::uint32_t handleIndex) {
@@ -46,44 +59,35 @@ D3D12_CPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleCPU(std::uint32_t handleIndex)
 
 void HeapMan::Free(std::uint32_t index) {
     m_AvailableDescs.push(index);
-    m_InUseDescs.erase(index);
+    m_InUseDescs[index] = false;
 }
 
 
 void HeapMan::ProcessRequests() {
-    if (m_NewDescCount > m_CurrentDescCount) {
+    if (m_NewDescCount > m_CurrentDescCount)
         CreateHeap(m_NewDescCount);
 
-        for (int i = 0; i < m_InUseDescs.size(); i++) {
-            GetDevice(m_GfxRef)->CopyDescriptorsSimple(
-                    1u,
-                    CD3DX12_CPU_DESCRIPTOR_HANDLE(
-                        m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                        i,
-                        m_HeapIncrementSize
-                    ),
-                    m_InUseDescs[i],
-                    m_HeapType
-                );
-        }
-    }
-
     for (int i = 0; i < m_QueuedRequests.size(); i++) {
-        std::pair<D3D12_CPU_DESCRIPTOR_HANDLE, std::uint32_t> pair = m_QueuedRequests.front();
+        std::uint32_t index = m_QueuedRequests.front();
         m_QueuedRequests.pop();
-
-        m_InUseDescs.insert_or_assign(pair.second, pair.first);
 
         GetDevice(m_GfxRef)->CopyDescriptorsSimple(
             1u,
             CD3DX12_CPU_DESCRIPTOR_HANDLE(
                 m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                pair.second,
+                index,
                 m_HeapIncrementSize
             ),
-            pair.first,
+            m_InUseDescsCPUHandles[index],
             m_HeapType
         );
+
+        m_InUseDescsSetters[index](
+            CD3DX12_GPU_DESCRIPTOR_HANDLE(
+                m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
+                index, m_HeapIncrementSize
+            )
+            );
     }
 }
 
@@ -103,4 +107,40 @@ void HeapMan::CreateHeap(std::uint32_t descriptorCount) {
     ));
 
     m_CurrentDescCount = descriptorCount;
+
+    for (int i = 0; i < m_InUseDescs.size(); i++) {
+        if (m_InUseDescs[i]) {
+            GetDevice(m_GfxRef)->CopyDescriptorsSimple(
+                1u,
+                CD3DX12_CPU_DESCRIPTOR_HANDLE(
+                    m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
+                    i,
+                    m_HeapIncrementSize
+                ),
+                m_InUseDescsCPUHandles[i],
+                m_HeapType
+            );
+
+            m_InUseDescsSetters[i](
+                CD3DX12_GPU_DESCRIPTOR_HANDLE(
+                    m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
+                    i, m_HeapIncrementSize
+                )
+                );
+        }
+        else {
+            GetDevice(m_GfxRef)->CopyDescriptorsSimple(
+                1u,
+                CD3DX12_CPU_DESCRIPTOR_HANDLE(
+                    m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
+                    i,
+                    m_HeapIncrementSize
+                ),
+                m_pEmptyCPUHeap->GetCPUDescriptorHandleForHeapStart(),
+                m_HeapType
+            );
+        }
+
+    }
+
 }

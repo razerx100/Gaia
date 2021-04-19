@@ -62,7 +62,7 @@ Box::Box(Graphics& gfx,
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.PrimitiveTopologyType = topo->GetTopology();
 		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		psoDesc.SampleDesc.Count = 1;
 

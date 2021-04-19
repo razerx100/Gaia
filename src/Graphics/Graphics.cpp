@@ -16,7 +16,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 
     Initialize(hwnd);
     ImGuiImpl::ImGuiDxInit(
-        m_pDevice.Get(), bufferCount, DXGI_FORMAT_B8G8R8A8_UNORM, m_pSRVHeapMan.get()
+        m_pDevice.Get(), bufferCount, DXGI_FORMAT_R8G8B8A8_UNORM, m_pSRVHeapMan.get()
     );
 }
 
@@ -74,7 +74,7 @@ void Graphics::Initialize(HWND hwnd) {
     swapChainDesc.BufferCount = bufferCount;
     swapChainDesc.Width = m_width;
     swapChainDesc.Height = m_height;
-    swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;

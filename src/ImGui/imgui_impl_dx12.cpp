@@ -58,7 +58,7 @@ static UINT                         g_numFramesInFlight = 0;
 
 // My Implementation
 static UINT                         g_srvHeapIndex = 0;
-static ID3D12DescriptorHeap*        g_dummyCopyHeap = NULL;
+static ID3D12DescriptorHeap*        g_copyHeap = NULL;
 static HeapMan*                     g_pHeapMan = NULL;
 
 // Buffers used during the rendering of a frame
@@ -479,7 +479,13 @@ static void ImGui_ImplDX12_CreateFontsTexture()
         srvDesc.Texture2D.MipLevels = desc.MipLevels;
         srvDesc.Texture2D.MostDetailedMip = 0;
         srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-        g_pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, g_hFontSrvCpuDescHandle);
+        g_pd3dDevice->CreateShaderResourceView(pTexture, &srvDesc, g_copyHeap->GetCPUDescriptorHandleForHeapStart());
+        g_pd3dDevice->CopyDescriptorsSimple(
+            1u,
+            g_hFontSrvCpuDescHandle,
+            g_copyHeap->GetCPUDescriptorHandleForHeapStart(),
+            D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV
+        );
         SafeRelease(g_pFontTextureResource);
         g_pFontTextureResource = pTexture;
     }
@@ -748,7 +754,6 @@ bool ImGui_ImplDX12_Init(ID3D12Device* device, int num_frames_in_flight, DXGI_FO
 
     g_pHeapMan = heapMan;
 
-
     {
         D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
         srvHeapDesc.NumDescriptors = 1;
@@ -756,12 +761,15 @@ bool ImGui_ImplDX12_Init(ID3D12Device* device, int num_frames_in_flight, DXGI_FO
         srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
         device->CreateDescriptorHeap(
-            &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(&g_dummyCopyHeap)
+            &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), reinterpret_cast<void**>(&g_copyHeap)
         );
     }
 
     g_srvHeapIndex = g_pHeapMan->RequestHandleIndex(
-        g_dummyCopyHeap->GetCPUDescriptorHandleForHeapStart()
+        g_copyHeap->GetCPUDescriptorHandleForHeapStart(),
+        [&](D3D12_GPU_DESCRIPTOR_HANDLE handle) {
+            g_hFontSrvGpuDescHandle = handle;
+        }
     );
 
     // Create a dummy ImGuiViewportDataDx12 holder for the main viewport,
@@ -779,7 +787,6 @@ bool ImGui_ImplDX12_Init(ID3D12Device* device, int num_frames_in_flight, DXGI_FO
 
 void ImGui_ImplDX12_GetSRVHeapData() {
     g_hFontSrvCpuDescHandle = g_pHeapMan->RequestHandleCPU(g_srvHeapIndex);
-    g_hFontSrvGpuDescHandle = g_pHeapMan->RequestHandleGPU(g_srvHeapIndex);
 
     g_pd3dSrvDescHeap = g_pHeapMan->GetHeap();
 }
@@ -807,7 +814,7 @@ void ImGui_ImplDX12_Shutdown()
     g_numFramesInFlight = 0;
     g_pd3dSrvDescHeap = NULL;
 
-    SafeRelease(g_dummyCopyHeap);
+    SafeRelease(g_copyHeap);
 }
 
 void ImGui_ImplDX12_NewFrame()

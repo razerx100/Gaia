@@ -7,21 +7,21 @@
 Texture::Texture(Graphics& gfx, const Surface& s) {
 
 	{
-        D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-        srvHeapDesc.NumDescriptors = 1;
-        srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+		srvHeapDesc.NumDescriptors = 1;
+		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
-        GFX_THROW_FAILED(hr, GetDevice(gfx)->CreateDescriptorHeap(
-            &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pSRVHeap
-        ));
-    }
+		GFX_THROW_FAILED(hr, GetDevice(gfx)->CreateDescriptorHeap(
+			&srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pSRVHeap
+		));
+	}
 
 	D3D12_RESOURCE_DESC texDesc = {};
 	texDesc.Height = s.GetHeight();
 	texDesc.Width = s.GetWidth();
 	texDesc.MipLevels = 1;
-	texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	texDesc.SampleDesc.Count = 1;
 	texDesc.DepthOrArraySize = 1;
 	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -83,9 +83,12 @@ Texture::Texture(Graphics& gfx, const Surface& s) {
 		m_pTexture.Get(), &srvDesc, m_pSRVHeap->GetCPUDescriptorHandleForHeapStart()
 	))
 
-	m_SRVIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
-			m_pSRVHeap->GetCPUDescriptorHandleForHeapStart()
-		);
+		m_SRVIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
+			m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(),
+			[&](D3D12_GPU_DESCRIPTOR_HANDLE handle) {
+				m_GPUHandle = handle;
+			}
+	);
 }
 
 void Texture::OnDestroy(Graphics& gfx) noexcept {
@@ -95,7 +98,7 @@ void Texture::OnDestroy(Graphics& gfx) noexcept {
 void Texture::BindCommand(Graphics& gfx) noexcept {
 
 	GetCommandList(gfx)->SetGraphicsRootDescriptorTable(
-		1, GetSRVHeapMan(gfx).RequestHandleGPU(m_SRVIndex)
+		1, m_GPUHandle
 	);
 }
 
