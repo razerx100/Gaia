@@ -2,6 +2,7 @@
 #include <Cube.hpp>
 #include <BindAll.hpp>
 #include <App.hpp>
+#include <Light.hpp>
 
 Box::Box(Graphics& gfx,
 	std::mt19937& rng,
@@ -81,7 +82,7 @@ Box::Box(Graphics& gfx,
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
 
-		/*struct ConstantBufferColor {
+		struct ConstantBufferColor {
 			struct {
 				float red;
 				float green;
@@ -104,18 +105,18 @@ Box::Box(Graphics& gfx,
 		std::uint8_t* cpuPtr = nullptr;
 
 		AddStaticBind(std::make_unique<ConstantBuffer<ConstantBufferColor>>(
-				2u, static_cast<std::uint32_t>(256), &cpuPtr, gfx
-				));
+			1u, static_cast<std::uint32_t>(256), &cpuPtr, gfx
+			));
 
-		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));*/
+		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));
+
+		AddStaticBind(std::make_unique<ConstantBuffer<DirectX::XMFLOAT3>>(
+			2u, 3u, std::bind(&Light::GetLightPosition)
+			));
 	}
 
 	AddBind(std::make_unique<VertexConstantBuffer>(
 		0u, 16u, std::bind(&Box::GetTransformationMatrix, this)
-		));
-
-	AddBind(std::make_unique<ConstantBuffer<DirectX::XMFLOAT3>>(
-		1u, 3u, std::bind(&App::GetLightDir)
 		));
 
 	DirectX::XMStoreFloat3x3(
@@ -133,15 +134,9 @@ void Box::Update(float deltaTime) noexcept {
 	phi += dphi * deltaTime;
 	chi += dchi * deltaTime;
 
-	rotation = DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll);
-
 	m_Transform =
 		DirectX::XMLoadFloat3x3(&mt) *
-		rotation *
+		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
 		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
 		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi);
-}
-
-DirectX::XMMATRIX Box::GetRotation() const noexcept {
-	return rotation;
 }

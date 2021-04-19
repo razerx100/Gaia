@@ -13,8 +13,6 @@ public:
 
 	int Go();
 
-	static DirectX::XMFLOAT3 GetLightDir() noexcept;
-
 private:
 	void DoFrame();
 
@@ -27,6 +25,5 @@ private:
 
 	static constexpr std::uint64_t nDrawables = 380u;
 	float m_speedFactor;
-	static float light_x, light_y, light_z;
 };
 #endif

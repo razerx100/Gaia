@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
+#include <Light.hpp>
 
 #ifdef _IMGUI
 #include <ImGuiMan.hpp>
@@ -11,8 +12,6 @@ ImGuiMan ImGuiMan::s_initObj;
 #endif
 
 GDIPlusManager gdim;
-
-float App::light_x = 0.0f, App::light_y = 0.0f, App::light_z = -1.0f;
 
 App::App()
 	: m_wnd(1980, 1080, "DirectX12 Window"), m_speedFactor(1.0f) {
@@ -47,7 +46,7 @@ App::App()
 
 	std::generate_n(std::back_inserter(m_drawables), nDrawables, f);
 
-	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 40.0f));
+	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 60.0f));
 
 	m_wnd.GetGfx().InitialGPUSetup();
 }
@@ -72,13 +71,10 @@ void App::DoFrame() {
 	}
 
 	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
+
 	m_camera.ControlWindow();
 
-	ImGuiImpl::ImGuiLightSlider(light_x, light_y, light_z);
+	Light::ImGuiLightSlider();
 
 	m_wnd.GetGfx().EndFrame();
-}
-
-DirectX::XMFLOAT3 App::GetLightDir() noexcept {
-	return DirectX::XMFLOAT3(light_x, light_y, light_z);
 }

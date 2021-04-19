@@ -24,6 +24,10 @@ void Drawable::SetShaderPath() noexcept {
 	s_ShaderPath.append(L"shaders\\");
 }
 
+std::wstring Drawable::GetShaderPath() noexcept {
+	return s_ShaderPath;
+}
+
 // Bind Root Signature before constant buffers
 void Drawable::AddBind(std::unique_ptr<Bindable> bind) noexcept {
 	m_Binds.emplace_back(std::move(bind));
