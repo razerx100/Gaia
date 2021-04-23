@@ -64,6 +64,16 @@ std::unique_ptr<Memory> BufferMan::_RequestMemory(
 
             std::uint64_t alignedOffset = AlignUp(partition.offsetFromBase, alignment);
             std::uint64_t sizeDec = alignedOffset - partition.offsetFromBase;
+
+            if (sizeDec) {
+                Partition remains;
+                remains.offsetFromBase = partition.offsetFromBase;
+                remains.pageIndex = static_cast<std::uint32_t>(page - m_Memories.begin());
+                remains.size = sizeDec;
+
+                page->m_FreePartitions.insert(std::move(remains));
+            }
+
             partition.offsetFromBase = alignedOffset;
 
             if ((partition.size -sizeDec) > bufferSize) {
