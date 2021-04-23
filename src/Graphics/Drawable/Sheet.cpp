@@ -88,10 +88,10 @@ Sheet::Sheet(Graphics& gfx,
 		AddStaticBind(std::make_unique<Texture>(gfx, Surface::FromFile("Image\\pupa_gun.png")));
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			gfx, std::move(model.m_Vertices), std::move(uvCoord)
+			std::move(model.m_Vertices), std::move(uvCoord)
 			));
 
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
 	}
 
 	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, std::bind(&Sheet::GetTransformationMatrix, this)));

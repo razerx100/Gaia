@@ -767,9 +767,7 @@ bool ImGui_ImplDX12_Init(ID3D12Device* device, int num_frames_in_flight, DXGI_FO
 
     g_srvHeapIndex = g_pHeapMan->RequestHandleIndex(
         g_copyHeap->GetCPUDescriptorHandleForHeapStart(),
-        [&](D3D12_GPU_DESCRIPTOR_HANDLE handle) {
-            g_hFontSrvGpuDescHandle = handle;
-        }
+        g_hFontSrvGpuDescHandle
     );
 
     // Create a dummy ImGuiViewportDataDx12 holder for the main viewport,

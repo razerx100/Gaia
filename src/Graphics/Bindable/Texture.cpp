@@ -85,10 +85,8 @@ Texture::Texture(Graphics& gfx, const Surface& s) {
 
 		m_SRVIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
 			m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(),
-			[&](D3D12_GPU_DESCRIPTOR_HANDLE handle) {
-				m_GPUHandle = handle;
-			}
-	);
+			m_GPUHandle
+		);
 }
 
 void Texture::OnDestroy(Graphics& gfx) noexcept {

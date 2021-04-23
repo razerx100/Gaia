@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include <GraphicsThrowMacros.hpp>
 #include <ImGuiImpl.hpp>
+#include <BufferMan.hpp>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
@@ -61,6 +62,8 @@ void Graphics::Initialize(HWND hwnd) {
 #ifdef _DEBUG
     DebugInfoManager::SetDebugInfoManager(m_pDevice.Get());
 #endif
+
+    BufferMan::Init(*this);
 
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;

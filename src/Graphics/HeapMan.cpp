@@ -21,7 +21,7 @@ HeapMan::HeapMan(D3D12_DESCRIPTOR_HEAP_TYPE type, Graphics& gfx)
 
 std::uint32_t HeapMan::RequestHandleIndex(
     D3D12_CPU_DESCRIPTOR_HANDLE cpuVisibleHandle,
-    std::function<void(D3D12_GPU_DESCRIPTOR_HANDLE)> setter
+    D3D12_GPU_DESCRIPTOR_HANDLE& setter
 ) {
     std::uint32_t index;
     if (m_AvailableDescs.empty())
@@ -34,12 +34,12 @@ std::uint32_t HeapMan::RequestHandleIndex(
     if (index < m_InUseDescs.size()) {
         m_InUseDescs[index] = true;
         m_InUseDescsCPUHandles[index] = cpuVisibleHandle;
-        m_InUseDescsSetters[index] = setter;
+        m_InUseDescsGPURefs[index] = setter;
     }
     else {
         m_InUseDescs.push_back(true);
         m_InUseDescsCPUHandles.push_back(cpuVisibleHandle);
-        m_InUseDescsSetters.emplace_back(setter);
+        m_InUseDescsGPURefs.emplace_back(setter);
     }
 
     m_QueuedRequests.push(index);
@@ -82,11 +82,10 @@ void HeapMan::ProcessRequests() {
             m_HeapType
         );
 
-        m_InUseDescsSetters[index](
+        m_InUseDescsGPURefs[index].get() =
             CD3DX12_GPU_DESCRIPTOR_HANDLE(
                 m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
                 index, m_HeapIncrementSize
-            )
             );
     }
 }
@@ -108,24 +107,23 @@ void HeapMan::CreateHeap(std::uint32_t descriptorCount) {
 
     m_CurrentDescCount = descriptorCount;
 
-    for (int i = 0; i < m_InUseDescs.size(); i++) {
-        if (m_InUseDescs[i]) {
+    for (int index = 0; index < m_InUseDescs.size(); index++) {
+        if (m_InUseDescs[index]) {
             GetDevice(m_GfxRef)->CopyDescriptorsSimple(
                 1u,
                 CD3DX12_CPU_DESCRIPTOR_HANDLE(
                     m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                    i,
+                    index,
                     m_HeapIncrementSize
                 ),
-                m_InUseDescsCPUHandles[i],
+                m_InUseDescsCPUHandles[index],
                 m_HeapType
             );
 
-            m_InUseDescsSetters[i](
+            m_InUseDescsGPURefs[index].get() =
                 CD3DX12_GPU_DESCRIPTOR_HANDLE(
                     m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
-                    i, m_HeapIncrementSize
-                )
+                    index, m_HeapIncrementSize
                 );
         }
         else {
@@ -133,7 +131,7 @@ void HeapMan::CreateHeap(std::uint32_t descriptorCount) {
                 1u,
                 CD3DX12_CPU_DESCRIPTOR_HANDLE(
                     m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                    i,
+                    index,
                     m_HeapIncrementSize
                 ),
                 m_pEmptyCPUHeap->GetCPUDescriptorHandleForHeapStart(),

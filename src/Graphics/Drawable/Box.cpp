@@ -77,10 +77,10 @@ Box::Box(Graphics& gfx,
 		model.SetNormalsIndependentFlat();
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			gfx, std::move(model.m_Vertices), std::move(model.m_Normals)
+			std::move(model.m_Vertices), std::move(model.m_Normals)
 			));
 
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
 
 		struct ConstantBufferColor {
 			struct {
@@ -104,8 +104,8 @@ Box::Box(Graphics& gfx,
 
 		std::uint8_t* cpuPtr = nullptr;
 
-		AddStaticBind(std::make_unique<ConstantBuffer<ConstantBufferColor>>(
-			1u, static_cast<std::uint32_t>(256), &cpuPtr, gfx
+		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(
+			1u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
 			));
 
 		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));

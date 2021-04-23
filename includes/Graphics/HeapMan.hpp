@@ -13,7 +13,7 @@ public:
 
 	std::uint32_t RequestHandleIndex(
 		D3D12_CPU_DESCRIPTOR_HANDLE cpuVisibleHandle,
-		std::function<void(D3D12_GPU_DESCRIPTOR_HANDLE)> setter
+		D3D12_GPU_DESCRIPTOR_HANDLE& setter
 		);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE RequestHandleCPU(std::uint32_t handleIndex);
@@ -32,7 +32,7 @@ private:
 
 	std::vector<bool> m_InUseDescs;
 	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_InUseDescsCPUHandles;
-	std::vector<std::function<void(D3D12_GPU_DESCRIPTOR_HANDLE)>> m_InUseDescsSetters;
+	std::vector<std::reference_wrapper<D3D12_GPU_DESCRIPTOR_HANDLE>> m_InUseDescsGPURefs;
 
 	std::queue<std::uint32_t> m_AvailableDescs;
 

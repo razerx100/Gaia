@@ -3,11 +3,11 @@
 #include <BindAll.hpp>
 
 Pyramid::Pyramid(Graphics& gfx,
-		std::mt19937& rng,
-		std::uniform_real_distribution<float>& adist,
-		std::uniform_real_distribution<float>& ddist,
-		std::uniform_real_distribution<float>& odist,
-		std::uniform_real_distribution<float>& rdist)
+	std::mt19937& rng,
+	std::uniform_real_distribution<float>& adist,
+	std::uniform_real_distribution<float>& ddist,
+	std::uniform_real_distribution<float>& odist,
+	std::uniform_real_distribution<float>& rdist)
 	:
 	r(rdist(rng)),
 	roll(0.0f),
@@ -79,10 +79,10 @@ Pyramid::Pyramid(Graphics& gfx,
 			vColor = { cdist(rng), cdist(rng), cdist(rng), 1.0f };
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			gfx, std::move(model.m_Vertices), std::move(vertexColors)
+			std::move(model.m_Vertices), std::move(vertexColors)
 			));
 
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(gfx, std::move(model.m_Indices)));
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
 	}
 
 	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, std::bind(&Pyramid::GetTransformationMatrix, this)));

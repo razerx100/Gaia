@@ -1,7 +1,7 @@
 #include <VertexBuffer.hpp>
 #include <Graphics.hpp>
 
-VertexBuffer::VertexBuffer(Graphics& gfx, std::vector<DirectX::XMFLOAT3>&& vertices)
+VertexBuffer::VertexBuffer(std::vector<DirectX::XMFLOAT3>&& vertices)
 	: m_VertexBufferView{} {
 
 	const std::uint32_t stride = static_cast<std::uint32_t>(sizeof(DirectX::XMFLOAT3));
@@ -9,14 +9,15 @@ VertexBuffer::VertexBuffer(Graphics& gfx, std::vector<DirectX::XMFLOAT3>&& verti
 			std::size(vertices) * stride
 		);
 
-	CreateResource(gfx, vertices.data(), verticesSize, &m_pVertexBuffer);
+	m_pBuffer = BufferMan::RequestMemory(verticesSize);
+	memcpy(m_pBuffer->cpuPTR, vertices.data(), verticesSize);
 
-	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.BufferLocation = m_pBuffer->gpuPTR;
 	m_VertexBufferView.SizeInBytes = verticesSize;
 	m_VertexBufferView.StrideInBytes = stride;
 }
 
-VertexBuffer::VertexBuffer(Graphics& gfx,
+VertexBuffer::VertexBuffer(
 	std::vector<DirectX::XMFLOAT3>&& vertices,
 	std::vector<DirectX::XMFLOAT4>&& colors
 ) : m_VertexBufferView{} {
@@ -37,14 +38,15 @@ VertexBuffer::VertexBuffer(Graphics& gfx,
 			std::size(vVertices) * stride
 		);
 
-	CreateResource(gfx, vVertices.data(), verticesSize, &m_pVertexBuffer);
+	m_pBuffer = BufferMan::RequestMemory(verticesSize);
+	memcpy(m_pBuffer->cpuPTR, vVertices.data(), verticesSize);
 
-	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.BufferLocation = m_pBuffer->gpuPTR;
 	m_VertexBufferView.SizeInBytes = verticesSize;
 	m_VertexBufferView.StrideInBytes = stride;
 }
 
-VertexBuffer::VertexBuffer(Graphics& gfx,
+VertexBuffer::VertexBuffer(
 	std::vector<DirectX::XMFLOAT3>&& vertices,
 	std::vector<DirectX::XMFLOAT3>&& normals
 ) : m_VertexBufferView{} {
@@ -65,14 +67,15 @@ VertexBuffer::VertexBuffer(Graphics& gfx,
 			std::size(vVertices) * stride
 		);
 
-	CreateResource(gfx, vVertices.data(), verticesSize, &m_pVertexBuffer);
+	m_pBuffer = BufferMan::RequestMemory(verticesSize);
+	memcpy(m_pBuffer->cpuPTR, vVertices.data(), verticesSize);
 
-	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.BufferLocation = m_pBuffer->gpuPTR;
 	m_VertexBufferView.SizeInBytes = verticesSize;
 	m_VertexBufferView.StrideInBytes = stride;
 }
 
-VertexBuffer::VertexBuffer(Graphics& gfx,
+VertexBuffer::VertexBuffer(
 	std::vector<DirectX::XMFLOAT3>&& vertices,
 	std::vector<DirectX::XMFLOAT2>&& uvs
 ) : m_VertexBufferView{} {
@@ -93,9 +96,10 @@ VertexBuffer::VertexBuffer(Graphics& gfx,
 			std::size(vVertices) * stride
 		);
 
-	CreateResource(gfx, vVertices.data(), verticesSize, &m_pVertexBuffer);
+	m_pBuffer = BufferMan::RequestMemory(verticesSize);
+	memcpy(m_pBuffer->cpuPTR, vVertices.data(), verticesSize);
 
-	m_VertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+	m_VertexBufferView.BufferLocation = m_pBuffer->gpuPTR;
 	m_VertexBufferView.SizeInBytes = verticesSize;
 	m_VertexBufferView.StrideInBytes = stride;
 }

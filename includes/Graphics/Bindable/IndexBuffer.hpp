@@ -2,16 +2,18 @@
 #define __INDEX_BUFFER_HPP__
 #include <Bindable.hpp>
 #include <vector>
+#include <BufferMan.hpp>
 
-class IndexBuffer : public BindableResource {
+class IndexBuffer : public Bindable {
 public:
-	IndexBuffer(Graphics& gfx, std::vector<std::uint16_t>&& indices);
+	IndexBuffer(std::vector<std::uint16_t>&& indices);
 	void BindCommand(Graphics& gfx) noexcept override;
 
 	std::uint32_t GetIndexCount() const noexcept;
 
 private:
-	ComPtr<ID3D12Resource> m_pIndexBuffer;
+	std::unique_ptr<Memory> m_pBuffer;
+
 	D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
 
 	std::uint32_t m_IndexCount;
