@@ -142,18 +142,18 @@ void BufferMan::FreePartition(Partition&& partition) noexcept {
 }
 
 // Custom Literal Suffix
-std::uint64_t operator"" _B(unsigned long long number) {
+constexpr std::uint64_t operator"" _B(unsigned long long number) {
     return number;
 }
 
-std::uint64_t operator"" _KB(unsigned long long number) {
+constexpr std::uint64_t operator"" _KB(unsigned long long number) {
     return number * 1024u;
 }
 
-std::uint64_t operator"" _MB(unsigned long long number) {
-    return number * static_cast<std::uint64_t>(std::pow(1024u, 2u));
+constexpr std::uint64_t operator"" _MB(unsigned long long number) {
+    return number * 1024u * 1024u;
 }
 
-std::uint64_t operator"" _GB(unsigned long long number) {
-    return number * static_cast<std::uint64_t>(std::pow(1024u, 3u));
+constexpr std::uint64_t operator"" _GB(unsigned long long number) {
+    return number * 1024u * 1024u * 1024u;
 }
