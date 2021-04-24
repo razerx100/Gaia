@@ -66,4 +66,9 @@ private:
 
     HRESULT hr;
 };
+
+std::uint64_t operator"" _B(unsigned long long number);
+std::uint64_t operator"" _KB(unsigned long long number);
+std::uint64_t operator"" _MB(unsigned long long number);
+std::uint64_t operator"" _GB(unsigned long long number);
 #endif

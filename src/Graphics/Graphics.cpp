@@ -195,7 +195,7 @@ void Graphics::Initialize(HWND hwnd) {
         0, D3D12_COMMAND_LIST_TYPE_DIRECT,
         m_pCommandAllocators[m_CurrentBackBufferIndex].Get(),
         nullptr,
-        __uuidof(ID3D12CommandList),
+        __uuidof(ID3D12GraphicsCommandList),
         &m_pCommandList
     ));
 

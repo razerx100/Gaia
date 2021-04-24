@@ -13,7 +13,7 @@ Memory::Memory(std::uint8_t* ptr, D3D12_GPU_VIRTUAL_ADDRESS gPtr, Partition&& pa
     : cpuPTR(ptr), gpuPTR(gPtr), partitionInPage(std::move(partition)) {}
 
 BufferMan::BufferMan(Graphics& gfx)
-    : m_gfx(gfx), m_DefaultSize(2048u) {}
+    : m_gfx(gfx), m_DefaultSize(2_KB) {}
 
 void BufferMan::Allocate(std::uint64_t bufferSize) {
     CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -139,4 +139,21 @@ void BufferMan::Free(Partition&& partition) noexcept {
 
 void BufferMan::FreePartition(Partition&& partition) noexcept {
     s_Instance->Free(std::move(partition));
+}
+
+// Custom Literal Suffix
+std::uint64_t operator"" _B(unsigned long long number) {
+    return number;
+}
+
+std::uint64_t operator"" _KB(unsigned long long number) {
+    return number * 1024u;
+}
+
+std::uint64_t operator"" _MB(unsigned long long number) {
+    return number * static_cast<std::uint64_t>(std::pow(1024u, 2u));
+}
+
+std::uint64_t operator"" _GB(unsigned long long number) {
+    return number * static_cast<std::uint64_t>(std::pow(1024u, 3u));
 }
