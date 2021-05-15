@@ -21,7 +21,9 @@ public:
 	void Free(std::uint32_t index);
 	void ProcessRequests();
 
-	ID3D12DescriptorHeap* GetHeap() const;
+	ID3D12DescriptorHeap* GetHeap() const noexcept;
+
+	std::uint32_t GetHeapCount() const noexcept;
 
 private:
 	void CreateHeap(std::uint32_t descriptorCount);

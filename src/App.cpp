@@ -52,11 +52,13 @@ App::App()
 }
 
 int App::Go() {
+
 	while (true) {
 		if (const auto ecode = Window::ProcessMessages())
 			return *ecode;
 
 		DoFrame();
+		m_wnd.GetGfx().PresentFrame();
 	}
 }
 
@@ -65,10 +67,10 @@ void App::DoFrame() {
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 	m_camera.Update();
 
-	for (auto& da : m_drawables) {
-		da->Update(m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
-		da->Draw(m_wnd.GetGfx());
-	}
+	for (auto& drawable : m_drawables) {
+		drawable->Update(m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
+		drawable->Draw(m_wnd.GetGfx());
+	};
 
 	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
 

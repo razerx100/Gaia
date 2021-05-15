@@ -6,6 +6,7 @@
 #include <wrl.h>
 #include <d3dx12.h>
 #include <HeapMan.hpp>
+#include <CommandList.hpp>
 
 using Microsoft::WRL::ComPtr;
 
@@ -19,6 +20,7 @@ public:
 
 	void EndFrame();
     void BeginFrame(float red, float green, float blue);
+    void PresentFrame();
     void DrawIndexed(std::uint32_t indexCount) noexcept;
     void InitialGPUSetup();
 
@@ -37,9 +39,8 @@ private:
     ComPtr<IDXGISwapChain4> m_pSwapChain;
     ComPtr<ID3D12Device2> m_pDevice;
     ComPtr<ID3D12Resource> m_pRenderTargets[bufferCount];
-    ComPtr<ID3D12CommandAllocator> m_pCommandAllocators[bufferCount];
     ComPtr<ID3D12CommandQueue> m_pCommandQueue;
-    ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+    CommandList m_gfxCommandList;
 
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
     ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;

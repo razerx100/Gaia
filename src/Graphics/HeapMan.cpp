@@ -90,8 +90,12 @@ void HeapMan::ProcessRequests() {
     }
 }
 
-ID3D12DescriptorHeap* HeapMan::GetHeap() const {
+ID3D12DescriptorHeap* HeapMan::GetHeap() const noexcept {
     return m_pGPUHeap.Get();
+}
+
+std::uint32_t HeapMan::GetHeapCount() const noexcept {
+    return m_CurrentDescCount > 0;
 }
 
 void HeapMan::CreateHeap(std::uint32_t descriptorCount) {

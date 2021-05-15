@@ -10,7 +10,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
 	m_pSwapChain(nullptr),
 	m_width(width), m_height(height), m_color{0.0f, 0.0f, 0.0f, 1.0f},
-	m_FenceValues{}, m_RTVHeapIncSize(0), m_CurrentBackBufferIndex(0),
+	m_FenceValues{0, 0}, m_RTVHeapIncSize(0), m_CurrentBackBufferIndex(0),
     m_Viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) },
     m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
     m_triangleIndicesCount(0u), hr(0) {
@@ -123,12 +123,6 @@ void Graphics::Initialize(HWND hwnd) {
                 m_pDevice->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle)
             )
             rtvHandle.Offset(1, m_RTVHeapIncSize);
-
-            GFX_THROW_FAILED(hr, m_pDevice->CreateCommandAllocator(
-                D3D12_COMMAND_LIST_TYPE_DIRECT,
-                __uuidof(ID3D12CommandAllocator),
-                &m_pCommandAllocators[n]
-            ));
         }
     }
 
@@ -191,13 +185,7 @@ void Graphics::Initialize(HWND hwnd) {
         GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 
     // Command List
-    GFX_THROW_FAILED(hr, m_pDevice->CreateCommandList(
-        0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-        m_pCommandAllocators[m_CurrentBackBufferIndex].Get(),
-        nullptr,
-        __uuidof(ID3D12GraphicsCommandList),
-        &m_pCommandList
-    ));
+    m_gfxCommandList.Create(*this, D3D12_COMMAND_LIST_TYPE_DIRECT, bufferCount);
 
     m_pSRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, *this);
 }
@@ -215,43 +203,40 @@ void Graphics::BeginFrame(float red, float green, float blue) {
     m_color[1] = green;
     m_color[2] = blue;
 
-    m_pCommandList->ClearRenderTargetView(rtvHandle, m_color, 0, nullptr);
+    m_gfxCommandList->ClearRenderTargetView(rtvHandle, m_color, 0, nullptr);
 
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
 
-    m_pCommandList->ClearDepthStencilView(
+    m_gfxCommandList->ClearDepthStencilView(
         dsvHandle,
         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+    m_gfxCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }
 
 void Graphics::DrawIndexed(std::uint32_t indexCount) noexcept {
-    m_pCommandList->DrawIndexedInstanced(indexCount, 1u, 0u, 0u, 0u);
+    m_gfxCommandList->DrawIndexedInstanced(indexCount, 1u, 0u, 0u, 0u);
 }
 
 void Graphics::ResetCommandList() {
-    GFX_THROW_FAILED(hr, m_pCommandAllocators[m_CurrentBackBufferIndex]->Reset());
-
-    GFX_THROW_FAILED(hr, m_pCommandList->Reset(
-        m_pCommandAllocators[m_CurrentBackBufferIndex].Get(), nullptr));
+    m_gfxCommandList.Reset();
 
     ID3D12DescriptorHeap* ppHeaps[] = {
         m_pSRVHeapMan->GetHeap()
     };
 
-    m_pCommandList->SetDescriptorHeaps(
-        1, ppHeaps
+    m_gfxCommandList->SetDescriptorHeaps(
+        m_pSRVHeapMan->GetHeapCount(), ppHeaps
     );
 
-    m_pCommandList->RSSetViewports(1, &m_Viewport);
-    m_pCommandList->RSSetScissorRects(1, &m_ScissorRect);
+    m_gfxCommandList->RSSetViewports(1, &m_Viewport);
+    m_gfxCommandList->RSSetScissorRects(1, &m_ScissorRect);
 
     CD3DX12_RESOURCE_BARRIER prebar = CD3DX12_RESOURCE_BARRIER::Transition(
         m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
         D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-    m_pCommandList->ResourceBarrier(1, &prebar);
+    m_gfxCommandList->ResourceBarrier(1, &prebar);
 }
 
 void Graphics::WaitForGPU() {
@@ -283,15 +268,21 @@ void Graphics::MoveToNextFrame() {
 }
 
 void Graphics::EndFrame() {
-    ImGuiImpl::ImGuiEndFrame(m_pCommandList.Get());
+    ImGuiImpl::ImGuiEndFrame(m_gfxCommandList.Get());
 
     CD3DX12_RESOURCE_BARRIER postbar = CD3DX12_RESOURCE_BARRIER::Transition(
         m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
-    m_pCommandList->ResourceBarrier(1, &postbar);
+    m_gfxCommandList->ResourceBarrier(1, &postbar);
 
+    m_gfxCommandList.Close();
+}
+
+void Graphics::PresentFrame() {
     ExecuteCommandList();
+
+    m_gfxCommandList.FinishedExecution();
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
@@ -301,16 +292,16 @@ void Graphics::EndFrame() {
 }
 
 void Graphics::ExecuteCommandList() {
-    GFX_THROW_FAILED(hr, m_pCommandList->Close());
-
-    ID3D12CommandList* ppCommandLists[] = { m_pCommandList.Get() };
+    ID3D12CommandList* ppCommandLists[] = { m_gfxCommandList.Get() };
     m_pCommandQueue->ExecuteCommandLists(
         static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
     );
 }
 
 void Graphics::InitialGPUSetup() {
+    m_gfxCommandList.Close();
     ExecuteCommandList();
+
     m_pSRVHeapMan->ProcessRequests();
 
     WaitForGPU();
