@@ -13,10 +13,16 @@ ImGuiMan ImGuiMan::s_initObj;
 
 GDIPlusManager gdim;
 
+std::unique_ptr<Light> App::s_light;
+
 App::App()
-	: m_wnd(1980, 1080, "DirectX12 Window"), m_speedFactor(1.0f) {
+	:
+	m_wnd(1980, 1080, "DirectX12 Window"),
+	m_speedFactor(1.0f) {
 
 	Drawable::SetShaderPath();
+
+	s_light = std::make_unique<Light>(m_wnd.GetGfx(), 0.4f);
 
 	class Factory {
 	public:
@@ -67,16 +73,24 @@ void App::DoFrame() {
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 	m_camera.Update();
 
+	s_light->Update();
+
 	for (auto& drawable : m_drawables) {
 		drawable->Update(m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
 		drawable->Draw(m_wnd.GetGfx());
 	};
 
+	s_light->Draw(m_wnd.GetGfx());
+
 	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
 
 	m_camera.ControlWindow();
 
-	Light::ImGuiLightSlider();
+	s_light->ImGuiLightSlider();
 
 	m_wnd.GetGfx().EndFrame();
+}
+
+Light* App::GetLight() noexcept {
+	return s_light.get();
 }

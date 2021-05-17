@@ -1,6 +1,5 @@
 #include <SkinnedBox.hpp>
 #include <Cube.hpp>
-#include <GraphicsThrowMacros.hpp>
 #include <Texture.hpp>
 #include <Surface.hpp>
 #include <BindAll.hpp>

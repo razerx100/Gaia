@@ -5,6 +5,7 @@
 #include <Timer.hpp>
 #include <vector>
 #include <Camera.hpp>
+#include <Light.hpp>
 
 class App {
 public:
@@ -12,6 +13,8 @@ public:
 	~App() = default;
 
 	int Go();
+
+	static Light* GetLight() noexcept;
 
 private:
 	void DoFrame();
@@ -22,6 +25,8 @@ private:
 	Camera m_camera;
 
 	std::vector<std::unique_ptr<Drawable>> m_drawables;
+
+	static std::unique_ptr<Light> s_light;
 
 	static constexpr std::uint64_t nDrawables = 380u;
 	float m_speedFactor;

@@ -36,12 +36,12 @@ Box::Box(Graphics& gfx,
 		InputLayout inputLayout = InputLayout(std::move(inputDescs));
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RSVertexLight.cso"
+			gfx, s_ShaderPath + L"RSPixelLight.cso"
 			);
 
-		Shader pixel = Shader(s_ShaderPath + L"PSVertexLight.cso");
+		Shader pixel = Shader(s_ShaderPath + L"PSPixelLight.cso");
 
-		Shader vertex = Shader(s_ShaderPath + L"VSVertexLight.cso");
+		Shader vertex = Shader(s_ShaderPath + L"VSPixelLight.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
@@ -105,18 +105,22 @@ Box::Box(Graphics& gfx,
 		std::uint8_t* cpuPtr = nullptr;
 
 		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(
-			1u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
+			2u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
 			));
 
 		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));
 
 		AddStaticBind(std::make_unique<ConstantBuffer<DirectX::XMFLOAT3>>(
-			2u, 3u, std::bind(&Light::GetLightPosition)
+			3u, 3u, std::bind(&Light::GetLightPosition, App::GetLight())
 			));
 	}
 
 	AddBind(std::make_unique<VertexConstantBuffer>(
 		0u, 16u, std::bind(&Box::GetTransformationMatrix, this)
+		));
+
+	AddBind(std::make_unique<ConstantBuffer<DirectX::XMMATRIX>>(
+		1u, 16u, std::bind(&Box::GetTransformationMatrix, this)
 		));
 
 	DirectX::XMStoreFloat3x3(

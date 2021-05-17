@@ -8,7 +8,6 @@ cbuffer CVertexBuff1 : register(b1, space0) {
 
 static const float3 diffuse = { 1.0f, 1.0f, 1.0f };
 static const float3 ambient = { 0.1f, 0.1f, 0.1f };
-static const float3 color = { 0.8f, 0.85f, 1.0f };
 
 struct VSOut {
     float4 light : Light;

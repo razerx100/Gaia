@@ -22,7 +22,7 @@ public:
 		: m_RSIndex(indexInRootSignature), m_ConstantInfo{elementsNumber, getter} {}
 
 	ConstantBuffer(std::uint32_t indexInRootSignature)
-		:m_RSIndex(indexInRootSignature) {}
+		: m_RSIndex(indexInRootSignature) {}
 
 	void BindCommand(Graphics& gfx) noexcept override {
 		T constData = m_ConstantInfo.getter();
@@ -36,8 +36,6 @@ public:
 
 protected:
 	std::uint32_t m_RSIndex;
-
-	std::function<void(Graphics&)> m_bindFunction;
 
 	std::unique_ptr<Memory> m_pBuffer;
 };

@@ -6,5 +6,6 @@ ImGui
 # Requirements
 Visual Studio 19.\
 cmake 3.11+.\
-Latest Windows 10 SDK.
+Latest Windows 10 SDK.\
+C++20 Standard.
 

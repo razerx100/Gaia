@@ -1,6 +1,8 @@
 #ifndef __LIGHT_HPP__
 #define __LIGHT_HPP__
 #include <DirectXMath.h>
+#include <memory>
+#include <SolidSphere.hpp>
 
 enum class LightType {
 	Directional,
@@ -14,16 +16,20 @@ enum class ShadingType {
 
 class Light {
 public:
-	static DirectX::XMFLOAT3 GetLightPosition() noexcept;
+	Light(class Graphics& gfx, float radius);
+	DirectX::XMFLOAT3 GetLightPosition() noexcept;
 
-	static void ImGuiLightSlider() noexcept;
+	void ImGuiLightSlider() noexcept;
+
+	void Update() noexcept;
+	void Draw(class Graphics& gfx) noexcept;
 
 private:
 	struct pos {
 		float x;
 		float y;
 		float z;
-	};
-	static pos LightPosition;
+	} m_lightPosition;
+	std::unique_ptr<class SolidSphere> m_lightSource;
 };
 #endif

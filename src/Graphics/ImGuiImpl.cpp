@@ -95,9 +95,9 @@ namespace ImGuiImpl {
 	void ImGuiLightSlider(float& x, float& y, float& z) {
 		if (ImGui::Begin("Light")) {
 			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &x, -1.0f, 1.0f, "%.1f");
-			ImGui::SliderFloat("Y", &y, -1.0f, 1.0f, "%.1f");
-			ImGui::SliderFloat("Z", &z, -1.0f, 1.0f, "%.1f");
+			ImGui::SliderFloat("X", &x, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("Y", &y, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("Z", &z, -18.0f, 18.0f, "%.1f");
 		}
 
 		ImGui::End();
