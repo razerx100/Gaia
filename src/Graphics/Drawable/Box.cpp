@@ -104,7 +104,7 @@ Box::Box(Graphics& gfx,
 
 		std::uint8_t* cpuPtr = nullptr;
 
-		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(
+		AddStaticBind(std::make_unique<ConstantBufferCBV<ConstantBufferColor>>(
 			2u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
 			));
 
@@ -115,12 +115,12 @@ Box::Box(Graphics& gfx,
 			));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer>(
-		0u, 16u, std::bind(&Box::GetTransformationMatrix, this)
+	AddBind(std::make_unique<ConstantBufferMat>(
+		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
 		));
 
-	AddBind(std::make_unique<ConstantBuffer<DirectX::XMMATRIX>>(
-		1u, 16u, std::bind(&Box::GetTransformationMatrix, this)
+	AddBind(std::make_unique<ConstantBufferMat>(
+		1u, 16u, std::bind(&Transform::GetTransformCM, &m_Transform)
 		));
 
 	DirectX::XMStoreFloat3x3(

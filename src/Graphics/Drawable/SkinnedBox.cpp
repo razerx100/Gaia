@@ -98,7 +98,9 @@ SkinnedBox::SkinnedBox(Graphics& gfx,
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer>(0u, 16u, std::bind(&SkinnedBox::GetTransformationMatrix, this)));
+	AddBind(std::make_unique<ConstantBufferMat>(
+		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform))
+	);
 }
 
 void SkinnedBox::Update(float deltaTime) noexcept {

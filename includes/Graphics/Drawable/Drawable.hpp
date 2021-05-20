@@ -1,7 +1,7 @@
 #ifndef __DRAWABLE_HPP__
 #define __DRAWABLE_HPP__
 #include <Graphics.hpp>
-#include <DirectXMath.h>
+#include <Transform.hpp>
 #include <memory>
 
 class Bindable;
@@ -20,8 +20,6 @@ public:
 
 	static void SetShaderPath() noexcept;
 
-	DirectX::XMMATRIX GetTransformationMatrix() const noexcept;
-
 	static std::wstring GetShaderPath() noexcept;
 
 protected:
@@ -35,6 +33,6 @@ protected:
 	std::uint32_t m_IndexCount;
 	std::vector<std::unique_ptr<Bindable>> m_Binds;
 
-	DirectX::XMMATRIX m_Transform;
+	Transform m_Transform;
 };
 #endif

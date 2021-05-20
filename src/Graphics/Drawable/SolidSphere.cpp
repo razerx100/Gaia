@@ -71,15 +71,15 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 
 		std::uint8_t* cpuPtr = nullptr;
 
-		AddStaticBind(std::make_unique<PixelConstantBuffer<ConstantBufferColor>>(
+		AddStaticBind(std::make_unique<ConstantBufferCBV<ConstantBufferColor>>(
 			1u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
 			));
 
 		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));
 	}
 
-	AddBind(std::make_unique<VertexConstantBuffer>(
-		0u, 16u, std::bind(&SolidSphere::GetTransformationMatrix, this)
+	AddBind(std::make_unique<ConstantBufferMat>(
+		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
 		));
 
 	m_Transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);

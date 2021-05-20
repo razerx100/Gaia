@@ -37,7 +37,3 @@ void Drawable::AddIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer) noexcept
 	m_IndexCount = indexBuffer->GetIndexCount();
 	m_Binds.emplace_back(std::move(indexBuffer));
 }
-
-DirectX::XMMATRIX Drawable::GetTransformationMatrix() const noexcept {
-	return m_Transform;
-}
