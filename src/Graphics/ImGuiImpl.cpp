@@ -106,7 +106,6 @@ namespace ImGuiImpl {
 			ImGui::SliderFloat("Intensity", &data.diffuseIntensity, 0.01f, 2.0f, "%.2f");
 			ImGui::ColorEdit3("Diffuse Color", &data.diffuseColor.x);
 			ImGui::ColorEdit3("Ambient", &data.ambient.x);
-			//ImGui::ColorEdit3("Material", &data.materialColor.x);
 
 			ImGui::Text("Falloff");
 			ImGui::SliderFloat("Constant", &data.attenuationConstant, 0.05f, 10.0f, "%.2f");

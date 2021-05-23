@@ -1,5 +1,5 @@
 cbuffer ColorBuf : register(b0, space1) {
-	float4 faceColors[6];
+	float4 material;
 };
 
 cbuffer LightBuf : register(b1, space1) {
@@ -25,5 +25,5 @@ float4 main(float3 worldPos : Position,
     const float3 diffuse = diffuseColor * diffuseIntensity * attenuation *
         max(0.0f, dot(directionOfLight, normal));
 
-    return saturate(float4((diffuse + ambient), 1.0f) * faceColors[(id / 2) % 6]);
+    return saturate(float4((diffuse + ambient), 1.0f) * material);
 }

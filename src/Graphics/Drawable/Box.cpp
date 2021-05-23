@@ -10,7 +10,8 @@ Box::Box(Graphics& gfx,
 	std::uniform_real_distribution<float>& ddist,
 	std::uniform_real_distribution<float>& odist,
 	std::uniform_real_distribution<float>& rdist,
-	std::uniform_real_distribution<float>& bdist)
+	std::uniform_real_distribution<float>& bdist,
+	DirectX::XMFLOAT4 material)
 	:
 	r(rdist(rng)),
 	roll(0.0f),
@@ -82,39 +83,19 @@ Box::Box(Graphics& gfx,
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
 
-		struct ConstantBufferColor {
-			struct {
-				float red;
-				float green;
-				float blue;
-				float alpha;
-			}face_color[6];
-		};
-
-		ConstantBufferColor FaceColor = {
-				{
-				{1.0f, 0.0f, 0.0f, 1.0f},
-				{0.0f, 1.0f, 1.0f, 1.0f},
-				{0.0f, 1.0f, 0.0f, 1.0f},
-				{0.0f, 0.0f, 1.0f, 1.0f},
-				{1.0f, 0.0f, 1.0f, 1.0f},
-				{0.0f, 0.75f, 0.5f, 1.0f}
-				}
-		};
-
-		std::uint8_t* cpuPtr = nullptr;
-
-		AddStaticBind(std::make_unique<ConstantBufferCBV<ConstantBufferColor>>(
-			2u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
-			));
-
-		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));
-
 		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
 			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
 			std::bind(&Light::GetLightData, App::GetLight())
 			));
 	}
+
+	std::uint8_t* cpuPtr = nullptr;
+
+	AddBind(std::make_unique<ConstantBufferCBV<DirectX::XMFLOAT4>>(
+		2u, static_cast<std::uint32_t>(sizeof(material)), &cpuPtr
+		));
+
+	memcpy(cpuPtr, &material, sizeof(material));
 
 	AddBind(std::make_unique<ConstantBufferMat>(
 		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
