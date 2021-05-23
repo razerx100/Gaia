@@ -110,8 +110,9 @@ Box::Box(Graphics& gfx,
 
 		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));
 
-		AddStaticBind(std::make_unique<ConstantBuffer<DirectX::XMFLOAT3>>(
-			3u, 3u, std::bind(&Light::GetLightPosition, App::GetLight())
+		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
+			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
+			std::bind(&Light::GetLightData, App::GetLight())
 			));
 	}
 

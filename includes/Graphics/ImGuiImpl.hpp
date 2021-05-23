@@ -4,6 +4,7 @@
 #include <CleanWin.hpp>
 #include <d3d12.h>
 #include <HeapMan.hpp>
+#include <Light.hpp>
 #include <functional>
 
 namespace ImGuiImpl {
@@ -35,6 +36,9 @@ namespace ImGuiImpl {
 		std::function<void()> resetButton
 	);
 
-	void ImGuiLightSlider(float& x, float& y, float& z);
+	void ImGuiLightSlider(
+		LightData& data,
+		std::function<void()> resetButton
+	);
 }
 #endif

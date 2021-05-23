@@ -14,22 +14,32 @@ enum class ShadingType {
 	PerPixel
 };
 
+struct LightData {
+	DirectX::XMFLOAT3 source;
+	float padding0;
+	DirectX::XMFLOAT3 ambient;
+	float padding1;
+	DirectX::XMFLOAT3 diffuseColor;
+	float diffuseIntensity;
+	float attenuationConstant;
+	float attenuationLinear;
+	float attenuationQuadratic;
+};
+
 class Light {
 public:
 	Light(class Graphics& gfx, float radius);
-	DirectX::XMFLOAT3 GetLightPosition() noexcept;
+	LightData GetLightData() const noexcept;
 
 	void ImGuiLightSlider() noexcept;
 
 	void Update() noexcept;
 	void Draw(class Graphics& gfx) noexcept;
 
+	void ResetData() noexcept;
+
 private:
-	struct pos {
-		float x;
-		float y;
-		float z;
-	} m_lightPosition;
+	LightData m_lightData;
 	std::unique_ptr<class SolidSphere> m_lightSource;
 };
 #endif

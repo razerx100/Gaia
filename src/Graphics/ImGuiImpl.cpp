@@ -92,12 +92,31 @@ namespace ImGuiImpl {
 		ImGui::End();
 	}
 
-	void ImGuiLightSlider(float& x, float& y, float& z) {
+	void ImGuiLightSlider(
+		LightData& data,
+		std::function<void()> resetButton
+	) {
 		if (ImGui::Begin("Light")) {
 			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &x, -18.0f, 18.0f, "%.1f");
-			ImGui::SliderFloat("Y", &y, -18.0f, 18.0f, "%.1f");
-			ImGui::SliderFloat("Z", &z, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("X", &data.source.x, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("Y", &data.source.y, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("Z", &data.source.z, -18.0f, 18.0f, "%.1f");
+
+			ImGui::Text("Intensity/Color");
+			ImGui::SliderFloat("Intensity", &data.diffuseIntensity, 0.01f, 2.0f, "%.2f");
+			ImGui::ColorEdit3("Diffuse Color", &data.diffuseColor.x);
+			ImGui::ColorEdit3("Ambient", &data.ambient.x);
+			//ImGui::ColorEdit3("Material", &data.materialColor.x);
+
+			ImGui::Text("Falloff");
+			ImGui::SliderFloat("Constant", &data.attenuationConstant, 0.05f, 10.0f, "%.2f");
+			ImGui::SliderFloat("Linear", &data.attenuationLinear, 0.0001f, 4.0f, "%.4f");
+			ImGui::SliderFloat("Quadratic", &data.attenuationQuadratic, 0.0000001f, 10.0f, "%.7f");
+
+			if (ImGui::Button("Reset"))
+			{
+				resetButton();
+			}
 		}
 
 		ImGui::End();
@@ -134,7 +153,10 @@ namespace ImGuiImpl {
 		std::function<void()> resetButton
 	) {}
 
-	void ImGuiLightSlider(float& x, float& y, float& z) {}
+	void ImGuiLightSlider(
+		LightData& data,
+		std::function<void()> resetButton
+	) {}
 }
 
 #endif

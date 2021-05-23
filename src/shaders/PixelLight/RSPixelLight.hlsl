@@ -8,5 +8,5 @@
 									"visibility=SHADER_VISIBILITY_VERTEX),"\
 			 "CBV(b0, space=1, visibility=SHADER_VISIBILITY_PIXEL,"\
 									"flags = DATA_VOLATILE ),"\
-			 "RootConstants(num32BitConstants = 3, b1, space=1, "\
+			 "RootConstants(num32BitConstants = 15, b1, space=1, "\
 									"visibility=SHADER_VISIBILITY_PIXEL),"
