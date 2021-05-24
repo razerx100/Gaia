@@ -4,7 +4,7 @@
 
 struct TransformData {
 	DirectX::XMMATRIX model;
-	DirectX::XMMATRIX view;
+	DirectX::XMVECTOR viewPosition;
 };
 
 class Transform {
@@ -16,8 +16,6 @@ public:
 	DirectX::XMMATRIX GetTransformCM() const noexcept;
 
 	DirectX::XMMATRIX GetTransformWithProjectionCM() const noexcept;
-
-	TransformData GetTransformDataCM() const noexcept;
 
 	Transform& operator=(const DirectX::XMMATRIX& matrix) noexcept;
 

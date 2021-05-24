@@ -22,10 +22,3 @@ Transform& Transform::operator=(const DirectX::XMMATRIX& matrix) noexcept {
 
 	return *this;
 }
-
-TransformData Transform::GetTransformDataCM() const noexcept {
-	return {
-		DirectX::XMMatrixTranspose(m_Transform),
-		DirectX::XMMatrixTranspose(Camera::GetCamera())
-	};
-}

@@ -89,16 +89,28 @@ Box::Box(Graphics& gfx,
 			));
 	}
 
-	AddBind(std::make_unique<ConstantBufferCBVStatic<DirectX::XMFLOAT4>>(
-		2u, &material
+	struct PSMaterial {
+		DirectX::XMFLOAT4 material;
+		float specularIntensity;
+		float specularPower;
+	};
+
+	PSMaterial matData = {
+		material,
+		0.6f,
+		30.0f
+	};
+
+	AddBind(std::make_unique<ConstantBufferCBVStatic<PSMaterial>>(
+		2u, &matData
 		));
 
 	AddBind(std::make_unique<ConstantBufferMat>(
 		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
 		));
 
-	AddBind(std::make_unique<ConstantBufferCBVDynamic<TransformData>>(
-		1u, std::bind(&Transform::GetTransformDataCM, &m_Transform)
+	AddBind(std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
+		1u, std::bind(&Transform::GetTransformCM, &m_Transform)
 		));
 
 	DirectX::XMStoreFloat3x3(

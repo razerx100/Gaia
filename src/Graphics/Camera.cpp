@@ -33,7 +33,7 @@ void Camera::Reset() noexcept {
 }
 
 void Camera::Update() noexcept {
-	const DirectX::XMVECTOR pos = DirectX::XMVector3Transform(
+	DirectX::XMVECTOR pos = DirectX::XMVector3Transform(
 		DirectX::XMVectorSet(0.0f, 0.0f, -r, 0.0f),
 		DirectX::XMMatrixRotationRollPitchYaw(phi, -theta, 0.0f)
 	);

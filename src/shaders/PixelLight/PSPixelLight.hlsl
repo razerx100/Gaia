@@ -1,5 +1,7 @@
 cbuffer ColorBuf : register(b0, space1) {
 	float4 material;
+    float specularIntensity;
+    float specularPower;
 };
 
 cbuffer LightBuf : register(b1, space1) {
@@ -22,8 +24,18 @@ float4 main(float3 worldPos : Position,
     const float attenuation = 1.0f /
         (attConst + attLin * distanceToLight + attQuad * (distanceToLight * distanceToLight));
 
-    const float3 diffuse = diffuseColor * diffuseIntensity * attenuation *
-        max(0.0f, dot(directionOfLight, normal));
+    const float3 diffuseData = attenuation * diffuseColor * diffuseIntensity;
 
-    return saturate(float4((diffuse + ambient), 1.0f) * material);
+    const float3 diffuse = diffuseData * max(0.0f, dot(directionOfLight, normal));
+
+    // Specular highlight
+    const float3 vn = normalize(vectorToLight);
+
+    const float3 r = reflect(normalize(-lightPosition), normalize(normal));
+
+    const float3 specular = diffuseData * specularIntensity * pow(
+        max(0.0f, dot(r, vn)), specularPower
+    );
+
+    return saturate(float4((diffuse + ambient + specular), 1.0f) * material);
 }
