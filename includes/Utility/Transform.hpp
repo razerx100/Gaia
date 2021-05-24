@@ -2,6 +2,11 @@
 #define __TRANSFORM_HPP__
 #include <DirectXMath.h>
 
+struct TransformData {
+	DirectX::XMMATRIX model;
+	DirectX::XMMATRIX view;
+};
+
 class Transform {
 public:
 	Transform() = default;
@@ -11,6 +16,8 @@ public:
 	DirectX::XMMATRIX GetTransformCM() const noexcept;
 
 	DirectX::XMMATRIX GetTransformWithProjectionCM() const noexcept;
+
+	TransformData GetTransformDataCM() const noexcept;
 
 	Transform& operator=(const DirectX::XMMATRIX& matrix) noexcept;
 

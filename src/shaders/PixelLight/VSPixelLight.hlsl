@@ -1,9 +1,10 @@
-cbuffer CVertexBuf : register(b0, space0) {
+cbuffer Projection : register(b0, space0) {
 	matrix modelWithProjection;
 };
 
-cbuffer CVertexBuf1 : register(b1, space0) {
+cbuffer TransformData : register(b1, space0) {
 	matrix model;
+    matrix view;
 };
 
 struct VSOut {

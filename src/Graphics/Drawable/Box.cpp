@@ -89,20 +89,16 @@ Box::Box(Graphics& gfx,
 			));
 	}
 
-	std::uint8_t* cpuPtr = nullptr;
-
-	AddBind(std::make_unique<ConstantBufferCBV<DirectX::XMFLOAT4>>(
-		2u, static_cast<std::uint32_t>(sizeof(material)), &cpuPtr
+	AddBind(std::make_unique<ConstantBufferCBVStatic<DirectX::XMFLOAT4>>(
+		2u, &material
 		));
-
-	memcpy(cpuPtr, &material, sizeof(material));
 
 	AddBind(std::make_unique<ConstantBufferMat>(
 		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
 		));
 
-	AddBind(std::make_unique<ConstantBufferMat>(
-		1u, 16u, std::bind(&Transform::GetTransformCM, &m_Transform)
+	AddBind(std::make_unique<ConstantBufferCBVDynamic<TransformData>>(
+		1u, std::bind(&Transform::GetTransformDataCM, &m_Transform)
 		));
 
 	DirectX::XMStoreFloat3x3(

@@ -65,17 +65,13 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 			}face_color;
 		};
 
-		ConstantBufferColor FaceColor = {
+		ConstantBufferColor materialColor = {
 			{1.0f, 1.0f, 1.0f, 1.0f}
 		};
 
-		std::uint8_t* cpuPtr = nullptr;
-
-		AddStaticBind(std::make_unique<ConstantBufferCBV<ConstantBufferColor>>(
-			1u, static_cast<std::uint32_t>(sizeof(FaceColor)), &cpuPtr
+		AddStaticBind(std::make_unique<ConstantBufferCBVStatic<ConstantBufferColor>>(
+			1u, &materialColor
 			));
-
-		memcpy(cpuPtr, &FaceColor, sizeof(FaceColor));
 	}
 
 	AddBind(std::make_unique<ConstantBufferMat>(
