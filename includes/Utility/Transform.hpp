@@ -2,11 +2,6 @@
 #define __TRANSFORM_HPP__
 #include <DirectXMath.h>
 
-struct TransformData {
-	DirectX::XMMATRIX model;
-	DirectX::XMVECTOR viewPosition;
-};
-
 class Transform {
 public:
 	Transform() = default;

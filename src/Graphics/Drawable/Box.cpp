@@ -2,7 +2,6 @@
 #include <Cube.hpp>
 #include <BindAll.hpp>
 #include <App.hpp>
-#include <Light.hpp>
 
 Box::Box(Graphics& gfx,
 	std::mt19937& rng,
@@ -12,20 +11,7 @@ Box::Box(Graphics& gfx,
 	std::uniform_real_distribution<float>& rdist,
 	std::uniform_real_distribution<float>& bdist,
 	DirectX::XMFLOAT4 material)
-	:
-	r(rdist(rng)),
-	roll(0.0f),
-	pitch(0.0f),
-	yaw(0.0f),
-	theta(adist(rng)),
-	phi(adist(rng)),
-	chi(adist(rng)),
-	droll(ddist(rng)),
-	dpitch(ddist(rng)),
-	dyaw(ddist(rng)),
-	dtheta(odist(rng)),
-	dphi(odist(rng)),
-	dchi(odist(rng)) {
+	: m_tobj(rng, adist, ddist, odist, rdist) {
 
 	if (!IsDataInitialized()) {
 
@@ -120,17 +106,7 @@ Box::Box(Graphics& gfx,
 }
 
 void Box::Update(float deltaTime) noexcept {
-
-	roll += droll * deltaTime;
-	pitch += dpitch * deltaTime;
-	yaw += dyaw * deltaTime;
-	theta += dtheta * deltaTime;
-	phi += dphi * deltaTime;
-	chi += dchi * deltaTime;
-
 	m_Transform =
 		DirectX::XMLoadFloat3x3(&mt) *
-		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi);
+		m_tobj.GetMomentum(deltaTime);
 }

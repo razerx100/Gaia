@@ -1,10 +1,10 @@
 #include <App.hpp>
 #include <random>
 #include <Box.hpp>
+#include <Cylinder.hpp>
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
-#include <Light.hpp>
 
 #ifdef _IMGUI
 #include <ImGuiMan.hpp>
@@ -34,16 +34,29 @@ App::App()
 				cdist(rng), cdist(rng), cdist(rng), 10.f
 			};
 
-			return std::make_unique<Box>(
-				m_gfx, rng, adist, ddist,
-				odist, rdist, bdist, mat
-				);
+			switch (sdist(rng)) {
+			case 0:
+				return std::make_unique<Box>(
+					m_gfx, rng, adist, ddist,
+					odist, rdist, bdist, mat
+					);
+
+			case 1:
+				return std::make_unique<Cylinder>(
+					m_gfx, rng, adist, ddist,
+					odist, rdist, tdist, mat
+					);
+			default:
+				return {};
+			}
 		}
 
 	private:
 		Graphics& m_gfx;
 
 		std::mt19937 rng{ std::random_device{}() };
+		std::uniform_int_distribution<int> sdist{ 0, 1 };
+		std::uniform_int_distribution<int> tdist{ 3, 30 };
 		std::uniform_real_distribution<float> adist{ 0.0f, DirectX::XM_PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f, DirectX::XM_PI * 0.5f };
 		std::uniform_real_distribution<float> odist{ 0.0f, DirectX::XM_PI * 0.08f };

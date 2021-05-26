@@ -4,7 +4,8 @@
 
 class Prism {
 public:
-	static IndexedTriangleList MakeTesselated(std::uint16_t longDiv);
+	static IndexedTriangleList MakeTesselated(int longDiv);
+	static IndexedTriangleList MakeTesselatedIndependentCapNormals(int longDiv);
 
 	static IndexedTriangleList Make();
 };

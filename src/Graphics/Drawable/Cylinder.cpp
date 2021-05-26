@@ -1,46 +1,34 @@
-#include <Sheet.hpp>
-#include <Plane.hpp>
-#include <Surface.hpp>
-#include <Texture.hpp>
+#include <Cylinder.hpp>
+#include <Prism.hpp>
 #include <BindAll.hpp>
+#include <App.hpp>
 
-Sheet::Sheet(Graphics& gfx,
+Cylinder::Cylinder(
+	Graphics& gfx,
 	std::mt19937& rng,
 	std::uniform_real_distribution<float>& adist,
 	std::uniform_real_distribution<float>& ddist,
 	std::uniform_real_distribution<float>& odist,
-	std::uniform_real_distribution<float>& rdist)
-	:
-	r(rdist(rng)),
-	roll(0.0f),
-	pitch(0.0f),
-	yaw(0.0f),
-	theta(adist(rng)),
-	phi(adist(rng)),
-	chi(adist(rng)),
-	droll(ddist(rng)),
-	dpitch(ddist(rng)),
-	dyaw(ddist(rng)),
-	dtheta(odist(rng)),
-	dphi(odist(rng)),
-	dchi(odist(rng)) {
-
+	std::uniform_real_distribution<float>& rdist,
+	std::uniform_int_distribution<int>& tdist,
+	DirectX::XMFLOAT4 material)
+	: m_tobj(rng, adist, ddist, odist, rdist) {
 	if (!IsDataInitialized()) {
 
 		std::vector<D3D12_INPUT_ELEMENT_DESC> inputDescs = {
 			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-			{"TexCoord", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+			{"Normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 		};
 
 		InputLayout inputLayout = InputLayout(std::move(inputDescs));
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RS_VS_CBuff_Tex2D.cso"
+			gfx, s_ShaderPath + L"RSPixelLight.cso"
 			);
 
-		Shader pixel = Shader(s_ShaderPath + L"PSTexture2D.cso");
+		Shader pixel = Shader(s_ShaderPath + L"PSPixelLight.cso");
 
-		Shader vertex = Shader(s_ShaderPath + L"VSTexture2D.cso");
+		Shader vertex = Shader(s_ShaderPath + L"VSPixelLight.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
@@ -71,45 +59,45 @@ Sheet::Sheet(Graphics& gfx,
 
 		AddStaticBind(std::move(topo));
 
-		IndexedTriangleList model = Plane::Make();
-
-		std::vector<DirectX::XMFLOAT2> uvCoord = {
-			{0.0f, 0.0f},
-			{0.5f, 0.0f},
-			{1.0f, 0.0f},
-			{0.0f, 0.5f},
-			{0.5f, 0.5f},
-			{1.0f, 0.5f},
-			{0.0f, 1.0f},
-			{0.5f, 1.0f},
-			{1.0f, 1.0f}
-		};
-
-		AddStaticBind(std::make_unique<Texture>(gfx, Surface::FromFile("Image\\pupa_gun.png")));
+		IndexedTriangleList model = Prism::MakeTesselatedIndependentCapNormals(tdist(rng));
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			std::move(model.m_Vertices), std::move(uvCoord)
+			std::move(model.m_Vertices), std::move(model.m_Normals)
 			));
 
 		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
+
+		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
+			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
+			std::bind(&Light::GetLightData, App::GetLight())
+			));
 	}
 
+	struct PSMaterial {
+		DirectX::XMFLOAT4 material;
+		float specularIntensity;
+		float specularPower;
+	};
+
+	PSMaterial matData = {
+		material,
+		0.6f,
+		30.0f
+	};
+
+	AddBind(std::make_unique<ConstantBufferCBVStatic<PSMaterial>>(
+		2u, &matData
+		));
+
 	AddBind(std::make_unique<ConstantBufferMat>(
-		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform))
-	);
+		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
+		));
+
+	AddBind(std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
+		1u, std::bind(&Transform::GetTransformCM, &m_Transform)
+		));
 }
 
-void Sheet::Update(float deltaTime) noexcept {
-
-	roll += droll * deltaTime;
-	pitch += dpitch * deltaTime;
-	yaw += dyaw * deltaTime;
-	theta += dtheta * deltaTime;
-	phi += dphi * deltaTime;
-	chi += dchi * deltaTime;
-
-	m_Transform =
-		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi);
+void Cylinder::Update(float deltaTime) noexcept {
+	m_Transform = m_tobj.GetMomentum(deltaTime);
 }

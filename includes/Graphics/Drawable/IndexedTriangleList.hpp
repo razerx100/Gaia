@@ -9,6 +9,10 @@ public:
 	IndexedTriangleList(
 		std::vector<DirectX::XMFLOAT3>&& vertices_input,
 		std::vector<std::uint16_t>&& indices_input);
+	IndexedTriangleList(
+		std::vector<DirectX::XMFLOAT3>&& vertices_input,
+		std::vector<DirectX::XMFLOAT3>&& normals_input,
+		std::vector<std::uint16_t>&& indices_input);
 
 	void Transform(DirectX::FXMMATRIX matrix);
 	void SetNormalsIndependentFlat() noexcept;

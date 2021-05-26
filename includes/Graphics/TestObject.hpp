@@ -1,18 +1,19 @@
-#ifndef __SHEET_HPP__
-#define __SHEET_HPP__
-#include <DrawableBase.hpp>
+#ifndef __RANDOM_OBJECT_HPP__
+#define __RANDOM_OBJECT_HPP__
 #include <random>
+#include <DirectXMath.h>
 
-class Sheet : public DrawableBase<Sheet> {
+class TestObject {
 public:
-	Sheet(Graphics& gfx,
+	TestObject(
 		std::mt19937& rng,
 		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
 		std::uniform_real_distribution<float>& odist,
-		std::uniform_real_distribution<float>& rdist);
+		std::uniform_real_distribution<float>& rdist
+	);
 
-	void Update(float deltaTime) noexcept override;
+	DirectX::XMMATRIX GetMomentum(float deltaTime) noexcept;
 
 private:
 	// positional

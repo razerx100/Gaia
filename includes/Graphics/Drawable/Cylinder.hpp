@@ -1,25 +1,23 @@
-#ifndef __BOX_HPP__
-#define __BOX_HPP__
+#ifndef __CYLINDER_HPP__
+#define __CYLINDER_HPP__
 #include <DrawableBase.hpp>
-#include <random>
 #include <TestObject.hpp>
 
-class Box : public DrawableBase<Box> {
+class Cylinder : public DrawableBase<Cylinder> {
 public:
-	Box(Graphics& gfx,
+	Cylinder(
+		Graphics& gfx,
 		std::mt19937& rng,
 		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
 		std::uniform_real_distribution<float>& odist,
 		std::uniform_real_distribution<float>& rdist,
-		std::uniform_real_distribution<float>& bdist,
+		std::uniform_int_distribution<int>& tdist,
 		DirectX::XMFLOAT4 material);
 
 	void Update(float deltaTime) noexcept override;
 
 private:
 	TestObject m_tobj;
-	DirectX::XMFLOAT3X3 mt;
 };
-
 #endif
