@@ -2,10 +2,10 @@
 #include <GraphicsThrowMacros.hpp>
 #include <Graphics.hpp>
 
-PipelineState::PipelineState(Graphics& gfx, const D3D12_GRAPHICS_PIPELINE_STATE_DESC* psoDesc) {
+PipelineState::PipelineState(Graphics& gfx, const PSODesc& psoDesc) {
 	GFX_THROW_FAILED(hr,
 		GetDevice(gfx)->CreateGraphicsPipelineState(
-				psoDesc,
+				psoDesc.GetPSO(),
 				__uuidof(ID3D12PipelineState),
 				&m_pPipelineState
 			)

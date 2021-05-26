@@ -9,7 +9,12 @@ using Microsoft::WRL::ComPtr;
 
 class PreCompiled {
 public:
+	PreCompiled() = default;
+
 	PreCompiled(const std::wstring& fileName);
+
+protected:
+	void ReadBinary(const std::wstring& fileName);
 
 protected:
 	ComPtr<ID3DBlob> m_pBinary;

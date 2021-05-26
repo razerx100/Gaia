@@ -6,3 +6,8 @@ PreCompiled::PreCompiled(const std::wstring& fileName) {
 	HRESULT hr;
 	GFX_THROW_FAILED(hr, D3DReadFileToBlob(fileName.c_str(), &m_pBinary));
 }
+
+void PreCompiled::ReadBinary(const std::wstring& fileName) {
+	HRESULT hr;
+	GFX_THROW_FAILED(hr, D3DReadFileToBlob(fileName.c_str(), &m_pBinary));
+}
