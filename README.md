@@ -1,4 +1,5 @@
-3D Engine with DirectX11 on Win32.
+3D Engine with DirectX11 on Win32. 
+// DEAD. Moved to DirectX12.
 
 # Third Party Program Used
 ImGui
