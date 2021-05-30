@@ -1,11 +1,11 @@
 #ifndef __SKINNED_BOX_HPP__
 #define __SKINNED_BOX_HPP__
 #include <DrawableBase.hpp>
-#include <random>
+#include <TestObject.hpp>
 
-class SkinnedBox : public DrawableBase<SkinnedBox> {
+class Tex2DBox : public DrawableBase<Tex2DBox> {
 public:
-	SkinnedBox(Graphics& gfx,
+	Tex2DBox(Graphics& gfx,
 		std::mt19937& rng,
 		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
@@ -15,21 +15,7 @@ public:
 	void Update(float deltaTime) noexcept override;
 
 private:
-	// positional
-	float r;
-	float roll;
-	float pitch;
-	float yaw;
-	float theta;
-	float phi;
-	float chi;
-	// speed (delta/s)
-	float droll;
-	float dpitch;
-	float dyaw;
-	float dtheta;
-	float dphi;
-	float dchi;
+	TestObject m_tobj;
 };
 
 #endif

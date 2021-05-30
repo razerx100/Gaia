@@ -4,7 +4,8 @@
 #include <d3dx12.h>
 #include <HeapMan.hpp>
 
-Texture::Texture(Graphics& gfx, const Surface& s) {
+Texture::Texture(Graphics& gfx, const Surface& s, std::uint32_t rootIndex)
+	: m_rootIndex(rootIndex) {
 
 	{
 		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
@@ -94,9 +95,8 @@ void Texture::OnDestroy(Graphics& gfx) noexcept {
 }
 
 void Texture::BindCommand(Graphics& gfx) noexcept {
-
 	GetCommandList(gfx)->SetGraphicsRootDescriptorTable(
-		1, m_GPUHandle
+		m_rootIndex, m_GPUHandle
 	);
 }
 

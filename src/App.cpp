@@ -3,6 +3,7 @@
 #include <Box.hpp>
 #include <Cylinder.hpp>
 #include <Pyramid.hpp>
+#include <Tex2DBox.hpp>
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
@@ -54,6 +55,12 @@ App::App()
 					odist, rdist, tdist
 					);
 
+			case 3:
+				return std::make_unique<Tex2DBox>(
+					m_gfx, rng, adist, ddist,
+					odist, rdist
+					);
+
 			default:
 				return {};
 			}
@@ -63,7 +70,7 @@ App::App()
 		Graphics& m_gfx;
 
 		std::mt19937 rng{ std::random_device{}() };
-		std::uniform_int_distribution<int> sdist{ 0, 2 };
+		std::uniform_int_distribution<int> sdist{ 0, 3 };
 		std::uniform_int_distribution<int> tdist{ 3, 30 };
 		std::uniform_real_distribution<float> adist{ 0.0f, DirectX::XM_PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f, DirectX::XM_PI * 0.5f };
