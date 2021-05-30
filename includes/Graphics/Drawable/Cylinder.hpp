@@ -17,6 +17,8 @@ public:
 
 	void Update(float deltaTime) noexcept override;
 
+	std::uint32_t GetIndexCount() const noexcept override;
+
 private:
 	TestObject m_tobj;
 };

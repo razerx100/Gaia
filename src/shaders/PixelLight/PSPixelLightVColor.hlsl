@@ -1,5 +1,4 @@
 cbuffer ColorBuf : register(b0, space1) {
-	float4 material;
     float specularIntensity;
     float specularPower;
 };
@@ -15,7 +14,8 @@ cbuffer LightBuf : register(b1, space1) {
 };
 
 float4 main(float3 worldPos : Position,
-			float3 normal : Normal) : SV_TARGET {
+			float3 normal : Normal,
+            float4 colors : Color) : SV_TARGET {
     const float3 vectorToLight = lightPosition - worldPos;
     const float distanceToLight = length(vectorToLight);
     const float3 directionOfLight = vectorToLight / distanceToLight;
@@ -36,5 +36,5 @@ float4 main(float3 worldPos : Position,
         max(0.0f, dot(r, vn)), specularPower
     );
 
-    return saturate(float4((diffuse + ambient + specular), 1.0f) * material);
+    return saturate(float4((diffuse + ambient + specular), 1.0f) * colors);
 }

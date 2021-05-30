@@ -45,6 +45,62 @@ IndexedTriangleList Cone::MakeTesselated(std::uint16_t longDiv) {
 	return IndexedTriangleList(std::move(vertices), std::move(indices));
 }
 
+IndexedTriangleList Cone::MakeTesselatedIndependentFaces(int longDiv) {
+	assert(longDiv >= 3);
+
+	const auto base = DirectX::XMVectorSet(1.0f, 0.0f, -1.0f, 0.0f);
+	const float longitudeAngle = 2.0f * DirectX::XM_PI / longDiv;
+
+	std::vector<DirectX::XMFLOAT3> vertices;
+
+	// cone vertices
+	const auto iCone = (unsigned short)vertices.size();
+	for (int iLong = 0; iLong < longDiv; iLong++) {
+		const float thetas[] = {
+			longitudeAngle * iLong,
+			longitudeAngle * (((iLong + 1) == longDiv) ? 0 : (iLong + 1))
+		};
+		vertices.emplace_back();
+		vertices.back() = { 0.0f,0.0f,1.0f };
+		for (auto theta : thetas) {
+			vertices.emplace_back();
+			const auto v = DirectX::XMVector3Transform(
+				base,
+				DirectX::XMMatrixRotationZ(theta)
+			);
+			DirectX::XMStoreFloat3(&vertices.back(), v);
+		}
+	}
+	// base vertices
+	const auto iBaseCenter = (unsigned short)vertices.size();
+	vertices.emplace_back();
+	vertices.back() = { 0.0f,0.0f,-1.0f };
+	const auto iBaseEdge = (unsigned short)vertices.size();
+	for (int iLong = 0; iLong < longDiv; iLong++) {
+		vertices.emplace_back();
+		auto v = DirectX::XMVector3Transform(
+			base,
+			DirectX::XMMatrixRotationZ(longitudeAngle * iLong)
+		);
+		DirectX::XMStoreFloat3(&vertices.back(), v);
+	}
+
+	std::vector<std::uint16_t> indices;
+
+	// cone indices
+	for (std::uint16_t i = 0; i < longDiv * 3; i++) {
+		indices.push_back(i + iCone);
+	}
+	// base indices
+	for (std::uint16_t iLong = 0; iLong < longDiv; iLong++) {
+		indices.push_back(iBaseCenter);
+		indices.push_back((iLong + 1) % longDiv + iBaseEdge);
+		indices.push_back(iLong + iBaseEdge);
+	}
+
+	return { std::move(vertices),std::move(indices) };
+}
+
 IndexedTriangleList Cone::Make() {
 	return MakeTesselated(24u);
 }

@@ -47,19 +47,19 @@ Cylinder::Cylinder(
 
 		AddStaticBind(std::move(topo));
 
-		IndexedTriangleList model = Prism::MakeTesselatedIndependentCapNormals(tdist(rng));
-
-		AddStaticBind(std::make_unique<VertexBuffer>(
-			std::move(model.m_Vertices), std::move(model.m_Normals)
-			));
-
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
-
 		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
 			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
 			std::bind(&Light::GetLightData, App::GetLight())
 			));
 	}
+
+	IndexedTriangleList model = Prism::MakeTesselatedIndependentCapNormals(tdist(rng));
+
+	AddBind(std::make_unique<VertexBuffer>(
+		std::move(model.m_Vertices), std::move(model.m_Normals)
+		));
+
+	AddIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
 
 	struct PSMaterial {
 		DirectX::XMFLOAT4 material;
@@ -88,4 +88,8 @@ Cylinder::Cylinder(
 
 void Cylinder::Update(float deltaTime) noexcept {
 	m_Transform = m_tobj.GetMomentum(deltaTime);
+}
+
+std::uint32_t Cylinder::GetIndexCount() const noexcept {
+	return m_IndexCount;
 }

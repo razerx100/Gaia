@@ -18,6 +18,16 @@ public:
 	);
 	VertexBuffer(
 		std::vector<DirectX::XMFLOAT3>&& vertices,
+		std::vector<DirectX::XMFLOAT3>&& normals,
+		std::vector<DirectX::XMFLOAT4>&& colors
+	);
+	VertexBuffer(
+		std::vector<DirectX::XMFLOAT3>&& vertices,
+		std::vector<DirectX::XMFLOAT3>&& normals,
+		std::vector<DirectX::XMFLOAT2>&& uvs
+	);
+	VertexBuffer(
+		std::vector<DirectX::XMFLOAT3>&& vertices,
 		std::vector<DirectX::XMFLOAT2>&& uvs
 	);
 

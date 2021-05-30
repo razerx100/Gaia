@@ -16,6 +16,7 @@ public:
 	void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
 	void AddBind(std::unique_ptr<Bindable> bind) noexcept;
 
+	// Override GetIndexCount function
 	void AddIndexBuffer(std::unique_ptr<class IndexBuffer> indexBuffer) noexcept;
 
 	static void SetShaderPath() noexcept;

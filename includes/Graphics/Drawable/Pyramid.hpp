@@ -1,7 +1,7 @@
 #ifndef __PYRAMID_HPP__
 #define __PYRAMID_HPP__
+#include <TestObject.hpp>
 #include <DrawableBase.hpp>
-#include <random>
 
 class Pyramid : public DrawableBase<Pyramid> {
 public:
@@ -10,26 +10,15 @@ public:
 		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
 		std::uniform_real_distribution<float>& odist,
-		std::uniform_real_distribution<float>& rdist);
+		std::uniform_real_distribution<float>& rdist,
+		std::uniform_int_distribution<int>& tdist);
 
 	void Update(float deltaTime) noexcept override;
 
+	std::uint32_t GetIndexCount() const noexcept override;
+
 private:
-	// positional
-	float r;
-	float roll;
-	float pitch;
-	float yaw;
-	float theta;
-	float phi;
-	float chi;
-	// speed (delta/s)
-	float droll;
-	float dpitch;
-	float dyaw;
-	float dtheta;
-	float dphi;
-	float dchi;
+	TestObject m_tobj;
 };
 
 #endif
