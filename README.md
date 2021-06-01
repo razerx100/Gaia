@@ -1,9 +1,12 @@
 3D Engine with DirectX12 on Win32.
 
-# Third Party Program Used
+# External Dependencies
+Assimp (dll)
+
+# Third party library Used
 ImGui
 
-# Requirements
+# Tools requirements
 Visual Studio 19.\
 cmake 3.11+.\
 Latest Windows 10 SDK.\

@@ -23,7 +23,7 @@ add_executable(${PROJECT_NAME} WIN32
     resources/resource.rc
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE includes/ includes/Exceptions  includes/Graphics includes/Graphics/Bindable includes/Graphics/Drawable includes/Graphics/PipelineObjects includes/Macros includes/Utility includes/Window includes/ImGui)
+target_include_directories(${PROJECT_NAME} PRIVATE includes/ external/ includes/Exceptions  includes/Graphics includes/Graphics/Bindable includes/Graphics/Drawable includes/Graphics/PipelineObjects includes/Macros includes/Utility includes/Window includes/ImGui)
 
 if(IMGUIFLAG STREQUAL "ENABLE")
     target_compile_definitions(${PROJECT_NAME} PRIVATE _IMGUI)
@@ -33,6 +33,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     d3d12.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
+    ${PROJECT_SOURCE_DIR}/external/libs/assimp-vc142-mt.lib
 )
 
 if(MSVC)

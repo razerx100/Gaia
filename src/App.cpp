@@ -7,6 +7,9 @@
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #ifdef _IMGUI
 #include <ImGuiMan.hpp>
@@ -21,6 +24,12 @@ App::App()
 	:
 	m_wnd(1980, 1080, "DirectX12 Window"),
 	m_speedFactor(1.0f) {
+
+	Assimp::Importer imp;
+	auto model = imp.ReadFile("models\\suzanne.obj",
+		aiProcess_Triangulate |
+		aiProcess_JoinIdenticalVertices
+	);
 
 	Drawable::SetShaderPath();
 
