@@ -1,24 +1,22 @@
-#ifndef __BOX_HPP__
-#define __BOX_HPP__
+#ifndef __MODEL_HPP__
+#define __MODEL_HPP__
 #include <DrawableBase.hpp>
 #include <TestObject.hpp>
 
-class Box : public DrawableBase<Box> {
+class Model : public DrawableBase<Model> {
 public:
-	Box(Graphics& gfx,
+	Model(Graphics& gfx,
 		std::mt19937& rng,
 		std::uniform_real_distribution<float>& adist,
 		std::uniform_real_distribution<float>& ddist,
 		std::uniform_real_distribution<float>& odist,
 		std::uniform_real_distribution<float>& rdist,
-		std::uniform_real_distribution<float>& bdist,
-		DirectX::XMFLOAT4 material);
+		DirectX::XMFLOAT4 material, float scale);
 
 	void Update(float deltaTime) noexcept override;
 
 private:
 	TestObject m_tobj;
-	DirectX::XMFLOAT3X3 mt;
 };
 
 #endif

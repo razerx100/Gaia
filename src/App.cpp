@@ -4,12 +4,10 @@
 #include <Cylinder.hpp>
 #include <Pyramid.hpp>
 #include <Tex2DBox.hpp>
+#include <Model.hpp>
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
 
 #ifdef _IMGUI
 #include <ImGuiMan.hpp>
@@ -24,12 +22,6 @@ App::App()
 	:
 	m_wnd(1980, 1080, "DirectX12 Window"),
 	m_speedFactor(1.0f) {
-
-	Assimp::Importer imp;
-	auto model = imp.ReadFile("models\\suzanne.obj",
-		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
-	);
 
 	Drawable::SetShaderPath();
 
@@ -70,6 +62,12 @@ App::App()
 					odist, rdist
 					);
 
+			case 4:
+				return std::make_unique<Model>(
+					m_gfx, rng, adist, ddist,
+					odist, rdist, mat, 1.5f
+					);
+
 			default:
 				return {};
 			}
@@ -79,7 +77,7 @@ App::App()
 		Graphics& m_gfx;
 
 		std::mt19937 rng{ std::random_device{}() };
-		std::uniform_int_distribution<int> sdist{ 0, 3 };
+		std::uniform_int_distribution<int> sdist{ 0, 4 };
 		std::uniform_int_distribution<int> tdist{ 3, 30 };
 		std::uniform_real_distribution<float> adist{ 0.0f, DirectX::XM_PI * 2.0f };
 		std::uniform_real_distribution<float> ddist{ 0.0f, DirectX::XM_PI * 0.5f };

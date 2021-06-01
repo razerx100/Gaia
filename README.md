@@ -1,7 +1,7 @@
 3D Engine with DirectX12 on Win32.
 
 # External Dependencies
-Assimp (dll)
+Assimp
 
 # Third party library Used
 ImGui

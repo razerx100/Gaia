@@ -33,7 +33,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:_DEBUG>" "
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     d3d12.lib dxgi.lib dxguid.lib uuid.lib d3dcompiler.lib
-    ${PROJECT_SOURCE_DIR}/external/libs/assimp-vc142-mt.lib
+    ${PROJECT_SOURCE_DIR}/external/libs/*.lib
 )
 
 if(MSVC)
