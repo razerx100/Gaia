@@ -2,13 +2,13 @@
 
 # External Dependencies
 Assimp
-#### Instructions
+## Instructions
 Put the .dll along with the executable and put the .lib inside
 ***external/libs/*** folder.
 
 # Third party library Used
 ImGui
-#### Instructions
+## Instructions
 Use ***Setup.bat*** to include ImGui related files to VS Solution file.
 Use ***Setup_No_ImGui.bat*** to include empty ImGui function. Or for 
 command line add ***IMGUIFLAG:STRING=ENABLE*** to enable ImGui stuffs
