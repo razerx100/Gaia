@@ -17,6 +17,17 @@ VertexBuffer::VertexBuffer(std::vector<DirectX::XMFLOAT3>&& vertices)
 	m_VertexBufferView.StrideInBytes = stride;
 }
 
+VertexBuffer::VertexBuffer(const Vertices& vertices)
+	: m_VertexBufferView{} {
+
+	m_pBuffer = BufferMan::RequestMemory(vertices.GetSizeByte());
+	memcpy(m_pBuffer->cpuPTR, vertices.GetBuffer(), vertices.GetSizeByte());
+
+	m_VertexBufferView.BufferLocation = m_pBuffer->gpuPTR;
+	m_VertexBufferView.SizeInBytes = vertices.GetSizeByte();
+	m_VertexBufferView.StrideInBytes = vertices.GetVertexSizeByte();
+}
+
 VertexBuffer::VertexBuffer(
 	std::vector<DirectX::XMFLOAT3>&& vertices,
 	std::vector<DirectX::XMFLOAT4>&& colors

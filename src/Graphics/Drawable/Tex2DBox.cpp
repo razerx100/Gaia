@@ -15,16 +15,15 @@ Tex2DBox::Tex2DBox(Graphics& gfx,
 	m_tobj(rng, adist, ddist, odist, rdist) {
 
 	if (!IsDataInitialized()) {
-
-		std::vector<D3D12_INPUT_ELEMENT_DESC> inputDescs = {
-			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-			{"Normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-			{"TexCoord", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-		};
-
 		PSODesc pso = PSODesc();
 
-		pso.SetInputLayout(std::move(inputDescs));
+		VertexLayout vertexLayout = {
+			{"Position", 12u},
+			{"Normal", 12u},
+			{"TexCoord", 8u}
+		};
+
+		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
 			gfx, s_ShaderPath + L"RSPixelLightTex2D.cso"

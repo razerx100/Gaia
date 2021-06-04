@@ -10,7 +10,7 @@ class PSODesc {
 public:
 	PSODesc();
 
-	void SetInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC>&& inputElements) noexcept;
+	void SetInputLayout(const VertexLayout& vertexLayout) noexcept;
 	void SetRootSignature(RootSignature* signature) noexcept;
 	void SetVertexShader(const std::wstring& filePath) noexcept;
 	void SetPixelShader(const std::wstring& filePath) noexcept;

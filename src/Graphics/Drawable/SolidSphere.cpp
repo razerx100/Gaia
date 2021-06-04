@@ -5,13 +5,13 @@
 
 SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 	if (!IsDataInitialized()) {
-		std::vector<D3D12_INPUT_ELEMENT_DESC> inputDescs = {
-			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-		};
-
 		PSODesc pso = PSODesc();
 
-		pso.SetInputLayout(std::move(inputDescs));
+		VertexLayout vertexLayout = {
+			{"Position", 12u}
+		};
+
+		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
 			gfx, s_ShaderPath + L"RSSolidColor.cso"

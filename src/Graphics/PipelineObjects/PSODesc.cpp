@@ -16,8 +16,8 @@ PSODesc::PSODesc()
 	m_psoDesc.SampleDesc.Count = 1;
 }
 
-void PSODesc::SetInputLayout(std::vector<D3D12_INPUT_ELEMENT_DESC>&& inputElements) noexcept {
-	m_inputLayout.Init(std::move(inputElements));
+void PSODesc::SetInputLayout(const VertexLayout& vertexLayout) noexcept {
+	m_inputLayout.Init(vertexLayout);
 
 	m_psoDesc.InputLayout = m_inputLayout.GetInputLayout();
 }

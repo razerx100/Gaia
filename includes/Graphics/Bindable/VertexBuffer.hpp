@@ -4,10 +4,12 @@
 #include <vector>
 #include <DirectXMath.h>
 #include <BufferMan.hpp>
+#include <Vertices.hpp>
 
 class VertexBuffer : public Bindable {
 public:
 	VertexBuffer(std::vector<DirectX::XMFLOAT3>&& vertices);
+	VertexBuffer(const Vertices& vertices);
 	VertexBuffer(
 		std::vector<DirectX::XMFLOAT3>&& vertices,
 		std::vector<DirectX::XMFLOAT4>&& colors

@@ -16,15 +16,14 @@ Model::Model(Graphics& gfx,
 	: m_tobj(rng, adist, ddist, odist, rdist) {
 
 	if (!IsDataInitialized()) {
-
-		std::vector<D3D12_INPUT_ELEMENT_DESC> inputDescs = {
-			{"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-			{"Normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-		};
-
 		PSODesc pso = PSODesc();
 
-		pso.SetInputLayout(std::move(inputDescs));
+		VertexLayout vertexLayout = {
+			{"Position", 12u},
+			{"Normal", 12u}
+		};
+
+		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
 			gfx, s_ShaderPath + L"RSPixelLight.cso"
@@ -58,28 +57,24 @@ Model::Model(Graphics& gfx,
 
 		const auto pMesh = pModel->mMeshes[0];
 
-		std::vector<DirectX::XMFLOAT3> vertices;
-		vertices.reserve(pMesh->mNumVertices);
-
-		std::vector<DirectX::XMFLOAT3> normals;
-		normals.reserve(pMesh->mNumVertices);
+		Vertices vertices = {
+			vertexLayout,
+			pMesh->mNumVertices
+		};
 
 		for (std::uint32_t i = 0; i < pMesh->mNumVertices; i++) {
-			vertices.push_back(
-				{
+			vertices.AddVertexData(
+				DirectX::XMFLOAT3{
 					pMesh->mVertices[i].x * scale,
 					pMesh->mVertices[i].y * scale,
 					pMesh->mVertices[i].z * scale
-				}
-			);
-
-			normals.push_back(
+				},
 				*reinterpret_cast<DirectX::XMFLOAT3*>(&pMesh->mNormals[i])
 			);
 		}
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			std::move(vertices), std::move(normals))
+			vertices)
 		);
 
 		std::vector<std::uint16_t> indices;
