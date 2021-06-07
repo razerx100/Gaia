@@ -17,8 +17,8 @@ public:
 	void Update(float deltaTime) noexcept override;
 
 private:
-	TestObject m_tobj;
-	DirectX::XMFLOAT3X3 mt;
+	TestObject m_TObj;
+	DirectX::XMFLOAT3X3 m_Mat;
 };
 
 #endif

@@ -13,13 +13,14 @@ Cylinder::Cylinder(
 	std::uniform_int_distribution<int>& tdist,
 	DirectX::XMFLOAT4 material)
 	: m_tobj(rng, adist, ddist, odist, rdist) {
-	if (!IsDataInitialized()) {
-		PSODesc pso = PSODesc();
 
-		VertexLayout vertexLayout = {
+	VertexLayout vertexLayout = {
 			{"Position", 12u},
 			{"Normal", 12u}
 		};
+
+	if (!IsDataInitialized()) {
+		PSODesc pso = PSODesc();
 
 		pso.SetInputLayout(vertexLayout);
 
@@ -55,10 +56,10 @@ Cylinder::Cylinder(
 	IndexedTriangleList model = Prism::MakeTesselatedIndependentCapNormals(tdist(rng));
 
 	AddBind(std::make_unique<VertexBuffer>(
-		std::move(model.m_Vertices), std::move(model.m_Normals)
-		));
+		model.GetVerticesObject(vertexLayout, true))
+	);
 
-	AddIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
+	AddIndexBuffer(std::make_unique<IndexBuffer>(model.GetIndices()));
 
 	struct PSMaterial {
 		DirectX::XMFLOAT4 material;

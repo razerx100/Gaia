@@ -17,19 +17,19 @@ public:
 
 private:
 	// positional
-	float r;
-	float roll;
-	float pitch;
-	float yaw;
-	float theta;
-	float phi;
-	float chi;
+	float R;
+	float Roll;
+	float Pitch;
+	float Yaw;
+	float Theta;
+	float Phi;
+	float Chi;
 	// speed (delta/s)
-	float droll;
-	float dpitch;
-	float dyaw;
-	float dtheta;
-	float dphi;
-	float dchi;
+	float dRoll;
+	float dPitch;
+	float dYaw;
+	float dTheta;
+	float dPhi;
+	float dChi;
 };
 #endif

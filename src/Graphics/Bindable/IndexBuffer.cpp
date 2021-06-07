@@ -1,7 +1,7 @@
 #include <IndexBuffer.hpp>
 #include <Graphics.hpp>
 
-IndexBuffer::IndexBuffer(std::vector<std::uint16_t>&& indices)
+IndexBuffer::IndexBuffer(const std::vector<std::uint16_t>& indices)
 	: m_IndexBufferView{}, m_IndexCount(static_cast<std::uint32_t>(std::size(indices))) {
 
 	const std::uint32_t indicesSize = static_cast<std::uint32_t>(

@@ -12,7 +12,7 @@ Tex2DBox::Tex2DBox(Graphics& gfx,
 	std::uniform_real_distribution<float>& odist,
 	std::uniform_real_distribution<float>& rdist)
 	:
-	m_tobj(rng, adist, ddist, odist, rdist) {
+	m_TObj(rng, adist, ddist, odist, rdist) {
 
 	if (!IsDataInitialized()) {
 		PSODesc pso = PSODesc();
@@ -82,9 +82,10 @@ Tex2DBox::Tex2DBox(Graphics& gfx,
 		model.SetNormalsIndependentFlat();
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			std::move(model.m_Vertices), std::move(model.m_Normals), std::move(uvCoord)));
+			model.GetVerticesObject(vertexLayout, true, uvCoord))
+		);
 
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(model.GetIndices()));
 
 		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
 			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
@@ -116,5 +117,5 @@ Tex2DBox::Tex2DBox(Graphics& gfx,
 }
 
 void Tex2DBox::Update(float deltaTime) noexcept {
-	m_Transform = m_tobj.GetMomentum(deltaTime);
+	m_Transform = m_TObj.GetMomentum(deltaTime);
 }

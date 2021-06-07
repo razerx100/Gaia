@@ -8,30 +8,7 @@
 
 class VertexBuffer : public Bindable {
 public:
-	VertexBuffer(std::vector<DirectX::XMFLOAT3>&& vertices);
 	VertexBuffer(const Vertices& vertices);
-	VertexBuffer(
-		std::vector<DirectX::XMFLOAT3>&& vertices,
-		std::vector<DirectX::XMFLOAT4>&& colors
-	);
-	VertexBuffer(
-		std::vector<DirectX::XMFLOAT3>&& vertices,
-		std::vector<DirectX::XMFLOAT3>&& normals
-	);
-	VertexBuffer(
-		std::vector<DirectX::XMFLOAT3>&& vertices,
-		std::vector<DirectX::XMFLOAT3>&& normals,
-		std::vector<DirectX::XMFLOAT4>&& colors
-	);
-	VertexBuffer(
-		std::vector<DirectX::XMFLOAT3>&& vertices,
-		std::vector<DirectX::XMFLOAT3>&& normals,
-		std::vector<DirectX::XMFLOAT2>&& uvs
-	);
-	VertexBuffer(
-		std::vector<DirectX::XMFLOAT3>&& vertices,
-		std::vector<DirectX::XMFLOAT2>&& uvs
-	);
 
 	void BindCommand(Graphics& gfx) noexcept override;
 

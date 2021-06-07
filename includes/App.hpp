@@ -20,15 +20,15 @@ private:
 	void DoFrame();
 
 private:
-	Window m_wnd;
-	Timer m_timer;
-	Camera m_camera;
+	Window m_Wnd;
+	Timer m_Timer;
+	Camera m_Camera;
 
-	std::vector<std::unique_ptr<Drawable>> m_drawables;
+	std::vector<std::unique_ptr<Drawable>> m_pDrawables;
 
-	static std::unique_ptr<Light> s_light;
+	static std::unique_ptr<Light> s_Light;
 
-	static constexpr std::uint64_t nDrawables = 380u;
-	float m_speedFactor;
+	static constexpr std::uint64_t s_nDrawables = 380u;
+	float m_SpeedFactor;
 };
 #endif

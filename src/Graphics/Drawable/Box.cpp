@@ -11,7 +11,7 @@ Box::Box(Graphics& gfx,
 	std::uniform_real_distribution<float>& rdist,
 	std::uniform_real_distribution<float>& bdist,
 	DirectX::XMFLOAT4 material)
-	: m_tobj(rng, adist, ddist, odist, rdist) {
+	: m_TObj(rng, adist, ddist, odist, rdist) {
 
 	if (!IsDataInitialized()) {
 		PSODesc pso = PSODesc();
@@ -51,10 +51,10 @@ Box::Box(Graphics& gfx,
 		model.SetNormalsIndependentFlat();
 
 		AddStaticBind(std::make_unique<VertexBuffer>(
-			std::move(model.m_Vertices), std::move(model.m_Normals)
-			));
+			model.GetVerticesObject(vertexLayout, true))
+		);
 
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(model.GetIndices()));
 
 		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
 			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
@@ -87,13 +87,13 @@ Box::Box(Graphics& gfx,
 		));
 
 	DirectX::XMStoreFloat3x3(
-		&mt,
+		&m_Mat,
 		DirectX::XMMatrixScaling(1.0f, 1.0f, bdist(rng))
 	);
 }
 
 void Box::Update(float deltaTime) noexcept {
 	m_Transform =
-		DirectX::XMLoadFloat3x3(&mt) *
-		m_tobj.GetMomentum(deltaTime);
+		DirectX::XMLoadFloat3x3(&m_Mat) *
+		m_TObj.GetMomentum(deltaTime);
 }

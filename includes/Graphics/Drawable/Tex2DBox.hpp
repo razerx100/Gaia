@@ -15,7 +15,7 @@ public:
 	void Update(float deltaTime) noexcept override;
 
 private:
-	TestObject m_tobj;
+	TestObject m_TObj;
 };
 
 #endif

@@ -16,16 +16,16 @@ ImGuiMan ImGuiMan::s_initObj;
 
 GDIPlusManager gdim;
 
-std::unique_ptr<Light> App::s_light;
+std::unique_ptr<Light> App::s_Light;
 
 App::App()
 	:
-	m_wnd(1980, 1080, "DirectX12 Window"),
-	m_speedFactor(1.0f) {
+	m_Wnd(1980, 1080, "DirectX12 Window"),
+	m_SpeedFactor(1.0f) {
 
 	Drawable::SetShaderPath();
 
-	s_light = std::make_unique<Light>(m_wnd.GetGfx(), 0.4f);
+	s_Light = std::make_unique<Light>(m_Wnd.GetGfx(), 0.4f);
 
 	class Factory {
 	public:
@@ -87,14 +87,14 @@ App::App()
 		std::uniform_real_distribution<float> cdist{ 0.0f, 1.0f };
 	};
 
-	Factory f(m_wnd.GetGfx());
-	m_drawables.reserve(nDrawables);
+	Factory f(m_Wnd.GetGfx());
+	m_pDrawables.reserve(s_nDrawables);
 
-	std::generate_n(std::back_inserter(m_drawables), nDrawables, f);
+	std::generate_n(std::back_inserter(m_pDrawables), s_nDrawables, f);
 
 	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 60.0f));
 
-	m_wnd.GetGfx().InitialGPUSetup();
+	m_Wnd.GetGfx().InitialGPUSetup();
 }
 
 int App::Go() {
@@ -104,33 +104,33 @@ int App::Go() {
 			return *ecode;
 
 		DoFrame();
-		m_wnd.GetGfx().PresentFrame();
+		m_Wnd.GetGfx().PresentFrame();
 	}
 }
 
 void App::DoFrame() {
-	const float deltaTime = m_timer.Mark() * m_speedFactor;
-	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
-	m_camera.Update();
+	const float deltaTime = m_Timer.Mark() * m_SpeedFactor;
+	m_Wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
+	m_Camera.Update();
 
-	s_light->Update();
+	s_Light->Update();
 
-	for (auto& drawable : m_drawables) {
-		drawable->Update(m_wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
-		drawable->Draw(m_wnd.GetGfx());
+	for (auto& drawable : m_pDrawables) {
+		drawable->Update(m_Wnd.m_kb.IsKeyPressed(VK_SPACE) ? 0.0f : deltaTime);
+		drawable->Draw(m_Wnd.GetGfx());
 	};
 
-	s_light->Draw(m_wnd.GetGfx());
+	s_Light->Draw(m_Wnd.GetGfx());
 
-	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
+	ImGuiImpl::ImGuiRenderSimulationSlider(m_SpeedFactor, m_Wnd.m_kb.IsKeyPressed(VK_SPACE));
 
-	m_camera.ControlWindow();
+	m_Camera.ControlWindow();
 
-	s_light->ImGuiLightSlider();
+	s_Light->ImGuiLightSlider();
 
-	m_wnd.GetGfx().EndFrame();
+	m_Wnd.GetGfx().EndFrame();
 }
 
 Light* App::GetLight() noexcept {
-	return s_light.get();
+	return s_Light.get();
 }

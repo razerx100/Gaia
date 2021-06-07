@@ -1,22 +1,22 @@
 #include <IndexedTriangleList.hpp>
 
 IndexedTriangleList::IndexedTriangleList(
-	std::vector<DirectX::XMFLOAT3>&& vertices_input,
-	std::vector<std::uint16_t>&& indices_input)
-	: m_Vertices(std::move(vertices_input)), m_Indices(std::move(indices_input)) {
+	std::vector<DirectX::XMFLOAT3>&& verticesInput,
+	std::vector<std::uint16_t>&& indicesInput)
+	: m_Vertices(std::move(verticesInput)), m_Indices(std::move(indicesInput)) {
 
 	assert(m_Vertices.size() > 2);
 	assert(m_Indices.size() % 3 == 0);
 }
 
 IndexedTriangleList::IndexedTriangleList(
-	std::vector<DirectX::XMFLOAT3>&& vertices_input,
-	std::vector<DirectX::XMFLOAT3>&& normals_input,
-	std::vector<std::uint16_t>&& indices_input)
+	std::vector<DirectX::XMFLOAT3>&& verticesInput,
+	std::vector<DirectX::XMFLOAT3>&& normalsInput,
+	std::vector<std::uint16_t>&& indicesInput)
 	:
-	m_Vertices(std::move(vertices_input)),
-	m_Normals(std::move(normals_input)),
-	m_Indices(std::move(indices_input)) {
+	m_Vertices(std::move(verticesInput)),
+	m_Normals(std::move(normalsInput)),
+	m_Indices(std::move(indicesInput)) {
 
 	assert(m_Vertices.size() > 2);
 	assert(m_Indices.size() % 3 == 0);
@@ -55,4 +55,103 @@ void IndexedTriangleList::SetNormalsIndependentFlat() noexcept {
 		XMStoreFloat3(&m_Normals[m_Indices[i + 1]], normal);
 		XMStoreFloat3(&m_Normals[m_Indices[i + 2]], normal);
 	}
+}
+
+std::vector<std::uint16_t> IndexedTriangleList::GetIndices() const noexcept {
+	return m_Indices;
+}
+
+std::uint32_t IndexedTriangleList::GetVerticesSize() const noexcept {
+	return static_cast<std::uint32_t>(m_Vertices.size());
+}
+
+Vertices IndexedTriangleList::GetVerticesObject(
+	const VertexLayout& vertexLayout
+) noexcept {
+	Vertices vertices = {
+		vertexLayout,
+		static_cast<std::uint32_t>(m_Vertices.size())
+	};
+
+	for (DirectX::XMFLOAT3 vertex : m_Vertices)
+		vertices.AddVertexData(vertex);
+
+	return vertices;
+}
+
+Vertices IndexedTriangleList::GetVerticesObject(
+	const VertexLayout& vertexLayout,
+	bool normals
+) noexcept {
+	Vertices vertices = {
+		vertexLayout,
+		static_cast<std::uint32_t>(m_Vertices.size())
+	};
+
+	for (int i = 0; i < m_Vertices.size(); ++i)
+		vertices.AddVertexData(m_Vertices[i], m_Normals[i]);
+
+	return vertices;
+}
+
+Vertices IndexedTriangleList::GetVerticesObject(
+	const VertexLayout& vertexLayout,
+	const std::vector<DirectX::XMFLOAT4>& colors
+) noexcept {
+	Vertices vertices = {
+		vertexLayout,
+		static_cast<std::uint32_t>(m_Vertices.size())
+	};
+
+	for (int i = 0; i < m_Vertices.size(); ++i)
+		vertices.AddVertexData(m_Vertices[i], colors[i]);
+
+	return vertices;
+}
+
+Vertices IndexedTriangleList::GetVerticesObject(
+	const VertexLayout& vertexLayout,
+	bool normals,
+	const std::vector<DirectX::XMFLOAT4>& colors
+) noexcept {
+	Vertices vertices = {
+		vertexLayout,
+		static_cast<std::uint32_t>(m_Vertices.size())
+	};
+
+	for (int i = 0; i < m_Vertices.size(); ++i)
+		vertices.AddVertexData(m_Vertices[i], m_Normals[i], colors[i]);
+
+	return vertices;
+}
+
+Vertices IndexedTriangleList::GetVerticesObject(
+	const VertexLayout& vertexLayout,
+	const std::vector<DirectX::XMFLOAT2>& uvs
+) noexcept {
+	Vertices vertices = {
+		vertexLayout,
+		static_cast<std::uint32_t>(m_Vertices.size())
+	};
+
+	for (int i = 0; i < m_Vertices.size(); ++i)
+		vertices.AddVertexData(m_Vertices[i], uvs[i]);
+
+	return vertices;
+}
+
+Vertices IndexedTriangleList::GetVerticesObject(
+	const VertexLayout& vertexLayout,
+	bool normals,
+	const std::vector<DirectX::XMFLOAT2>& uvs
+) noexcept {
+	Vertices vertices = {
+		vertexLayout,
+		static_cast<std::uint32_t>(m_Vertices.size())
+	};
+
+	for (int i = 0; i < m_Vertices.size(); ++i)
+		vertices.AddVertexData(m_Vertices[i], m_Normals[i], uvs[i]);
+
+	return vertices;
 }

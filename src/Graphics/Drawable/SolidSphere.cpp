@@ -40,9 +40,11 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 
 		model.Transform(DirectX::XMMatrixScaling(radius, radius, radius));
 
-		AddStaticBind(std::make_unique<VertexBuffer>(std::move(model.m_Vertices)));
+		AddStaticBind(std::make_unique<VertexBuffer>(
+			model.GetVerticesObject(vertexLayout))
+		);
 
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
+		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(model.GetIndices()));
 
 		struct ConstantBufferColor {
 			struct {

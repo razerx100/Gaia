@@ -11,16 +11,16 @@ Pyramid::Pyramid(Graphics& gfx,
 	std::uniform_real_distribution<float>& rdist,
 	std::uniform_int_distribution<int>& tdist)
 	:
-	m_tobj(rng, adist, ddist, odist, rdist) {
+	m_TObj(rng, adist, ddist, odist, rdist) {
+
+	VertexLayout vertexLayout = {
+		{"Position", 12u},
+		{"Normal", 12u},
+		{"Color", 16u}
+	};
 
 	if (!IsDataInitialized()) {
 		PSODesc pso = PSODesc();
-
-		VertexLayout vertexLayout = {
-			{"Position", 12u},
-			{"Normal", 12u},
-			{"Color", 16u}
-		};
 
 		pso.SetInputLayout(vertexLayout);
 
@@ -57,7 +57,7 @@ Pyramid::Pyramid(Graphics& gfx,
 
 	IndexedTriangleList model = Cone::MakeTesselatedIndependentFaces(tesselation);
 
-	std::vector<DirectX::XMFLOAT4> vertexColors(model.m_Vertices.size());
+	std::vector<DirectX::XMFLOAT4> vertexColors(model.GetVerticesSize());
 
 	for (DirectX::XMFLOAT4& vColor : vertexColors)
 		vColor = { 0.16f, 0.16f, 1.0f, 1.0f };
@@ -70,10 +70,10 @@ Pyramid::Pyramid(Graphics& gfx,
 	model.SetNormalsIndependentFlat();
 
 	AddBind(std::make_unique<VertexBuffer>(
-		std::move(model.m_Vertices), std::move(model.m_Normals), std::move(vertexColors)
-		));
+		model.GetVerticesObject(vertexLayout, true, vertexColors))
+	);
 
-	AddIndexBuffer(std::make_unique<IndexBuffer>(std::move(model.m_Indices)));
+	AddIndexBuffer(std::make_unique<IndexBuffer>(model.GetIndices()));
 
 	struct PSMaterial {
 		float specularIntensity;
@@ -99,7 +99,7 @@ Pyramid::Pyramid(Graphics& gfx,
 }
 
 void Pyramid::Update(float deltaTime) noexcept {
-	m_Transform = m_tobj.GetMomentum(deltaTime);
+	m_Transform = m_TObj.GetMomentum(deltaTime);
 }
 
 std::uint32_t Pyramid::GetIndexCount() const noexcept {

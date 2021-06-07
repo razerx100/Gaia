@@ -8,31 +8,31 @@ TestObject::TestObject(
 		std::uniform_real_distribution<float>& rdist
 		)
 	:
-	r(rdist(rng)),
-	roll(0.0f),
-	pitch(0.0f),
-	yaw(0.0f),
-	theta(adist(rng)),
-	phi(adist(rng)),
-	chi(adist(rng)),
-	droll(ddist(rng)),
-	dpitch(ddist(rng)),
-	dyaw(ddist(rng)),
-	dtheta(odist(rng)),
-	dphi(odist(rng)),
-	dchi(odist(rng)) {}
+	R(rdist(rng)),
+	Roll(0.0f),
+	Pitch(0.0f),
+	Yaw(0.0f),
+	Theta(adist(rng)),
+	Phi(adist(rng)),
+	Chi(adist(rng)),
+	dRoll(ddist(rng)),
+	dPitch(ddist(rng)),
+	dYaw(ddist(rng)),
+	dTheta(odist(rng)),
+	dPhi(odist(rng)),
+	dChi(odist(rng)) {}
 
 
 DirectX::XMMATRIX TestObject::GetMomentum(float deltaTime) noexcept {
-	roll += droll * deltaTime;
-	pitch += dpitch * deltaTime;
-	yaw += dyaw * deltaTime;
-	theta += dtheta * deltaTime;
-	phi += dphi * deltaTime;
-	chi += dchi * deltaTime;
+	Roll += dRoll * deltaTime;
+	Pitch += dPitch * deltaTime;
+	Yaw += dYaw * deltaTime;
+	Theta += dTheta * deltaTime;
+	Phi += dPhi * deltaTime;
+	Chi += dChi * deltaTime;
 
 	return
-		DirectX::XMMatrixRotationRollPitchYaw(pitch, yaw, roll) *
-		DirectX::XMMatrixTranslation(r, 0.0f, 0.0f) *
-		DirectX::XMMatrixRotationRollPitchYaw(theta, phi, chi);
+		DirectX::XMMatrixRotationRollPitchYaw(Pitch, Yaw, Roll) *
+		DirectX::XMMatrixTranslation(R, 0.0f, 0.0f) *
+		DirectX::XMMatrixRotationRollPitchYaw(Theta, Phi, Chi);
 }

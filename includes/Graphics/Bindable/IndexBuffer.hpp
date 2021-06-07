@@ -6,7 +6,7 @@
 
 class IndexBuffer : public Bindable {
 public:
-	IndexBuffer(std::vector<std::uint16_t>&& indices);
+	IndexBuffer(const std::vector<std::uint16_t>& indices);
 	void BindCommand(Graphics& gfx) noexcept override;
 
 	std::uint32_t GetIndexCount() const noexcept;
