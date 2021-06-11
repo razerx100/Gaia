@@ -25,14 +25,14 @@ Cylinder::Cylinder(
 		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RSPixelLight.cso"
+			gfx, App::GetShaderPath() + L"RSPixelLight.cso"
 			);
 
 		pso.SetRootSignature(rootSig.get());
 
-		pso.SetPixelShader(s_ShaderPath + L"PSPixelLight.cso");
+		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLight.cso");
 
-		pso.SetVertexShader(s_ShaderPath + L"VSPixelLight.cso");
+		pso.SetVertexShader(App::GetShaderPath() + L"VSPixelLight.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,

@@ -1,22 +1,45 @@
 #ifndef __MODEL_HPP__
 #define __MODEL_HPP__
-#include <DrawableBase.hpp>
-#include <TestObject.hpp>
+#include <vector>
+#include <memory>
+#include <string>
+#include <DirectXMath.h>
+#include <Mesh.hpp>
 
-class Model : public DrawableBase<Model> {
+class Node;
+
+class Model {
 public:
-	Model(Graphics& gfx,
-		std::mt19937& rng,
-		std::uniform_real_distribution<float>& adist,
-		std::uniform_real_distribution<float>& ddist,
-		std::uniform_real_distribution<float>& odist,
-		std::uniform_real_distribution<float>& rdist,
-		DirectX::XMFLOAT4 material, float scale);
+	Model(Graphics& gfx, const std::string& fileName);
 
-	void Update(float deltaTime) noexcept override;
+	static std::unique_ptr<Mesh> ParseMesh(
+		Graphics& gfx, const struct aiMesh& mesh
+	);
+	std::unique_ptr<Node> ParseNode(const struct aiNode& node);
+
+	void Draw(Graphics& gfx, const DirectX::XMMATRIX& transform) const;
 
 private:
-	TestObject m_tobj;
+	std::unique_ptr<Node> m_pRoot;
+	std::vector<std::unique_ptr<Mesh>> m_pMeshes;
 };
 
+class Node {
+	friend class Model;
+public:
+	Node(std::vector<Mesh*>&& pMeshes, const DirectX::XMMATRIX& transform);
+
+	void Draw(
+		Graphics& gfx,
+		const DirectX::XMMATRIX& accumulatedTransform
+	) const noexcept;
+
+private:
+	void AddChild(std::unique_ptr<Node> pChild) noexcept;
+
+private:
+	std::vector<std::unique_ptr<Node>> m_pChildren;
+	std::vector<Mesh*> m_pMeshes;
+	DirectX::XMMATRIX m_Transform;
+};
 #endif

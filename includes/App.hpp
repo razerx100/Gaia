@@ -1,11 +1,20 @@
 #ifndef __APP_HPP__
 #define __APP_HPP__
 #include <Window.hpp>
-#include <Drawable.hpp>
 #include <Timer.hpp>
 #include <vector>
 #include <Camera.hpp>
 #include <Light.hpp>
+#include <Model.hpp>
+
+struct Position {
+	float roll = 0.0f;
+	float pitch = -3.1f;
+	float yaw = 0.0f;
+	float x = 0.0f;
+	float y = -8.5f;
+	float z = 0.0f;
+};
 
 class App {
 public:
@@ -15,20 +24,24 @@ public:
 	int Go();
 
 	static Light* GetLight() noexcept;
+	static std::wstring GetShaderPath() noexcept;
 
 private:
 	void DoFrame();
+
+	static void SetShaderPath() noexcept;
 
 private:
 	Window m_Wnd;
 	Timer m_Timer;
 	Camera m_Camera;
+	std::unique_ptr<Model> m_pNano;
 
-	std::vector<std::unique_ptr<Drawable>> m_pDrawables;
+	float m_SpeedFactor;
 
+	static std::wstring s_ShaderPath;
 	static std::unique_ptr<Light> s_Light;
 
-	static constexpr std::uint64_t s_nDrawables = 380u;
-	float m_SpeedFactor;
+	Position pos;
 };
 #endif

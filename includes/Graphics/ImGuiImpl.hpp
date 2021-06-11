@@ -6,6 +6,7 @@
 #include <HeapMan.hpp>
 #include <Light.hpp>
 #include <functional>
+#include <App.hpp>
 
 namespace ImGuiImpl {
 	void ImGuiWindowInit(void* hwnd);
@@ -34,6 +35,10 @@ namespace ImGuiImpl {
 		float& r, float& theta, float& phi,
 		float& roll, float& pitch, float& yaw,
 		std::function<void()> resetButton
+	);
+
+	void ImGuiModelControl(
+		Position& position
 	);
 
 	void ImGuiLightSlider(

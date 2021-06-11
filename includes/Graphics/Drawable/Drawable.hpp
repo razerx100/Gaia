@@ -11,26 +11,17 @@ public:
 	Drawable() = default;
 	virtual ~Drawable() = default;
 
-	virtual void Update(float deltaTime) noexcept = 0;
+	virtual void Update(float deltaTime) noexcept;
+	virtual void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
 
-	void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
+	// Bind Root Signature before constant buffers
 	void AddBind(std::unique_ptr<Bindable> bind) noexcept;
-
-	// Override GetIndexCount function
 	void AddIndexBuffer(std::unique_ptr<class IndexBuffer> indexBuffer) noexcept;
 
-	static void SetShaderPath() noexcept;
-
-	static std::wstring GetShaderPath() noexcept;
+protected:
+	virtual std::uint32_t GetIndexCount() const noexcept;
 
 protected:
-	virtual const std::vector<std::unique_ptr<Bindable>>& GetStaticBindables() const noexcept = 0;
-
-	virtual std::uint32_t GetIndexCount() const noexcept = 0;
-
-protected:
-	static std::wstring s_ShaderPath;
-
 	std::uint32_t m_IndexCount;
 	std::vector<std::unique_ptr<Bindable>> m_Binds;
 

@@ -7,6 +7,16 @@
 template<typename T>
 class DrawableBase : public Drawable {
 public:
+	void Draw(Graphics& gfx) const noexcept(!IS_DEBUG) override {
+		for (auto& bind : s_Binds)
+			bind->BindCommand(gfx);
+
+		for (auto& bind : m_Binds)
+			bind->BindCommand(gfx);
+
+		gfx.DrawIndexed(GetIndexCount());
+	}
+
 	static bool IsDataInitialized() noexcept {
 		return !s_Binds.empty();
 	}
@@ -22,13 +32,9 @@ public:
 	}
 
 protected:
+	// Override with m_IndexCount if drawable has different IndexBuffer for each object
 	std::uint32_t GetIndexCount() const noexcept override {
 		return s_IndexCount;
-	}
-
-private:
-	const std::vector<std::unique_ptr<Bindable>>& GetStaticBindables() const noexcept override {
-		return s_Binds;
 	}
 
 private:

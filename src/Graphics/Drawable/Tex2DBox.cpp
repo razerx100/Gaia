@@ -26,14 +26,14 @@ Tex2DBox::Tex2DBox(Graphics& gfx,
 		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RSPixelLightTex2D.cso"
+			gfx, App::GetShaderPath() + L"RSPixelLightTex2D.cso"
 			);
 
 		pso.SetRootSignature(rootSig.get());
 
-		pso.SetPixelShader(s_ShaderPath + L"PSPixelLightTex2D.cso");
+		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLightTex2D.cso");
 
-		pso.SetVertexShader(s_ShaderPath + L"VSPixelLightTex2D.cso");
+		pso.SetVertexShader(App::GetShaderPath() + L"VSPixelLightTex2D.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,

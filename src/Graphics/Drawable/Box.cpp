@@ -24,14 +24,14 @@ Box::Box(Graphics& gfx,
 		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RSPixelLight.cso"
+			gfx, App::GetShaderPath() + L"RSPixelLight.cso"
 			);
 
 		pso.SetRootSignature(rootSig.get());
 
-		pso.SetPixelShader(s_ShaderPath + L"PSPixelLight.cso");
+		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLight.cso");
 
-		pso.SetVertexShader(s_ShaderPath + L"VSPixelLight.cso");
+		pso.SetVertexShader(App::GetShaderPath() + L"VSPixelLight.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
@@ -59,7 +59,8 @@ Box::Box(Graphics& gfx,
 		AddStaticBind(std::make_unique<ConstantBuffer<LightData>>(
 			3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
 			std::bind(&Light::GetLightData, App::GetLight())
-			));
+			)
+		);
 	}
 
 	struct PSMaterial {
@@ -76,15 +77,18 @@ Box::Box(Graphics& gfx,
 
 	AddBind(std::make_unique<ConstantBufferCBVStatic<PSMaterial>>(
 		2u, &matData
-		));
+		)
+	);
 
 	AddBind(std::make_unique<ConstantBufferMat>(
 		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
-		));
+		)
+	);
 
 	AddBind(std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
 		1u, std::bind(&Transform::GetTransformCM, &m_Transform)
-		));
+		)
+	);
 
 	DirectX::XMStoreFloat3x3(
 		&m_Mat,

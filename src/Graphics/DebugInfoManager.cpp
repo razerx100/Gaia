@@ -1,6 +1,4 @@
 #include <DebugInfoManager.hpp>
-#include <memory>
-#include <functional>
 #include <WindowThrowMacros.hpp>
 #include <GraphicsThrowMacros.hpp>
 

@@ -2,6 +2,7 @@
 #include <Graphics.hpp>
 #include <Sphere.hpp>
 #include <BindAll.hpp>
+#include <App.hpp>
 
 SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 	if (!IsDataInitialized()) {
@@ -14,14 +15,14 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 		pso.SetInputLayout(vertexLayout);
 
 		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, s_ShaderPath + L"RSSolidColor.cso"
+			gfx, App::GetShaderPath() + L"RSSolidColor.cso"
 			);
 
 		pso.SetRootSignature(rootSig.get());
 
-		pso.SetPixelShader(s_ShaderPath + L"PSSolidColor.cso");
+		pso.SetPixelShader(App::GetShaderPath() + L"PSSolidColor.cso");
 
-		pso.SetVertexShader(s_ShaderPath + L"VSSolidColor.cso");
+		pso.SetVertexShader(App::GetShaderPath() + L"VSSolidColor.cso");
 
 		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
 			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
@@ -70,8 +71,6 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 
 	m_Transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);
 }
-
-void SolidSphere::Update(float deltatime) noexcept {}
 
 void SolidSphere::SetPosition(DirectX::XMFLOAT3 position) noexcept {
 	m_Transform = DirectX::XMMatrixTranslation(position.x, position.y, position.z);

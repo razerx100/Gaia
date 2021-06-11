@@ -32,7 +32,7 @@ void Light::Draw(Graphics& gfx) noexcept {
 }
 
 void Light::ResetData() noexcept {
-	m_lightData.source = { 0.0f, 0.0f, -1.0f };
+	m_lightData.source = { 0.0f, 0.7f, -10.5f };
 	m_lightData.ambient = { 0.05f, 0.05f, 0.05f };
 	m_lightData.diffuseColor = { 1.0f, 1.0f, 1.0f };
 	m_lightData.diffuseIntensity = 1.0f;

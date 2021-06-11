@@ -56,11 +56,13 @@ namespace ImGuiImpl {
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {
 		if (ImGui::Begin("Simulation Speed")) {
 			ImGui::SliderFloat("Speed Factor", &speedFactor, 0.0f, 4.0f);
+
 			ImGui::Text(
 				"Application average %.3f ms/frame (%.1f FPS)",
 				1000.0f / ImGui::GetIO().Framerate,
 				ImGui::GetIO().Framerate
 			);
+
 			ImGui::Text(
 				"Status: %s", isPaused ? "PAUSED" : "RUNNING"
 			);
@@ -76,13 +78,17 @@ namespace ImGuiImpl {
 	) {
 		if (ImGui::Begin("Camera")) {
 			ImGui::Text("Position");
-			ImGui::SliderFloat("R", &r, 0.0f, 80.0f, "%.1f");
+
+			ImGui::SliderFloat("R", &r, 0.2f, 80.0f, "%.1f");
 			ImGui::SliderAngle("X", &theta, -180.0f, 180.0f);
 			ImGui::SliderAngle("Y", &phi, -89.0f, 89.0f);
+
 			ImGui::Text("Orientation");
+
 			ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
 			ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
 			ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
+
 			if (ImGui::Button("Reset"))
 			{
 				resetButton();
@@ -116,6 +122,26 @@ namespace ImGuiImpl {
 			{
 				resetButton();
 			}
+		}
+
+		ImGui::End();
+	}
+
+	void ImGuiModelControl(
+		Position& position
+	) {
+		if (ImGui::Begin("Model")) {
+			ImGui::Text("Position");
+
+			ImGui::SliderFloat("X", &position.x, -20.0f, 20.0f);
+			ImGui::SliderFloat("Y", &position.y, -20.0f, 20.0f);
+			ImGui::SliderFloat("Z", &position.z, -20.0f, 20.0f);
+
+			ImGui::Text("Orientation");
+
+			ImGui::SliderAngle("Roll", &position.roll, -180.0f, 180.0f);
+			ImGui::SliderAngle("Pitch", &position.pitch, -180.0f, 180.0f);
+			ImGui::SliderAngle("Yaw", &position.yaw, -180.0f, 180.0f);
 		}
 
 		ImGui::End();
@@ -155,6 +181,10 @@ namespace ImGuiImpl {
 	void ImGuiLightSlider(
 		LightData& data,
 		std::function<void()> resetButton
+	) {}
+
+	void ImGuiModelControl(
+		Position& position
 	) {}
 }
 
