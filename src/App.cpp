@@ -16,16 +16,18 @@ std::unique_ptr<Light> App::s_Light;
 
 App::App()
 	:
-	m_Wnd(1980, 1080, "DirectX12 Window"),
+	m_Wnd(1920, 1080, "DirectX12 Window"),
 	m_SpeedFactor(1.0f) {
 
 	SetShaderPath();
 
+	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1080.0f / 1920.0f, 0.5f, 60.0f));
+
 	s_Light = std::make_unique<Light>(m_Wnd.GetGfx(), 0.4f);
 
-	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 9.0f / 16.0f, 0.5f, 60.0f));
-
 	m_pNano = std::make_unique<Model>(m_Wnd.GetGfx(), "models\\nanosuit.obj");
+
+	m_pBox = std::make_unique<Box>(m_Wnd.GetGfx(), DirectX::XMFLOAT4{1.0f, 0.0f, 0.0f, 1.0f});
 
 	m_Wnd.GetGfx().InitialGPUSetup();
 }
@@ -60,6 +62,8 @@ void App::DoFrame() {
 		);
 
 	m_pNano->Draw(m_Wnd.GetGfx(), transform);
+
+	m_pBox->Draw(m_Wnd.GetGfx(), transform);
 
 	ImGuiImpl::ImGuiRenderSimulationSlider(m_SpeedFactor, m_Wnd.m_kb.IsKeyPressed(VK_SPACE));
 

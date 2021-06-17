@@ -46,19 +46,20 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept {
 
 // Window
 Window::Window(int width, int height, const char* name)
-	: m_width(width), m_height(height) {
+	: m_width(width), m_height(height), m_fullScreenMode(false),
+	m_windowStyle(WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU) {
 	RECT wr;
-	wr.left = 100;
-	wr.right = width + wr.left;
-	wr.top = 100;
-	wr.bottom = height + wr.top;
-	if (!AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE))
+	wr.left = 0;
+	wr.right = width;
+	wr.top = 0;
+	wr.bottom = height;
+	if (!AdjustWindowRect(&wr, m_windowStyle, FALSE))
 		throw HWND_LAST_EXCEPT();
 
 	m_hWnd = CreateWindowEx(
 		0,
 		WindowClass::GetName(), name,
-		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+		m_windowStyle,
 		CW_USEDEFAULT, CW_USEDEFAULT, wr.right - wr.left, wr.bottom - wr.top,
 		nullptr, nullptr, WindowClass::GetInstance(), this
 	);
@@ -116,6 +117,17 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		m_kb.ClearState();
 		break;
 	}
+	case WM_SIZE: {
+		RECT clientRect = {};
+		GetClientRect(m_hWnd, &clientRect);
+
+		m_width = clientRect.right - clientRect.left;
+		m_height = clientRect.bottom - clientRect.top;
+
+		if(m_pGfx)
+			m_pGfx->ResizeBuffer(m_width, m_height);
+		break;
+	}
 	/************* KEYBOARD MESSAGES *************/
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN: {
@@ -124,6 +136,9 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		if (imIO.WantCaptureKeyboard)
 			break;
 #endif
+		if ((wParam == VK_RETURN) && (lParam & (1 << 29)))
+			ToggleFullScreenMode();
+
 		if (!(lParam & 0x40000000) || m_kb.IsAutoRepeatEnabled()) // filters autoRepeat
 			m_kb.OnKeyPressed(static_cast<unsigned char>(wParam));
 		break;
@@ -281,5 +296,49 @@ Graphics& Window::GetGfx() const {
 		throw HWND_NOGFX_EXCEPT();
 
 	return *m_pGfx;
+}
+
+void Window::ToggleFullScreenMode() {
+	if (m_fullScreenMode) {
+		SetWindowLong(m_hWnd, GWL_STYLE, m_windowStyle);
+
+		SetWindowPos(
+			m_hWnd,
+			HWND_NOTOPMOST,
+			m_windowRect.left,
+			m_windowRect.top,
+			m_windowRect.right - m_windowRect.left,
+			m_windowRect.bottom - m_windowRect.top,
+			SWP_FRAMECHANGED | SWP_NOACTIVATE
+		);
+
+		ShowWindow(m_hWnd, SW_NORMAL);
+	}
+	else {
+		GetWindowRect(m_hWnd, &m_windowRect);
+
+		SetWindowLong(
+			m_hWnd, GWL_STYLE,
+			m_windowStyle & ~(
+				WS_CAPTION | WS_MAXIMIZEBOX | WS_MINIMIZEBOX |
+				WS_SYSMENU)
+		);
+
+		RECT fullscreenWindowRect = m_pGfx->GetOutputDesc().DesktopCoordinates;
+
+		SetWindowPos(
+			m_hWnd,
+			HWND_TOPMOST,
+			fullscreenWindowRect.left,
+			fullscreenWindowRect.top,
+			fullscreenWindowRect.right,
+			fullscreenWindowRect.bottom,
+			SWP_FRAMECHANGED | SWP_NOACTIVATE
+		);
+
+		ShowWindow(m_hWnd, SW_MAXIMIZE);
+	}
+
+	m_fullScreenMode = !m_fullScreenMode;
 }
 

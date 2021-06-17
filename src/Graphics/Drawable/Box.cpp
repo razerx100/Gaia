@@ -4,14 +4,7 @@
 #include <App.hpp>
 
 Box::Box(Graphics& gfx,
-	std::mt19937& rng,
-	std::uniform_real_distribution<float>& adist,
-	std::uniform_real_distribution<float>& ddist,
-	std::uniform_real_distribution<float>& odist,
-	std::uniform_real_distribution<float>& rdist,
-	std::uniform_real_distribution<float>& bdist,
-	DirectX::XMFLOAT4 material)
-	: m_TObj(rng, adist, ddist, odist, rdist) {
+	DirectX::XMFLOAT4 material) {
 
 	if (!IsDataInitialized()) {
 		PSODesc pso = PSODesc();
@@ -89,15 +82,13 @@ Box::Box(Graphics& gfx,
 		1u, std::bind(&Transform::GetTransformCM, &m_Transform)
 		)
 	);
-
-	DirectX::XMStoreFloat3x3(
-		&m_Mat,
-		DirectX::XMMatrixScaling(1.0f, 1.0f, bdist(rng))
-	);
 }
 
-void Box::Update(float deltaTime) noexcept {
-	m_Transform =
-		DirectX::XMLoadFloat3x3(&m_Mat) *
-		m_TObj.GetMomentum(deltaTime);
+void Box::Draw(
+	Graphics& gfx,
+	const DirectX::XMMATRIX& accumulatedTransform
+) noexcept {
+	m_Transform = accumulatedTransform;
+
+	DrawableBase::Draw(gfx);
 }

@@ -6,6 +6,7 @@
 #include <Camera.hpp>
 #include <Light.hpp>
 #include <Model.hpp>
+#include <Box.hpp>
 
 struct Position {
 	float roll = 0.0f;
@@ -36,6 +37,7 @@ private:
 	Timer m_Timer;
 	Camera m_Camera;
 	std::unique_ptr<Model> m_pNano;
+	std::unique_ptr<Box> m_pBox;
 
 	float m_SpeedFactor;
 

@@ -9,12 +9,12 @@
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
 	m_pSwapChain(nullptr),
-	m_width(width), m_height(height), m_color{0.0f, 0.0f, 0.0f, 1.0f},
-	m_FenceValues{0, 0}, m_RTVHeapIncSize(0), m_CurrentBackBufferIndex(0),
-    m_Viewport{ 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height) },
-    m_ScissorRect{0, 0, static_cast<long>(width), static_cast<long>(height)},
-    m_triangleIndicesCount(0u), hr(0) {
+	m_width(width), m_height(height),
+	m_fenceValues{0, 0}, m_nRTVHeapIncSize(0), m_currentBackBufferIndex(0),
+    m_color{0.0f, 0.0f, 0.0f, 1.0f},
+    hr(0) {
 
+    InitializeViewPortAndSRECT();
     Initialize(hwnd);
     ImGuiImpl::ImGuiDxInit(
         m_pDevice.Get(), bufferCount, DXGI_FORMAT_R8G8B8A8_UNORM, m_pSRVHeapMan.get()
@@ -24,7 +24,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 Graphics::~Graphics() {
 	WaitForGPU();
 
-	CloseHandle(m_FenceEvent);
+	CloseHandle(m_fenceEvent);
 
     ImGuiImpl::ImGuiDxQuit();
 }
@@ -93,10 +93,15 @@ void Graphics::Initialize(HWND hwnd) {
         &swapChain
     ));
 
-    GFX_THROW_FAILED(hr, swapChain.As(&m_pSwapChain));
-    m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+    factory->MakeWindowAssociation(
+        hwnd,
+        DXGI_MWA_NO_ALT_ENTER
+    );
 
-    // RTV
+    GFX_THROW_FAILED(hr, swapChain.As(&m_pSwapChain));
+    m_currentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+    // RTV HEAP
     {
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
         rtvHeapDesc.NumDescriptors = bufferCount;
@@ -107,26 +112,13 @@ void Graphics::Initialize(HWND hwnd) {
             &rtvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pRTVHeap
         ));
 
-        m_RTVHeapIncSize = m_pDevice->GetDescriptorHandleIncrementSize(
+        m_nRTVHeapIncSize = m_pDevice->GetDescriptorHandleIncrementSize(
             D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
 
-    {
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRTVHeap->GetCPUDescriptorHandleForHeapStart());
+    CreateRTVs();
 
-        for (std::uint32_t n = 0; n < bufferCount; n++) {
-            GFX_THROW_FAILED(hr, m_pSwapChain->GetBuffer(
-                n, __uuidof(ID3D12Resource), &m_pRenderTargets[n])
-            );
-
-            GFX_THROW_NO_HR(
-                m_pDevice->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle)
-            )
-            rtvHandle.Offset(1, m_RTVHeapIncSize);
-        }
-    }
-
-    // DSV
+    // DSV HEAP
     {
         D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
         dsvHeapDesc.NumDescriptors = 1;
@@ -136,52 +128,20 @@ void Graphics::Initialize(HWND hwnd) {
         GFX_THROW_FAILED(hr, m_pDevice->CreateDescriptorHeap(
             &dsvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pDSVHeap
         ));
-
-        D3D12_CLEAR_VALUE depthValue = {};
-        depthValue.Format = DXGI_FORMAT_D32_FLOAT;
-        depthValue.DepthStencil = { 1.0f, 0 };
-
-        CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-        CD3DX12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Tex2D(
-            DXGI_FORMAT_D32_FLOAT, m_width, m_height,
-            1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
-        );
-
-        GFX_THROW_FAILED(hr, m_pDevice->CreateCommittedResource(
-            &heapProp,
-            D3D12_HEAP_FLAG_NONE,
-            &rsDesc,
-            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-            &depthValue,
-            __uuidof(ID3D12Resource),
-            &m_pDepthBuffer
-        ));
-
-        D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-        dsv.Format = DXGI_FORMAT_D32_FLOAT;
-        dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-        dsv.Texture2D.MipSlice = 0;
-        dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-        GFX_THROW_NO_HR(
-            m_pDevice->CreateDepthStencilView(
-                m_pDepthBuffer.Get(), &dsv,
-                m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
-            )
-        )
     }
 
+    CreateDSV();
+
     GFX_THROW_FAILED(hr, m_pDevice->CreateFence(
-        m_FenceValues[m_CurrentBackBufferIndex],
+        m_fenceValues[m_currentBackBufferIndex],
         D3D12_FENCE_FLAG_NONE,
         __uuidof(ID3D12Fence),
         &m_pFence
     ));
-    m_FenceValues[m_CurrentBackBufferIndex]++;
+    m_fenceValues[m_currentBackBufferIndex]++;
 
-    m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (m_FenceEvent == nullptr)
+    m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (m_fenceEvent == nullptr)
         GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 
     // Command List
@@ -197,7 +157,7 @@ void Graphics::BeginFrame(float red, float green, float blue) {
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
         m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
-        m_CurrentBackBufferIndex, m_RTVHeapIncSize);
+        m_currentBackBufferIndex, m_nRTVHeapIncSize);
 
     m_color[0] = red;
     m_color[1] = green;
@@ -229,11 +189,11 @@ void Graphics::ResetCommandList() {
         m_pSRVHeapMan->GetHeapCount(), ppHeaps
     );
 
-    m_gfxCommandList->RSSetViewports(1, &m_Viewport);
-    m_gfxCommandList->RSSetScissorRects(1, &m_ScissorRect);
+    m_gfxCommandList->RSSetViewports(1, &m_viewport);
+    m_gfxCommandList->RSSetScissorRects(1, &m_scissorRect);
 
     CD3DX12_RESOURCE_BARRIER prebar = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
+        m_pRenderTargets[m_currentBackBufferIndex].Get(),
         D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     m_gfxCommandList->ResourceBarrier(1, &prebar);
@@ -241,37 +201,37 @@ void Graphics::ResetCommandList() {
 
 void Graphics::WaitForGPU() {
     GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
-        m_pFence.Get(), m_FenceValues[m_CurrentBackBufferIndex]));
+        m_pFence.Get(), m_fenceValues[m_currentBackBufferIndex]));
 
     GFX_THROW_FAILED(hr,
         m_pFence->SetEventOnCompletion(
-            m_FenceValues[m_CurrentBackBufferIndex], m_FenceEvent));
-    WaitForSingleObjectEx(m_FenceEvent, INFINITE, FALSE);
+            m_fenceValues[m_currentBackBufferIndex], m_fenceEvent));
+    WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
 
-    m_FenceValues[m_CurrentBackBufferIndex]++;
+    m_fenceValues[m_currentBackBufferIndex]++;
 }
 
 void Graphics::MoveToNextFrame() {
-    const std::uint64_t currentFenceValue = m_FenceValues[m_CurrentBackBufferIndex];
+    const std::uint64_t currentFenceValue = m_fenceValues[m_currentBackBufferIndex];
     GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(m_pFence.Get(), currentFenceValue));
 
-    m_CurrentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+    m_currentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
-    if (m_pFence->GetCompletedValue() < m_FenceValues[m_CurrentBackBufferIndex]) {
+    if (m_pFence->GetCompletedValue() < m_fenceValues[m_currentBackBufferIndex]) {
         GFX_THROW_FAILED(hr,
             m_pFence->SetEventOnCompletion(
-                m_FenceValues[m_CurrentBackBufferIndex], m_FenceEvent));
-        WaitForSingleObjectEx(m_FenceEvent, INFINITE, FALSE);
+                m_fenceValues[m_currentBackBufferIndex], m_fenceEvent));
+        WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
     }
 
-    m_FenceValues[m_CurrentBackBufferIndex] = currentFenceValue + 1;
+    m_fenceValues[m_currentBackBufferIndex] = currentFenceValue + 1;
 }
 
 void Graphics::EndFrame() {
     ImGuiImpl::ImGuiEndFrame(m_gfxCommandList.Get());
 
     CD3DX12_RESOURCE_BARRIER postbar = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_pRenderTargets[m_CurrentBackBufferIndex].Get(),
+        m_pRenderTargets[m_currentBackBufferIndex].Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
     m_gfxCommandList->ResourceBarrier(1, &postbar);
@@ -305,4 +265,120 @@ void Graphics::InitialGPUSetup() {
     m_pSRVHeapMan->ProcessRequests();
 
     WaitForGPU();
+}
+
+void Graphics::CreateRTVs() {
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+        m_pRTVHeap->GetCPUDescriptorHandleForHeapStart()
+    );
+
+    for (std::uint32_t n = 0; n < bufferCount; n++) {
+        GFX_THROW_FAILED(hr, m_pSwapChain->GetBuffer(
+            n, __uuidof(ID3D12Resource), &m_pRenderTargets[n])
+        );
+
+        GFX_THROW_NO_HR(
+            m_pDevice->CreateRenderTargetView(
+                m_pRenderTargets[n].Get(), nullptr, rtvHandle
+            )
+        )
+            rtvHandle.Offset(1, m_nRTVHeapIncSize);
+    }
+}
+
+void Graphics::CreateDSV() {
+    D3D12_CLEAR_VALUE depthValue = {};
+    depthValue.Format = DXGI_FORMAT_D32_FLOAT;
+    depthValue.DepthStencil = { 1.0f, 0 };
+
+    CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+    CD3DX12_RESOURCE_DESC rsDesc = CD3DX12_RESOURCE_DESC::Tex2D(
+        DXGI_FORMAT_D32_FLOAT, m_width, m_height,
+        1, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL
+    );
+
+    GFX_THROW_FAILED(hr, m_pDevice->CreateCommittedResource(
+        &heapProp,
+        D3D12_HEAP_FLAG_NONE,
+        &rsDesc,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE,
+        &depthValue,
+        __uuidof(ID3D12Resource),
+        &m_pDepthBuffer
+    ));
+
+    D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
+    dsv.Format = DXGI_FORMAT_D32_FLOAT;
+    dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    dsv.Texture2D.MipSlice = 0;
+    dsv.Flags = D3D12_DSV_FLAG_NONE;
+
+    GFX_THROW_NO_HR(
+        m_pDevice->CreateDepthStencilView(
+            m_pDepthBuffer.Get(), &dsv,
+            m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
+        )
+    )
+}
+
+void Graphics::InitializeViewPortAndSRECT() {
+    m_viewport.TopLeftX = 0;
+    m_viewport.TopLeftY = 0;
+    m_viewport.Width = static_cast<float>(m_width);
+    m_viewport.Height = static_cast<float>(m_height);
+    m_viewport.MinDepth = 0.0f;
+    m_viewport.MaxDepth = 1.0f;
+
+    m_scissorRect.left = static_cast<LONG>(m_viewport.TopLeftX);
+    m_scissorRect.right = static_cast<LONG>(m_viewport.TopLeftX + m_viewport.Width);
+    m_scissorRect.top = static_cast<LONG>(m_viewport.TopLeftY);
+    m_scissorRect.bottom = static_cast<LONG>(m_viewport.TopLeftY + m_viewport.Height);
+}
+
+void Graphics::ResizeBuffer(std::uint32_t width, std::uint32_t height) {
+    if (width != m_width || height != m_height) {
+        WaitForGPU();
+
+        for (std::uint32_t n = 0; n < bufferCount; ++n) {
+            m_pRenderTargets[n].Reset();
+            m_fenceValues[n] = m_fenceValues[m_currentBackBufferIndex];
+        }
+
+        DXGI_SWAP_CHAIN_DESC desc = {};
+        m_pSwapChain->GetDesc(&desc);
+        GFX_THROW_FAILED(
+            hr,
+            m_pSwapChain->ResizeBuffers(
+                bufferCount,
+                width, height,
+                desc.BufferDesc.Format,
+                desc.Flags
+            )
+        );
+
+        m_currentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+        m_width = width;
+        m_height = height;
+
+        InitializeViewPortAndSRECT();
+
+        CreateRTVs();
+        CreateDSV();
+
+	    Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(
+            1.0f,  static_cast<float>(height)/ width, 0.5f, 60.0f)
+        );
+    }
+}
+
+DXGI_OUTPUT_DESC Graphics::GetOutputDesc() {
+    ComPtr<IDXGIOutput> pOutput;
+    GFX_THROW_FAILED(hr, m_pSwapChain->GetContainingOutput(&pOutput));
+
+    DXGI_OUTPUT_DESC desc;
+    GFX_THROW_FAILED(hr, pOutput->GetDesc(&desc));
+
+    return desc;
 }

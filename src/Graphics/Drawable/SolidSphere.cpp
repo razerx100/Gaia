@@ -62,12 +62,14 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 
 		AddStaticBind(std::make_unique<ConstantBufferCBVStatic<ConstantBufferColor>>(
 			1u, &materialColor
-			));
+			)
+		);
 	}
 
 	AddBind(std::make_unique<ConstantBufferMat>(
 		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
-		));
+		)
+	);
 
 	m_Transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);
 }

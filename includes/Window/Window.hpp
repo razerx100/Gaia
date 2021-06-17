@@ -38,6 +38,7 @@ private:
 	static LRESULT CALLBACK HandleMsgSetup(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	static LRESULT CALLBACK HandleMsgWrap(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
 	LRESULT HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noexcept;
+	void ToggleFullScreenMode();
 
 public:
 	Keyboard m_kb;
@@ -48,6 +49,10 @@ private:
 	int m_height;
 	HWND m_hWnd;
 	std::unique_ptr<Graphics> m_pGfx;
+
+	bool m_fullScreenMode;
+	std::uint32_t m_windowStyle;
+	RECT m_windowRect;
 };
 
 #endif

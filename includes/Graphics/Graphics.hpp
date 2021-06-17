@@ -23,6 +23,9 @@ public:
     void PresentFrame();
     void DrawIndexed(std::uint32_t indexCount) noexcept;
     void InitialGPUSetup();
+    void ResizeBuffer(std::uint32_t width, std::uint32_t height);
+
+    DXGI_OUTPUT_DESC GetOutputDesc();
 
 private:
     void Initialize(HWND hwnd);
@@ -30,12 +33,15 @@ private:
     void ResetCommandList();
 	void WaitForGPU();
 	void MoveToNextFrame();
+    void CreateRTVs();
+    void CreateDSV();
+    void InitializeViewPortAndSRECT();
 
 private:
 	static constexpr std::uint16_t bufferCount = 2u;
 
-    CD3DX12_VIEWPORT m_Viewport;
-    CD3DX12_RECT m_ScissorRect;
+    D3D12_VIEWPORT m_viewport;
+    D3D12_RECT m_scissorRect;
     ComPtr<IDXGISwapChain4> m_pSwapChain;
     ComPtr<ID3D12Device2> m_pDevice;
     ComPtr<ID3D12Resource> m_pRenderTargets[bufferCount];
@@ -47,20 +53,17 @@ private:
 
     std::unique_ptr<HeapMan> m_pSRVHeapMan;
 
-    std::uint32_t m_RTVHeapIncSize;
+    std::uint32_t m_nRTVHeapIncSize;
 
     ComPtr<ID3D12Resource> m_pDepthBuffer;
 
     ComPtr<ID3D12Fence> m_pFence;
-    HANDLE m_FenceEvent;
-    std::uint32_t m_CurrentBackBufferIndex;
-    std::uint64_t m_FenceValues[bufferCount];
+    HANDLE m_fenceEvent;
+    std::uint32_t m_currentBackBufferIndex;
+    std::uint64_t m_fenceValues[bufferCount];
 
-	std::wstring m_ShaderPath;
 	std::uint32_t m_width;
 	std::uint32_t m_height;
-
-    std::uint32_t m_triangleIndicesCount;
 
 	float m_color[4];
 	HRESULT hr;
