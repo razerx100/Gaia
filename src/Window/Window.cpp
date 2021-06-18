@@ -137,6 +137,7 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 
 		if(m_pGfx)
 			m_pGfx->ResizeBuffer(m_width, m_height);
+
 		if(!m_cursorEnabled)
 			ConfineCursor();
 		break;
