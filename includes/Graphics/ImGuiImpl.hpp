@@ -6,9 +6,37 @@
 #include <HeapMan.hpp>
 #include <Light.hpp>
 #include <functional>
-#include <App.hpp>
+#include <DirectXMath.h>
 
 namespace ImGuiImpl {
+	class Position {
+	public:
+		float roll = 0.0f;
+		float pitch = -3.1f;
+		float yaw = 0.0f;
+		float x = 0.0f;
+		float y = -8.5f;
+		float z = 0.0f;
+
+		void Update() noexcept {
+			m_transform =
+				DirectX::XMMatrixRotationRollPitchYaw(
+					roll, pitch, yaw
+				)
+				*
+				DirectX::XMMatrixTranslation(
+					x, y, z
+				);
+		}
+
+		DirectX::XMMATRIX GetTransform() const noexcept {
+			return m_transform;
+		}
+
+	private:
+		DirectX::XMMATRIX m_transform;
+	};
+
 	void ImGuiWindowInit(void* hwnd);
 
 	void ImGuiWindowQuit();
@@ -27,6 +55,9 @@ namespace ImGuiImpl {
 	void ImGuiInitContext();
 
 	void ImGuiDestroyContext();
+
+	void EnableMouseInput() noexcept;
+	void DisableMouseInput() noexcept;
 
 	// My Widgets
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused);

@@ -4,6 +4,7 @@
 #include <GraphicsThrowMacros.hpp>
 #include <ImGuiImpl.hpp>
 #include <BufferMan.hpp>
+#include <Camera.hpp>
 
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)

@@ -10,26 +10,26 @@ ImGuiMan ImGuiMan::s_initObj;
 #endif
 
 GDIPlusManager gdim;
-std::wstring App::s_ShaderPath;
+std::wstring App::s_shaderPath;
 
-std::unique_ptr<Light> App::s_Light;
+std::unique_ptr<Light> App::s_light;
+
+ImGuiImpl::Position pos;
 
 App::App()
 	:
-	m_Wnd(1920, 1080, "DirectX12 Window"),
-	m_SpeedFactor(1.0f) {
+	m_wnd(1920, 1080, "DirectX12 Window"),
+	m_speedFactor(1.0f) {
 
 	SetShaderPath();
 
 	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1080.0f / 1920.0f, 0.5f, 60.0f));
 
-	s_Light = std::make_unique<Light>(m_Wnd.GetGfx(), 0.4f);
+	s_light = std::make_unique<Light>(m_wnd.GetGfx(), 0.4f);
 
-	m_pNano = std::make_unique<Model>(m_Wnd.GetGfx(), "models\\nanosuit.obj");
+	m_pNano = std::make_unique<Model>(m_wnd.GetGfx(), "models\\nanosuit.obj");
 
-	m_pBox = std::make_unique<Box>(m_Wnd.GetGfx(), DirectX::XMFLOAT4{1.0f, 0.0f, 0.0f, 1.0f});
-
-	m_Wnd.GetGfx().InitialGPUSetup();
+	m_wnd.GetGfx().InitialGPUSetup();
 }
 
 int App::Go() {
@@ -39,59 +39,44 @@ int App::Go() {
 			return *ecode;
 
 		DoFrame();
-		m_Wnd.GetGfx().PresentFrame();
+		m_wnd.GetGfx().PresentFrame();
 	}
 }
 
 void App::DoFrame() {
-	const float deltaTime = m_Timer.Mark() * m_SpeedFactor;
-	m_Wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
-	m_Camera.Update();
+	const float deltaTime = m_timer.Mark() * m_speedFactor;
+	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 
-	s_Light->Update();
+	m_camera.Update();
+	s_light->Update();
+	pos.Update();
+	m_wnd.ToggleCursor();
 
-	s_Light->Draw(m_Wnd.GetGfx());
+	s_light->Draw(m_wnd.GetGfx());
+	m_pNano->Draw(m_wnd.GetGfx(), pos.GetTransform());
 
-	DirectX::XMMATRIX transform =
-		DirectX::XMMatrixRotationRollPitchYaw(
-			pos.roll, pos.pitch, pos.yaw
-		)
-		*
-		DirectX::XMMatrixTranslation(
-			pos.x, pos.y, pos.z
-		);
-
-	m_pNano->Draw(m_Wnd.GetGfx(), transform);
-
-	m_pBox->Draw(m_Wnd.GetGfx(), transform);
-
-	ImGuiImpl::ImGuiRenderSimulationSlider(m_SpeedFactor, m_Wnd.m_kb.IsKeyPressed(VK_SPACE));
-
-	m_Camera.ControlWindow();
-
+	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
+	m_camera.ControlWindow();
 	ImGuiImpl::ImGuiModelControl(pos);
+	s_light->ImGuiLightSlider();
 
-	s_Light->ImGuiLightSlider();
-
-	m_Wnd.GetGfx().EndFrame();
+	m_wnd.GetGfx().EndFrame();
 }
 
 void App::SetShaderPath() noexcept {
 	wchar_t path[MAX_PATH];
 	GetModuleFileNameW(nullptr, path, MAX_PATH);
-	s_ShaderPath = path;
-	for (int i = static_cast<int>(s_ShaderPath.size() - 1); s_ShaderPath[i] != L'\\'; i--)
-		s_ShaderPath.pop_back();
+	s_shaderPath = path;
+	for (int i = static_cast<int>(s_shaderPath.size() - 1); s_shaderPath[i] != L'\\'; i--)
+		s_shaderPath.pop_back();
 
-	s_ShaderPath.append(L"shaders\\");
+	s_shaderPath.append(L"shaders\\");
 }
 
 std::wstring App::GetShaderPath() noexcept {
-	return s_ShaderPath;
+	return s_shaderPath;
 }
 
 Light* App::GetLight() noexcept {
-	return s_Light.get();
+	return s_light.get();
 }
-
-

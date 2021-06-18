@@ -47,7 +47,8 @@ HINSTANCE Window::WindowClass::GetInstance() noexcept {
 // Window
 Window::Window(int width, int height, const char* name)
 	: m_width(width), m_height(height), m_fullScreenMode(false),
-	m_windowStyle(WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU) {
+	m_windowStyle(WS_CAPTION | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU),
+	m_cursorEnabled(true) {
 	RECT wr;
 	wr.left = 0;
 	wr.right = width;
@@ -74,6 +75,16 @@ Window::Window(int width, int height, const char* name)
 	m_pGfx = std::make_unique<Graphics>(
 		m_hWnd, static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)
 		);
+
+	// Raw Input register
+	RAWINPUTDEVICE rId = {};
+	rId.usUsagePage = 1u;
+	rId.usUsage = 2u;
+	rId.dwFlags = 0;
+	rId.hwndTarget = nullptr;
+
+	if (!RegisterRawInputDevices(&rId, 1, sizeof(rId)))
+		throw HWND_LAST_EXCEPT();
 }
 
 Window::~Window() {
@@ -126,6 +137,21 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 
 		if(m_pGfx)
 			m_pGfx->ResizeBuffer(m_width, m_height);
+		if(!m_cursorEnabled)
+			ConfineCursor();
+		break;
+	}
+	case WM_ACTIVATE: {
+		if (!m_cursorEnabled) {
+			if (wParam & WA_ACTIVE || wParam & WA_CLICKACTIVE) {
+				HideCursor();
+				ConfineCursor();
+			}
+			else {
+				ShowCursor();
+				FreeCursor();
+			}
+		}
 		break;
 	}
 	/************* KEYBOARD MESSAGES *************/
@@ -167,6 +193,13 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 	/************* END KEYBOARD MESSAGES *************/
 	/************* MOUSE MESSAGES *************/
 	case WM_MOUSEMOVE: {
+		if (!m_cursorEnabled && !m_mouse.IsInWindow()) {
+			SetCapture(m_hWnd);
+			m_mouse.OnMouseEnter();
+			HideCursor();
+			break;
+		}
+
 #ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
@@ -195,6 +228,8 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		break;
 	}
 	case WM_LBUTTONDOWN: {
+		SetForegroundWindow(m_hWnd);
+
 #ifdef _IMGUI
 		// Consume this message if ImGui wants to capture
 		if (imIO.WantCaptureMouse)
@@ -267,6 +302,38 @@ LRESULT Window::HandleMsg(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) noe
 		break;
 	}
 	/************* END MOUSE MESSAGES *************/
+	/************* RAW MOUSE MESSAGES *************/
+	case WM_INPUT: {
+		if (!m_mouse.IsRawEnabled())
+			break;
+
+		std::uint32_t size = 0;
+
+		// Get raw data size with nullptr as buffer
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT, nullptr, &size,
+			sizeof(RAWINPUTHEADER)
+		) == -1)
+			break;
+
+		m_rawInputBuffer.resize(size);
+
+		// Get raw data by passing buffer
+		if (GetRawInputData(
+			reinterpret_cast<HRAWINPUT>(lParam), RID_INPUT,
+			m_rawInputBuffer.data(), &size,
+			sizeof(RAWINPUTHEADER)
+		) != size)
+			break;
+
+		auto& ri = reinterpret_cast<const RAWINPUT&>(*m_rawInputBuffer.data());
+		if (ri.header.dwType == RIM_TYPEMOUSE &&
+			(ri.data.mouse.lLastX != 0 || ri.data.mouse.lLastY != 0))
+			m_mouse.OnMouseRawDelta(ri.data.mouse.lLastX, ri.data.mouse.lLastY);
+
+		break;
+	}
+	/************* END RAW MOUSE MESSAGES *************/
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -340,5 +407,55 @@ void Window::ToggleFullScreenMode() {
 	}
 
 	m_fullScreenMode = !m_fullScreenMode;
+}
+
+void Window::EnableCursor() noexcept {
+	m_cursorEnabled = true;
+
+	ShowCursor();
+	ImGuiImpl::EnableMouseInput();
+	FreeCursor();
+}
+
+void Window::DisableCursor() noexcept {
+	m_cursorEnabled = false;
+
+	HideCursor();
+	ImGuiImpl::DisableMouseInput();
+	ConfineCursor();
+}
+
+void Window::HideCursor() noexcept {
+	while (::ShowCursor(FALSE) >= 0);
+}
+
+void Window::ShowCursor() noexcept {
+	while (::ShowCursor(TRUE) < 0);
+}
+
+void Window::ConfineCursor() noexcept {
+	RECT rect = {};
+	GetClientRect(m_hWnd, &rect);
+	MapWindowPoints(m_hWnd, nullptr, reinterpret_cast<POINT*>(&rect), 2);
+	ClipCursor(&rect);
+}
+
+void Window::FreeCursor() noexcept {
+	ClipCursor(nullptr);
+}
+
+void Window::ToggleCursor() noexcept {
+	while (auto event = m_kb.ReadKey()) {
+		if (event->IsPress() && event->GetCode() == VK_ESCAPE) {
+			if (m_cursorEnabled) {
+				DisableCursor();
+				m_mouse.EnableRaw();
+			}
+			else {
+				EnableCursor();
+				m_mouse.DisableRaw();
+			}
+		}
+	}
 }
 

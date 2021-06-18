@@ -2,7 +2,7 @@
 #include <WindowExceptions.hpp>
 #include <sstream>
 
-WindowException::WindowException(int line, const char* file, HRESULT hr) noexcept
+WindowException::WindowException(int line, const char* file, long hr) noexcept
 	: Exception(line, file), m_hr(hr) {}
 
 const char* WindowException::what() const noexcept {
@@ -23,7 +23,7 @@ const char* NoGfxException::GetType() const noexcept {
 	return "Window Exception [No Graphics]";
 }
 
-std::string WindowException::TranslateErrorCode(HRESULT hr) noexcept {
+std::string WindowException::TranslateErrorCode(long hr) noexcept {
 	char* pMsgBuf = nullptr;
 	DWORD nMsgLen = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -40,7 +40,7 @@ std::string WindowException::TranslateErrorCode(HRESULT hr) noexcept {
 	return errorString;
 }
 
-HRESULT WindowException::GetErrorCode() const noexcept {
+long WindowException::GetErrorCode() const noexcept {
 	return m_hr;
 }
 

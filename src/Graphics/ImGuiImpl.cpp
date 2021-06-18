@@ -53,6 +53,14 @@ namespace ImGuiImpl {
 		ImGui::DestroyContext();
 	}
 
+	void EnableMouseInput() noexcept {
+		ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
+	}
+
+	void DisableMouseInput() noexcept {
+		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
+	}
+
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {
 		if (ImGui::Begin("Simulation Speed")) {
 			ImGui::SliderFloat("Speed Factor", &speedFactor, 0.0f, 4.0f);
@@ -169,6 +177,9 @@ namespace ImGuiImpl {
 	void ImGuiInitContext() {}
 
 	void ImGuiDestroyContext() {}
+
+	void EnableMouseInput() noexcept {}
+	void DisableMouseInput() noexcept {}
 
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {}
 

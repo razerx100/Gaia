@@ -2,6 +2,7 @@
 #define __KEYBOARD_HPP__
 #include <queue>
 #include <bitset>
+#include <optional>
 
 class Keyboard {
 	friend class Window;
@@ -46,12 +47,12 @@ public:
 
 	// key events
 	bool IsKeyPressed(unsigned char keycode) const noexcept;
-	Event ReadKey() noexcept;
+	std::optional<Event> ReadKey() noexcept;
 	bool IsKeyEmpty() const noexcept;
 	void FlushKey() noexcept;
 
 	// char events
-	char ReadChar() noexcept;
+	std::optional<char> ReadChar() noexcept;
 	bool IsCharEmpty() const noexcept;
 	void FlushChar() noexcept;
 	void Flush() noexcept;

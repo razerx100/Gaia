@@ -6,16 +6,6 @@
 #include <Camera.hpp>
 #include <Light.hpp>
 #include <Model.hpp>
-#include <Box.hpp>
-
-struct Position {
-	float roll = 0.0f;
-	float pitch = -3.1f;
-	float yaw = 0.0f;
-	float x = 0.0f;
-	float y = -8.5f;
-	float z = 0.0f;
-};
 
 class App {
 public:
@@ -33,17 +23,14 @@ private:
 	static void SetShaderPath() noexcept;
 
 private:
-	Window m_Wnd;
-	Timer m_Timer;
-	Camera m_Camera;
+	Window m_wnd;
+	Timer m_timer;
+	Camera m_camera;
 	std::unique_ptr<Model> m_pNano;
-	std::unique_ptr<Box> m_pBox;
 
-	float m_SpeedFactor;
+	float m_speedFactor;
 
-	static std::wstring s_ShaderPath;
-	static std::unique_ptr<Light> s_Light;
-
-	Position pos;
+	static std::wstring s_shaderPath;
+	static std::unique_ptr<Light> s_light;
 };
 #endif
