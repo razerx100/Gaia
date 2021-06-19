@@ -63,8 +63,9 @@ namespace ImGuiImpl {
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused);
 
 	void ImGuiRenderCameraControl(
-		float& r, float& theta, float& phi,
-		float& roll, float& pitch, float& yaw,
+		DirectX::XMFLOAT3& cameraPosition,
+		float& pitch,
+		float& yaw,
 		std::function<void()> resetButton
 	);
 

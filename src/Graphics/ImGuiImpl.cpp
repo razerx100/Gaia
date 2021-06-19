@@ -80,21 +80,21 @@ namespace ImGuiImpl {
 	}
 
 	void ImGuiRenderCameraControl(
-		float& r, float& theta, float& phi,
-		float& roll, float& pitch, float& yaw,
+		DirectX::XMFLOAT3& cameraPosition,
+		float& pitch,
+		float& yaw,
 		std::function<void()> resetButton
 	) {
 		if (ImGui::Begin("Camera")) {
 			ImGui::Text("Position");
 
-			ImGui::SliderFloat("R", &r, 0.2f, 80.0f, "%.1f");
-			ImGui::SliderAngle("X", &theta, -180.0f, 180.0f);
-			ImGui::SliderAngle("Y", &phi, -89.0f, 89.0f);
+			ImGui::SliderFloat("X", &cameraPosition.x, -80.0f, 80.0f, "%.1f");
+			ImGui::SliderFloat("Y", &cameraPosition.y, -80.0f, 80.0f, "%.1f");
+			ImGui::SliderFloat("Z", &cameraPosition.z, -80.0f, 80.0f, "%.1f");
 
 			ImGui::Text("Orientation");
 
-			ImGui::SliderAngle("Roll", &roll, -180.0f, 180.0f);
-			ImGui::SliderAngle("Pitch", &pitch, -180.0f, 180.0f);
+			ImGui::SliderAngle("Pitch", &pitch, 0.995f * -90.0f, 0.995f * 90.0f);
 			ImGui::SliderAngle("Yaw", &yaw, -180.0f, 180.0f);
 
 			if (ImGui::Button("Reset"))
@@ -184,8 +184,9 @@ namespace ImGuiImpl {
 	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {}
 
 	void ImGuiRenderCameraControl(
-		float& r, float& theta, float& phi,
-		float& roll, float& pitch, float& yaw,
+		DirectX::XMFLOAT3& cameraPosition,
+		float& pitch,
+		float& yaw,
 		std::function<void()> resetButton
 	) {}
 

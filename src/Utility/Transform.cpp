@@ -12,7 +12,7 @@ DirectX::XMMATRIX Transform::GetTransformCM() const noexcept {
 DirectX::XMMATRIX Transform::GetTransformWithProjectionCM() const noexcept {
 	return DirectX::XMMatrixTranspose(
 		m_Transform *
-		Camera::GetCamera() *
+		Camera::GetCameraMatrix() *
 		Camera::GetProjection()
 	);
 }

@@ -20,6 +20,11 @@ public:
 private:
 	void DoFrame();
 
+	// Key events
+	void InputLoop(float deltaTime) noexcept;
+	void ToggleCursor(std::uint8_t keyCode) noexcept;
+	void CameraMovement(float deltaTime) noexcept;
+
 	static void SetShaderPath() noexcept;
 
 private:

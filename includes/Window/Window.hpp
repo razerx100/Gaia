@@ -31,14 +31,16 @@ public:
 	Window(const Window&) = delete;
 
 	Window& operator=(const Window&) = delete;
+
 	void SetTitle(const std::string& title);
+
 	Graphics& GetGfx() const;
+	bool IsCursorEnabled() const noexcept;
 
 	void EnableCursor() noexcept;
 	void DisableCursor() noexcept;
 	void ConfineCursor() noexcept;
 	void FreeCursor() noexcept;
-	void ToggleCursor() noexcept;
 
 	static std::optional<int> ProcessMessages();
 

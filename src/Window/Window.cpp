@@ -445,18 +445,6 @@ void Window::FreeCursor() noexcept {
 	ClipCursor(nullptr);
 }
 
-void Window::ToggleCursor() noexcept {
-	while (auto event = m_kb.ReadKey()) {
-		if (event->IsPress() && event->GetCode() == VK_ESCAPE) {
-			if (m_cursorEnabled) {
-				DisableCursor();
-				m_mouse.EnableRaw();
-			}
-			else {
-				EnableCursor();
-				m_mouse.DisableRaw();
-			}
-		}
-	}
+bool Window::IsCursorEnabled() const noexcept {
+	return m_cursorEnabled;
 }
-
