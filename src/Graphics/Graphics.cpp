@@ -64,7 +64,7 @@ void Graphics::Initialize(HWND hwnd) {
     DebugInfoManager::SetDebugInfoManager(m_pDevice.Get());
 #endif
 
-    BufferMan::Init(*this);
+    BufferMan::Init(this);
 
     D3D12_COMMAND_QUEUE_DESC queueDesc = {};
     queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -148,7 +148,7 @@ void Graphics::Initialize(HWND hwnd) {
     // Command List
     m_gfxCommandList.Create(*this, D3D12_COMMAND_LIST_TYPE_DIRECT, bufferCount);
 
-    m_pSRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, *this);
+    m_pSRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, this);
 }
 
 void Graphics::BeginFrame(float red, float green, float blue) {

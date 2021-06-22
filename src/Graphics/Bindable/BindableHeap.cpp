@@ -25,7 +25,8 @@ BindableHeap::BindableHeap(Graphics& gfx,
 
 	m_srvMainHeapIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
 		m_pHeap->GetCPUDescriptorHandleForHeapStart(),
-		m_gpuHandle
+		&m_gpuHandle,
+		descriptorAmount
 	);
 }
 

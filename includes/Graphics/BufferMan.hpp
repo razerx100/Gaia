@@ -13,6 +13,12 @@ struct Partition {
     std::uint64_t size;
     std::uint32_t pageIndex;
 
+    Partition() = default;
+    Partition(
+        std::uint64_t offsetFromBase,
+        std::uint64_t size, std::uint32_t pageIndex
+    );
+
     constexpr bool operator()(const Partition& x, const Partition& y) const;
 };
 
@@ -21,10 +27,11 @@ struct Page {
     std::uint8_t* cpuPTR;
     std::uint64_t size;
 
-    std::multiset <Partition, Partition> m_FreePartitions;
+    std::multiset <Partition, Partition> m_freePartitions;
 };
 
 struct Memory {
+    Memory() = default;
     Memory(std::uint8_t* ptr, D3D12_GPU_VIRTUAL_ADDRESS gPtr, Partition&& partition);
 
     std::uint8_t* cpuPTR;
@@ -34,35 +41,34 @@ struct Memory {
 
 class BufferMan : public GraphicsExtractor {
 public:
-    BufferMan(Graphics& gfx);
+    BufferMan(Graphics* gfx);
 
-    static void Init(Graphics& gfx) noexcept;
+    static void Init(Graphics* gfx) noexcept;
+    static void FreePartition(Partition&& partition) noexcept;
 
     static std::unique_ptr<Memory> RequestMemory(
         std::uint64_t bufferSize, std::uint64_t alignment = 4u
     ) noexcept;
 
-    static void FreePartition(Partition&& partition) noexcept;
-
 private:
-
     std::unique_ptr<Memory> _RequestMemory(
         std::uint64_t bufferSize, std::uint64_t alignment
     ) noexcept;
+    std::uint64_t AlignUp(std::uint64_t number, std::uint64_t alignment) noexcept;
+    std::uint64_t GetAlignedSizeDiff(
+        const Partition& partition, std::uint64_t alignment
+    ) noexcept;
 
     void Allocate(std::uint64_t bufferSize);
-
     void Free(Partition&& partition) noexcept;
 
-    std::uint64_t AlignUp(std::uint64_t number, std::uint64_t alignment) noexcept;
-
 private:
-    Graphics& m_gfx;
-    std::uint64_t m_DefaultSize;
+    Graphics* m_gfx;
+    std::uint64_t m_defaultSize;
 
-    std::vector<Page> m_Memories;
+    std::vector<Page> m_memories;
 
-    static std::unique_ptr<BufferMan> s_Instance;
+    static std::unique_ptr<BufferMan> s_instance;
 
     HRESULT hr;
 };

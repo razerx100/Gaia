@@ -3,90 +3,127 @@
 #include <GraphicsThrowMacros.hpp>
 #include <d3dx12.h>
 
-HeapMan::HeapMan(D3D12_DESCRIPTOR_HEAP_TYPE type, Graphics& gfx)
-    : m_currentDescCount(0u), m_newDescCount(0u), m_gfxRef(gfx),
+HeapMan::HeapMan(D3D12_DESCRIPTOR_HEAP_TYPE type, Graphics* gfx)
+    : m_currentDescCount(0u), m_currentDescOffsetFromBase(0u),
+    m_gfxRef(gfx),
     m_heapType(type), hr(0) {
 
-    m_heapIncrementSize = GetDevice(m_gfxRef)->GetDescriptorHandleIncrementSize(
+    m_heapIncrementSize = GetDevice(*m_gfxRef)->GetDescriptorHandleIncrementSize(
         m_heapType
     );
+}
 
-    // Empty Heap to replace removed heaps in the main heap
-    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-    srvHeapDesc.NumDescriptors = 1;
-    srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+std::optional<std::uint32_t> HeapMan::FindPartitionIndex(
+    std::uint32_t descCount
+) noexcept {
+    for (auto index = m_freeDescTables.begin();
+        index != m_freeDescTables.end(); ++index
+        ) {
+        if (m_descTableDescCounts[*index] > descCount) {
+            std::uint32_t newIndex = CreateNewTable(
+                m_descTableDescCounts[*index] - descCount,
+                m_descTableOffsetsFromBase[*index] + descCount
+            );
+            m_freeDescTables.emplace_back(
+                newIndex
+            );
 
-    GetDevice(gfx)->CreateDescriptorHeap(
-        &srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pEmptyCPUHeap
-    );
+            m_descTableDescCounts[*index] = descCount;
+            m_freeDescTables.erase(index);
+            return *index;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::uint32_t HeapMan::CreateNewTable(
+    std::uint32_t descriptorCount,
+    std::optional<std::uint32_t> offsetFromBase
+) noexcept {
+    std::uint32_t index = static_cast<std::uint32_t>(
+        m_descTableOffsetsFromBase.size()
+        );
+
+    m_descTableDescCounts.emplace_back(descriptorCount);
+    m_descTableCPUHandles.emplace_back();
+    m_descTableGPURefs.emplace_back();
+
+    if (offsetFromBase)
+        m_descTableOffsetsFromBase.emplace_back(*offsetFromBase);
+    else {
+        m_descTableOffsetsFromBase.emplace_back(
+            m_currentDescOffsetFromBase
+        );
+
+        m_currentDescOffsetFromBase += descriptorCount;
+    }
+
+    return index;
 }
 
 std::uint32_t HeapMan::RequestHandleIndex(
     D3D12_CPU_DESCRIPTOR_HANDLE cpuVisibleHandle,
-    D3D12_GPU_DESCRIPTOR_HANDLE& setter
+    D3D12_GPU_DESCRIPTOR_HANDLE* setter,
+    std::uint32_t descriptorCount
 ) {
     std::uint32_t index;
-    if (m_availableDescs.empty())
-        index = m_newDescCount++;
-    else {
-        index = m_availableDescs.front();
-        m_availableDescs.pop();
-    }
+    if (auto qIndex = FindPartitionIndex(descriptorCount))
+        index = *qIndex;
+    else
+        index = CreateNewTable(descriptorCount);
 
-    if (index < m_inUseDescs.size()) {
-        m_inUseDescs[index] = true;
-        m_inUseDescsCPUHandles[index] = cpuVisibleHandle;
-        m_inUseDescsGPURefs[index] = setter;
-    }
-    else {
-        m_inUseDescs.push_back(true);
-        m_inUseDescsCPUHandles.push_back(cpuVisibleHandle);
-        m_inUseDescsGPURefs.emplace_back(setter);
-    }
+    m_descTableCPUHandles[index] = cpuVisibleHandle;
+    m_descTableGPURefs[index] = setter;
 
     m_queuedRequests.push(index);
 
     return index;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleCPU(std::uint32_t handleIndex) {
+D3D12_CPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleCPU(std::uint32_t descTableIndex) {
     return CD3DX12_CPU_DESCRIPTOR_HANDLE(
         m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-        handleIndex, m_heapIncrementSize
+        m_descTableOffsetsFromBase[descTableIndex], m_heapIncrementSize
     );
 }
 
 void HeapMan::Free(std::uint32_t index) {
-    m_availableDescs.push(index);
-    m_inUseDescs[index] = false;
+    m_inUseDescTables.remove(index);
+    m_freeDescTables.emplace_back(index);
 }
 
+void HeapMan::CopyDescriptors(std::uint32_t tableIndex) {
+    GetDevice(*m_gfxRef)->CopyDescriptorsSimple(
+        m_descTableDescCounts[tableIndex],
+        CD3DX12_CPU_DESCRIPTOR_HANDLE(
+            m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
+            m_descTableOffsetsFromBase[tableIndex],
+            m_heapIncrementSize
+        ),
+        m_descTableCPUHandles[tableIndex],
+        m_heapType
+    );
+
+    *m_descTableGPURefs[tableIndex] =
+        CD3DX12_GPU_DESCRIPTOR_HANDLE(
+            m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
+            m_descTableOffsetsFromBase[tableIndex], m_heapIncrementSize
+        );
+}
 
 void HeapMan::ProcessRequests() {
-    if (m_newDescCount > m_currentDescCount)
-        CreateHeap(m_newDescCount);
+    if (m_currentDescOffsetFromBase > m_currentDescCount)
+        CreateHeap(m_currentDescOffsetFromBase);
 
-    for (int i = 0; i < m_queuedRequests.size(); i++) {
+    int requestsSize = m_queuedRequests.size();
+
+    for (int i = 0; i < requestsSize; i++) {
         std::uint32_t index = m_queuedRequests.front();
         m_queuedRequests.pop();
 
-        GetDevice(m_gfxRef)->CopyDescriptorsSimple(
-            1u,
-            CD3DX12_CPU_DESCRIPTOR_HANDLE(
-                m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                index,
-                m_heapIncrementSize
-            ),
-            m_inUseDescsCPUHandles[index],
-            m_heapType
-        );
-
-        m_inUseDescsGPURefs[index].get() =
-            CD3DX12_GPU_DESCRIPTOR_HANDLE(
-                m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
-                index, m_heapIncrementSize
-            );
+        CopyDescriptors(index);
+        m_inUseDescTables.emplace_back(index);
     }
 }
 
@@ -105,44 +142,12 @@ void HeapMan::CreateHeap(std::uint32_t descriptorCount) {
     heapDesc.Type = m_heapType;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    GFX_THROW_FAILED(hr, GetDevice(m_gfxRef)->CreateDescriptorHeap(
+    GFX_THROW_FAILED(hr, GetDevice(*m_gfxRef)->CreateDescriptorHeap(
         &heapDesc, __uuidof(ID3D12DescriptorHeap), &m_pGPUHeap
     ));
 
     m_currentDescCount = descriptorCount;
 
-    for (int index = 0; index < m_inUseDescs.size(); index++) {
-        if (m_inUseDescs[index]) {
-            GetDevice(m_gfxRef)->CopyDescriptorsSimple(
-                1u,
-                CD3DX12_CPU_DESCRIPTOR_HANDLE(
-                    m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                    index,
-                    m_heapIncrementSize
-                ),
-                m_inUseDescsCPUHandles[index],
-                m_heapType
-            );
-
-            m_inUseDescsGPURefs[index].get() =
-                CD3DX12_GPU_DESCRIPTOR_HANDLE(
-                    m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
-                    index, m_heapIncrementSize
-                );
-        }
-        else {
-            GetDevice(m_gfxRef)->CopyDescriptorsSimple(
-                1u,
-                CD3DX12_CPU_DESCRIPTOR_HANDLE(
-                    m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                    index,
-                    m_heapIncrementSize
-                ),
-                m_pEmptyCPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                m_heapType
-            );
-        }
-
-    }
-
+    for (std::uint32_t index : m_inUseDescTables)
+        CopyDescriptors(index);
 }
