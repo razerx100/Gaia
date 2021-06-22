@@ -9,15 +9,18 @@ cbuffer TransformData : register(b1, space0) {
 struct VSOut {
     float3 worldPos : Position;
     float3 normal : Normal;
+    float2 uv : TexCoord;
     float4 position : SV_Position;
 };
 
-VSOut main(float3 position : Position, float3 normals : Normal){
+VSOut main(float3 position : Position, float3 normals : Normal,
+           float2 uv : TexCoord){
     VSOut vso;
 
     vso.worldPos = (float3) mul(float4(position, 1.0f), model);
     vso.normal = mul(normals, (float3x3) model);
     vso.position = mul(float4(position, 1.0f), modelWithProjection);
+    vso.uv = uv;
 
 	return vso;
 }

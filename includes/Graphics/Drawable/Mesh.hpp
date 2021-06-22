@@ -2,11 +2,12 @@
 #define __MESH_HPP__
 #include <Drawable.hpp>
 #include <memory>
+#include <deque>
 
 class Mesh : public Drawable {
 public:
 	Mesh(
-		std::vector<std::unique_ptr<Bindable>>&& pBinds,
+		std::deque<std::unique_ptr<Bindable>>&& pBinds,
 		std::unique_ptr<class IndexBuffer> pIndexBuffer
 	);
 

@@ -6,6 +6,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <BindAll.hpp>
+#include <Texture.hpp>
+#include <Surface.hpp>
 
 Model::Model(Graphics& gfx, const std::string& fileName) {
 	Assimp::Importer importer;
@@ -13,61 +15,83 @@ Model::Model(Graphics& gfx, const std::string& fileName) {
 	const auto pScene = importer.ReadFile(
 		fileName.c_str(),
 		aiProcess_Triangulate |
-		aiProcess_JoinIdenticalVertices
+		aiProcess_JoinIdenticalVertices |
+		aiProcess_ConvertToLeftHanded |
+		aiProcess_GenNormals
 	);
 
 	for (std::uint32_t i = 0; i < pScene->mNumMeshes; ++i)
-		m_pMeshes.emplace_back(ParseMesh(gfx, *pScene->mMeshes[i]));
+		m_pMeshes.emplace_back(ParseMesh(
+			gfx, *pScene->mMeshes[i],
+			pScene->mMaterials
+			)
+		);
 
 	m_pRoot = ParseNode(*pScene->mRootNode);
 }
 
 std::unique_ptr<Mesh> Model::ParseMesh(
-	Graphics& gfx, const aiMesh& mesh
+	Graphics& gfx, const aiMesh& mesh,
+	const struct aiMaterial* const* pMaterials
 ) {
 	VertexLayout vertexLayout = {
 		{"Position", 12u},
-		{"Normal", 12u}
+		{"Normal", 12u},
+		{"TexCoord", 8u}
 	};
-
-	PSODesc pso = PSODesc();
-
-	pso.SetInputLayout(vertexLayout);
-
-	std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-		gfx, App::GetShaderPath() + L"RSPixelLight.cso"
-		);
-
-	pso.SetRootSignature(rootSig.get());
-
-	pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLight.cso");
-
-	pso.SetVertexShader(App::GetShaderPath() + L"VSPixelLight.cso");
-
-	std::unique_ptr<Topology> topo = std::make_unique<Topology>(
-		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
-		);
-
-	pso.SetTopology(topo.get());
-
-	std::vector<std::unique_ptr<Bindable>> bindables;
-
-	bindables.emplace_back(std::make_unique<PipelineState>(gfx, pso));
-
-	bindables.emplace_back(std::move(rootSig));
-
-	bindables.emplace_back(std::move(topo));
 
 	Vertices vertices = {
 		vertexLayout,
 		mesh.mNumVertices
 	};
 
+	std::deque<std::unique_ptr<Bindable>> bindables;
+
+	bool hasSpecular = false;
+	float shininess = 35.0f;
+
+	if (mesh.mMaterialIndex >= 0) {
+		auto& material = *pMaterials[mesh.mMaterialIndex];
+		aiString texFileName;
+
+		auto textureHeap = std::make_unique<BindableHeap>(gfx, 3u, 2);
+
+		std::string modelPath = "models\\nano_textured\\";
+
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
+		textureHeap->AddSRV(gfx, std::make_unique<Texture>(
+			gfx,
+			Surface::FromFile(
+				modelPath + texFileName.C_Str()
+			),
+			0u
+			)
+		);
+
+		if (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName)
+			== aiReturn_SUCCESS) {
+			textureHeap->AddSRV(gfx, std::make_unique<Texture>(
+				gfx,
+				Surface::FromFile(
+					modelPath + texFileName.C_Str()
+				),
+				1u
+				)
+			);
+
+			hasSpecular = true;
+		}
+		else
+			material.Get(AI_MATKEY_SHININESS, shininess);
+
+		bindables.emplace_back(std::move(textureHeap));
+	}
+
 	for (std::uint32_t i = 0; i < mesh.mNumVertices; ++i) {
 		vertices.AddVertexData(
 			*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mVertices[i]),
-			*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i])
+			*reinterpret_cast<DirectX::XMFLOAT3*>(&mesh.mNormals[i]),
+			*reinterpret_cast<DirectX::XMFLOAT2*>(&mesh.mTextureCoords[0][i])
 		);
 	}
 
@@ -83,27 +107,62 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 
 	bindables.emplace_back(std::make_unique<VertexBuffer>(vertices));
 
+	PSODesc pso = PSODesc();
+
+	pso.SetInputLayout(vertexLayout);
+
+	pso.SetVertexShader(App::GetShaderPath() + L"VSPixelLight.cso");
+
+	std::unique_ptr<RootSignature> rootSig;
+	if (hasSpecular) {
+		rootSig = std::make_unique<RootSignature>(
+			gfx, App::GetShaderPath() + L"RSPixelLightSpec.cso"
+			);
+
+		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLightSpec.cso");
+	}
+	else {
+		rootSig = std::make_unique<RootSignature>(
+			gfx, App::GetShaderPath() + L"RSPixelLight.cso"
+			);
+
+		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLight.cso");
+
+		struct PSMaterial {
+			float specularIntensity;
+			float specularPower;
+		};
+
+		PSMaterial matData = {
+			1.8f,
+			shininess
+		};
+
+		bindables.emplace_back(std::make_unique<ConstantBufferCBVStatic<PSMaterial>>(
+			4u, &matData
+			)
+		);
+	}
+
+	pso.SetRootSignature(rootSig.get());
+
+	std::unique_ptr<Topology> topo = std::make_unique<Topology>(
+		D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+		D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
+		);
+
+	pso.SetTopology(topo.get());
+
+	bindables.emplace_front(std::make_unique<PipelineState>(gfx, pso));
+
+	bindables.emplace_front(std::move(rootSig));
+
+	bindables.emplace_back(std::move(topo));
+
 	// Constant buffers
 
-	struct PSMaterial {
-		DirectX::XMFLOAT4 material;
-		float specularIntensity;
-		float specularPower;
-	};
-
-	PSMaterial matData = {
-		{0.6f, 0.6f, 0.8f, 1.0f},
-		0.6f,
-		30.0f
-	};
-
-	bindables.emplace_back(std::make_unique<ConstantBufferCBVStatic<PSMaterial>>(
-		2u, &matData
-		)
-	);
-
 	bindables.emplace_back(std::make_unique<ConstantBuffer<LightData>>(
-		3u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
+		2u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
 		std::bind(&Light::GetLightData, App::GetLight())
 		)
 	);

@@ -12,7 +12,7 @@ namespace ImGuiImpl {
 	class Position {
 	public:
 		float roll = 0.0f;
-		float pitch = -3.1f;
+		float pitch = 0.0f;
 		float yaw = 0.0f;
 		float x = 0.0f;
 		float y = -8.5f;

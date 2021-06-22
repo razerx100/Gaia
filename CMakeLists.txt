@@ -23,7 +23,7 @@ add_executable(${PROJECT_NAME} WIN32
     resources/resource.rc
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE includes/ external/ includes/Exceptions  includes/Graphics includes/Graphics/Bindable includes/Graphics/Drawable includes/Graphics/PipelineObjects includes/Macros includes/Utility includes/Window includes/ImGui)
+target_include_directories(${PROJECT_NAME} PRIVATE includes/ external/ includes/Exceptions  includes/Graphics includes/Graphics/Bindable includes/Graphics/Drawable includes/Graphics/Vertex includes/Graphics/PipelineObjects includes/Macros includes/Utility includes/Window includes/ImGui)
 
 if(IMGUIFLAG STREQUAL "ENABLE")
     target_compile_definitions(${PROJECT_NAME} PRIVATE _IMGUI)

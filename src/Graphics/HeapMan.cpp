@@ -4,11 +4,14 @@
 #include <d3dx12.h>
 
 HeapMan::HeapMan(D3D12_DESCRIPTOR_HEAP_TYPE type, Graphics& gfx)
-    : m_CurrentDescCount(0u), m_NewDescCount(0u), m_GfxRef(gfx), m_HeapType(type), hr(0) {
+    : m_currentDescCount(0u), m_newDescCount(0u), m_gfxRef(gfx),
+    m_heapType(type), hr(0) {
 
-    m_HeapIncrementSize = GetDevice(m_GfxRef)->GetDescriptorHandleIncrementSize(m_HeapType);
+    m_heapIncrementSize = GetDevice(m_gfxRef)->GetDescriptorHandleIncrementSize(
+        m_heapType
+    );
 
-
+    // Empty Heap to replace removed heaps in the main heap
     D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
     srvHeapDesc.NumDescriptors = 1;
     srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -24,68 +27,65 @@ std::uint32_t HeapMan::RequestHandleIndex(
     D3D12_GPU_DESCRIPTOR_HANDLE& setter
 ) {
     std::uint32_t index;
-    if (m_AvailableDescs.empty())
-        index = m_NewDescCount++;
+    if (m_availableDescs.empty())
+        index = m_newDescCount++;
     else {
-        index = m_AvailableDescs.front();
-        m_AvailableDescs.pop();
+        index = m_availableDescs.front();
+        m_availableDescs.pop();
     }
 
-    if (index < m_InUseDescs.size()) {
-        m_InUseDescs[index] = true;
-        m_InUseDescsCPUHandles[index] = cpuVisibleHandle;
-        m_InUseDescsGPURefs[index] = setter;
+    if (index < m_inUseDescs.size()) {
+        m_inUseDescs[index] = true;
+        m_inUseDescsCPUHandles[index] = cpuVisibleHandle;
+        m_inUseDescsGPURefs[index] = setter;
     }
     else {
-        m_InUseDescs.push_back(true);
-        m_InUseDescsCPUHandles.push_back(cpuVisibleHandle);
-        m_InUseDescsGPURefs.emplace_back(setter);
+        m_inUseDescs.push_back(true);
+        m_inUseDescsCPUHandles.push_back(cpuVisibleHandle);
+        m_inUseDescsGPURefs.emplace_back(setter);
     }
 
-    m_QueuedRequests.push(index);
+    m_queuedRequests.push(index);
 
     return index;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE HeapMan::RequestHandleCPU(std::uint32_t handleIndex) {
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(
+    return CD3DX12_CPU_DESCRIPTOR_HANDLE(
         m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
-        handleIndex, m_HeapIncrementSize
+        handleIndex, m_heapIncrementSize
     );
-
-    return cpuHandle;
 }
 
 void HeapMan::Free(std::uint32_t index) {
-    m_AvailableDescs.push(index);
-    m_InUseDescs[index] = false;
+    m_availableDescs.push(index);
+    m_inUseDescs[index] = false;
 }
 
 
 void HeapMan::ProcessRequests() {
-    if (m_NewDescCount > m_CurrentDescCount)
-        CreateHeap(m_NewDescCount);
+    if (m_newDescCount > m_currentDescCount)
+        CreateHeap(m_newDescCount);
 
-    for (int i = 0; i < m_QueuedRequests.size(); i++) {
-        std::uint32_t index = m_QueuedRequests.front();
-        m_QueuedRequests.pop();
+    for (int i = 0; i < m_queuedRequests.size(); i++) {
+        std::uint32_t index = m_queuedRequests.front();
+        m_queuedRequests.pop();
 
-        GetDevice(m_GfxRef)->CopyDescriptorsSimple(
+        GetDevice(m_gfxRef)->CopyDescriptorsSimple(
             1u,
             CD3DX12_CPU_DESCRIPTOR_HANDLE(
                 m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
                 index,
-                m_HeapIncrementSize
+                m_heapIncrementSize
             ),
-            m_InUseDescsCPUHandles[index],
-            m_HeapType
+            m_inUseDescsCPUHandles[index],
+            m_heapType
         );
 
-        m_InUseDescsGPURefs[index].get() =
+        m_inUseDescsGPURefs[index].get() =
             CD3DX12_GPU_DESCRIPTOR_HANDLE(
                 m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
-                index, m_HeapIncrementSize
+                index, m_heapIncrementSize
             );
     }
 }
@@ -95,51 +95,51 @@ ID3D12DescriptorHeap* HeapMan::GetHeap() const noexcept {
 }
 
 std::uint32_t HeapMan::GetHeapCount() const noexcept {
-    return m_CurrentDescCount > 0;
+    return m_currentDescCount > 0;
 }
 
 void HeapMan::CreateHeap(std::uint32_t descriptorCount) {
 
     D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
     heapDesc.NumDescriptors = descriptorCount;
-    heapDesc.Type = m_HeapType;
+    heapDesc.Type = m_heapType;
     heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-    GFX_THROW_FAILED(hr, GetDevice(m_GfxRef)->CreateDescriptorHeap(
+    GFX_THROW_FAILED(hr, GetDevice(m_gfxRef)->CreateDescriptorHeap(
         &heapDesc, __uuidof(ID3D12DescriptorHeap), &m_pGPUHeap
     ));
 
-    m_CurrentDescCount = descriptorCount;
+    m_currentDescCount = descriptorCount;
 
-    for (int index = 0; index < m_InUseDescs.size(); index++) {
-        if (m_InUseDescs[index]) {
-            GetDevice(m_GfxRef)->CopyDescriptorsSimple(
+    for (int index = 0; index < m_inUseDescs.size(); index++) {
+        if (m_inUseDescs[index]) {
+            GetDevice(m_gfxRef)->CopyDescriptorsSimple(
                 1u,
                 CD3DX12_CPU_DESCRIPTOR_HANDLE(
                     m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
                     index,
-                    m_HeapIncrementSize
+                    m_heapIncrementSize
                 ),
-                m_InUseDescsCPUHandles[index],
-                m_HeapType
+                m_inUseDescsCPUHandles[index],
+                m_heapType
             );
 
-            m_InUseDescsGPURefs[index].get() =
+            m_inUseDescsGPURefs[index].get() =
                 CD3DX12_GPU_DESCRIPTOR_HANDLE(
                     m_pGPUHeap->GetGPUDescriptorHandleForHeapStart(),
-                    index, m_HeapIncrementSize
+                    index, m_heapIncrementSize
                 );
         }
         else {
-            GetDevice(m_GfxRef)->CopyDescriptorsSimple(
+            GetDevice(m_gfxRef)->CopyDescriptorsSimple(
                 1u,
                 CD3DX12_CPU_DESCRIPTOR_HANDLE(
                     m_pGPUHeap->GetCPUDescriptorHandleForHeapStart(),
                     index,
-                    m_HeapIncrementSize
+                    m_heapIncrementSize
                 ),
                 m_pEmptyCPUHeap->GetCPUDescriptorHandleForHeapStart(),
-                m_HeapType
+                m_heapType
             );
         }
 

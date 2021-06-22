@@ -3,26 +3,18 @@
 #include <GraphicsThrowMacros.hpp>
 #include <d3dx12.h>
 #include <HeapMan.hpp>
+#include <Graphics.hpp>
 
-Texture::Texture(Graphics& gfx, const Surface& s, std::uint32_t rootIndex)
-	: m_rootIndex(rootIndex) {
-
-	{
-		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-		srvHeapDesc.NumDescriptors = 1;
-		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-
-		GFX_THROW_FAILED(hr, GetDevice(gfx)->CreateDescriptorHeap(
-			&srvHeapDesc, __uuidof(ID3D12DescriptorHeap), &m_pSRVHeap
-		));
-	}
+Texture::Texture(Graphics& gfx,
+	const Surface& s,
+	std::uint32_t descriptorIndex)
+	: ResourceView(descriptorIndex) {
 
 	D3D12_RESOURCE_DESC texDesc = {};
 	texDesc.Height = s.GetHeight();
 	texDesc.Width = s.GetWidth();
 	texDesc.MipLevels = 1;
-	texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	texDesc.SampleDesc.Count = 1;
 	texDesc.DepthOrArraySize = 1;
 	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -40,7 +32,9 @@ Texture::Texture(Graphics& gfx, const Surface& s, std::uint32_t rootIndex)
 		&m_pTexture
 	));
 
-	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(m_pTexture.Get(), 0, 1);
+	const UINT64 uploadBufferSize = GetRequiredIntermediateSize(
+		m_pTexture.Get(), 0, 1
+	);
 
 	heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 
@@ -73,30 +67,16 @@ Texture::Texture(Graphics& gfx, const Surface& s, std::uint32_t rootIndex)
 	);
 
 	GetCommandList(gfx)->ResourceBarrier(1, &transition);
+}
 
+void Texture::CreateSRV(Graphics& gfx, D3D12_CPU_DESCRIPTOR_HANDLE srvHandle) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = texDesc.Format;
+	srvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	GFX_THROW_NO_HR(GetDevice(gfx)->CreateShaderResourceView(
-		m_pTexture.Get(), &srvDesc, m_pSRVHeap->GetCPUDescriptorHandleForHeapStart()
+		m_pTexture.Get(), &srvDesc, srvHandle
 	))
-
-		m_SRVIndex = GetSRVHeapMan(gfx).RequestHandleIndex(
-			m_pSRVHeap->GetCPUDescriptorHandleForHeapStart(),
-			m_GPUHandle
-		);
 }
-
-void Texture::OnDestroy(Graphics& gfx) noexcept {
-	GetSRVHeapMan(gfx).Free(m_SRVIndex);
-}
-
-void Texture::BindCommand(Graphics& gfx) noexcept {
-	GetCommandList(gfx)->SetGraphicsRootDescriptorTable(
-		m_rootIndex, m_GPUHandle
-	);
-}
-

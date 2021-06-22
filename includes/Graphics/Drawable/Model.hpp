@@ -13,7 +13,8 @@ public:
 	Model(Graphics& gfx, const std::string& fileName);
 
 	static std::unique_ptr<Mesh> ParseMesh(
-		Graphics& gfx, const struct aiMesh& mesh
+		Graphics& gfx, const struct aiMesh& mesh,
+		const struct aiMaterial* const* pMaterials
 	);
 	std::unique_ptr<Node> ParseNode(const struct aiNode& node);
 

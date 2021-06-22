@@ -3,7 +3,7 @@
 #include <IndexBuffer.hpp>
 
 Mesh::Mesh(
-	std::vector<std::unique_ptr<Bindable>>&& pBinds,
+	std::deque<std::unique_ptr<Bindable>>&& pBinds,
 	std::unique_ptr<IndexBuffer> pIndexBuffer
 ) {
 	AddIndexBuffer(std::move(pIndexBuffer));

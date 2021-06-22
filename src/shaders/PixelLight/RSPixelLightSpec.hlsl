@@ -6,13 +6,11 @@
 									"visibility=SHADER_VISIBILITY_VERTEX),"\
 			 "CBV(b1, space=0, visibility=SHADER_VISIBILITY_VERTEX,"\
 									"flags = DATA_VOLATILE ),"\
-			 "RootConstants(num32BitConstants = 15, b1, space=1, "\
+			 "RootConstants(num32BitConstants = 15, b0, space=1, "\
 									"visibility=SHADER_VISIBILITY_PIXEL),"\
-			 "DescriptorTable(SRV(t0, space=0, numDescriptors=1,"\
+			 "DescriptorTable(SRV(t0, space=0, numDescriptors=2,"\
 									"flags = DESCRIPTORS_VOLATILE ),"\
 									"visibility=SHADER_VISIBILITY_PIXEL),"\
-			 "CBV(b0, space=1, visibility=SHADER_VISIBILITY_PIXEL,"\
-									"flags = DATA_VOLATILE ),"\
 			 "StaticSampler(s0,"\
 							"space = 0,"\
 							"filter = FILTER_MIN_MAG_MIP_LINEAR,"\

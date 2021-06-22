@@ -1,9 +1,4 @@
-cbuffer ColorBuf : register(b0, space1) {
-    float specularIntensity;
-    float specularPower;
-};
-
-cbuffer LightBuf : register(b1, space1) {
+cbuffer LightBuf : register(b0, space1) {
 	float3 lightPosition;
     float3 ambient;
     float3 diffuseColor;
@@ -13,7 +8,8 @@ cbuffer LightBuf : register(b1, space1) {
     float attQuad;
 };
 
-Texture2D tex : register(t0);
+Texture2D diffuseTex : register(t0);
+Texture2D specularTex : register(t1);
 SamplerState samplerState : register(s0);
 
 float4 main(float3 worldPos : Position,
@@ -31,15 +27,22 @@ float4 main(float3 worldPos : Position,
 
     // Specular highlight
     const float3 vn = normalize(vectorToLight);
+
     const float3 r = reflect(normalize(-lightPosition), normalize(normal));
 
-    const float3 specular = attenuation * (diffuseColor * diffuseIntensity)
-        * specularIntensity * pow(
+    const float4 specularSample = specularTex.Sample(samplerState, uv);
+    const float3 specularReflectionColor = specularSample.rgb;
+    const float specularPower = pow(2.0f, specularSample.a * 13.0f);
+
+    const float3 specular = attenuation * (diffuseColor * diffuseIntensity) * pow(
         max(0.0f, dot(r, vn)), specularPower
     );
 
     return float4(
-        saturate((diffuse + ambient) * tex.Sample(samplerState, uv).rgb + specular)
-        , 1.0f
+        saturate((diffuse + ambient)
+        * diffuseTex.Sample(samplerState, uv).rgb
+        + specular * specularReflectionColor
+        ),
+        1.0f
     );
 }

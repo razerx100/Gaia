@@ -28,7 +28,7 @@ App::App()
 
 	s_light = std::make_unique<Light>(m_wnd.GetGfx(), 0.4f);
 
-	m_pNano = std::make_unique<Model>(m_wnd.GetGfx(), "models\\nanosuit.obj");
+	m_pNano = std::make_unique<Model>(m_wnd.GetGfx(), "models\\nano_textured\\nanosuit.obj");
 
 	m_wnd.GetGfx().InitialGPUSetup();
 }

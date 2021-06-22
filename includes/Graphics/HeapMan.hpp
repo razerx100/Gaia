@@ -32,22 +32,20 @@ private:
 	ComPtr<ID3D12DescriptorHeap> m_pGPUHeap;
 	ComPtr<ID3D12DescriptorHeap> m_pEmptyCPUHeap;
 
-	std::vector<bool> m_InUseDescs;
-	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_InUseDescsCPUHandles;
-	std::vector<std::reference_wrapper<D3D12_GPU_DESCRIPTOR_HANDLE>> m_InUseDescsGPURefs;
+	std::vector<bool> m_inUseDescs;
+	std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_inUseDescsCPUHandles;
+	std::vector<std::reference_wrapper<D3D12_GPU_DESCRIPTOR_HANDLE>> m_inUseDescsGPURefs;
+	std::vector<std::uint32_t> m_inUseDescsDescriptorCount;
 
-	std::queue<std::uint32_t> m_AvailableDescs;
+	std::queue<std::uint32_t> m_availableDescs;
+	std::queue<std::uint32_t> m_queuedRequests;
 
-	std::queue<std::uint32_t> m_QueuedRequests;
+	std::uint32_t m_currentDescCount;
+	std::uint32_t m_heapIncrementSize;
+	std::uint32_t m_newDescCount;
 
-	std::uint32_t m_CurrentDescCount;
-	std::uint32_t m_HeapIncrementSize;
-	std::uint32_t m_NewDescCount;
-
-	Graphics& m_GfxRef;
-
-	const D3D12_DESCRIPTOR_HEAP_TYPE m_HeapType;
-
+	Graphics& m_gfxRef;
+	const D3D12_DESCRIPTOR_HEAP_TYPE m_heapType;
 	HRESULT hr;
 };
 #endif

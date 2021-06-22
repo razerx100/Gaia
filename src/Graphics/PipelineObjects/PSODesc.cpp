@@ -11,7 +11,7 @@ PSODesc::PSODesc()
 	m_psoDesc.DepthStencilState.StencilEnable = FALSE;
 	m_psoDesc.SampleMask = UINT_MAX;
 	m_psoDesc.NumRenderTargets = 1;
-	m_psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	m_psoDesc.RTVFormats[0] = DXGI_FORMAT_B8G8R8A8_UNORM;
 	m_psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 	m_psoDesc.SampleDesc.Count = 1;
 }
