@@ -8,21 +8,18 @@
 class BindableHeap : public Bindable {
 public:
 	BindableHeap(Graphics& gfx,
-		std::uint32_t rootIndex,
-		std::uint32_t descriptorAmount);
+		std::uint32_t rootIndex
+	);
 
 	void AddSRV(Graphics& gfx, std::unique_ptr<class Texture> texture);
+	void FinishedAdding(Graphics& gfx);
 
 	void BindCommand(Graphics& gfx) noexcept override;
 	void OnDestroy(Graphics& gfx) noexcept;
 
 private:
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle(
-		std::uint32_t descriptorIndex
-	) const noexcept;
-
-private:
 	ComPtr<ID3D12DescriptorHeap> m_pHeap;
+	std::vector<ComPtr<ID3D12DescriptorHeap>> m_copyHeaps;
 	std::vector<std::unique_ptr<class ResourceView>> m_resourceViews;
 
 	std::uint32_t m_rootIndex;

@@ -54,7 +54,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		auto& material = *pMaterials[mesh.mMaterialIndex];
 		aiString texFileName;
 
-		auto textureHeap = std::make_unique<BindableHeap>(gfx, 3u, 2);
+		auto textureHeap = std::make_unique<BindableHeap>(gfx, 3u);
 
 		std::string modelPath = "models\\nano_textured\\";
 
@@ -84,6 +84,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		else
 			material.Get(AI_MATKEY_SHININESS, shininess);
 
+		textureHeap->FinishedAdding(gfx);
 		bindables.emplace_back(std::move(textureHeap));
 	}
 
@@ -134,7 +135,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		};
 
 		PSMaterial matData = {
-			1.8f,
+			0.8f,
 			shininess
 		};
 
