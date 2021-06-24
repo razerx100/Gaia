@@ -27,6 +27,9 @@ public:
 
     DXGI_OUTPUT_DESC GetOutputDesc();
 
+    static void SetRenderFormat(DXGI_FORMAT renderFormat) noexcept;
+    static DXGI_FORMAT GetRenderFormat() noexcept;
+
 private:
     void Initialize(HWND hwnd);
     void ExecuteCommandList();
@@ -36,9 +39,14 @@ private:
     void CreateRTVs();
     void CreateDSV();
     void InitializeViewPortAndSRECT();
+    void GetHardwareAdapter(
+        IDXGIFactory1* pFactory,
+        IDXGIAdapter1** ppAdapter
+    );
 
 private:
 	static constexpr std::uint16_t bufferCount = 2u;
+    static  DXGI_FORMAT s_renderFormat;
 
     D3D12_VIEWPORT m_viewport;
     D3D12_RECT m_scissorRect;

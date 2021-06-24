@@ -6,6 +6,7 @@
 #include <BufferMan.hpp>
 #include <Camera.hpp>
 
+DXGI_FORMAT Graphics::s_renderFormat;
 // Graphics
 Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
 	: m_pDevice(nullptr),
@@ -18,7 +19,7 @@ Graphics::Graphics(HWND hwnd, std::uint32_t width, std::uint32_t height)
     InitializeViewPortAndSRECT();
     Initialize(hwnd);
     ImGuiImpl::ImGuiDxInit(
-        m_pDevice.Get(), bufferCount, DXGI_FORMAT_B8G8R8A8_UNORM, m_pSRVHeapMan.get()
+        m_pDevice.Get(), bufferCount, GetRenderFormat(), m_pSRVHeapMan.get()
     );
 }
 
@@ -49,8 +50,7 @@ void Graphics::Initialize(HWND hwnd) {
     {
         ComPtr<IDXGIAdapter1> adapter;
 
-        factory->EnumAdapters1(
-            0u, &adapter);
+        GetHardwareAdapter(factory.Get(), &adapter);
 
         D3D12CreateDevice(
             adapter.Get(),
@@ -78,7 +78,7 @@ void Graphics::Initialize(HWND hwnd) {
     swapChainDesc.BufferCount = bufferCount;
     swapChainDesc.Width = m_width;
     swapChainDesc.Height = m_height;
-    swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    swapChainDesc.Format = GetRenderFormat();
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;
@@ -382,4 +382,38 @@ DXGI_OUTPUT_DESC Graphics::GetOutputDesc() {
     GFX_THROW_FAILED(hr, pOutput->GetDesc(&desc));
 
     return desc;
+}
+
+void Graphics::SetRenderFormat(DXGI_FORMAT renderFormat) noexcept {
+    s_renderFormat = renderFormat;
+}
+
+DXGI_FORMAT Graphics::GetRenderFormat() noexcept {
+    return s_renderFormat;
+}
+
+void Graphics::GetHardwareAdapter(
+    IDXGIFactory1* pFactory,
+    IDXGIAdapter1** ppAdapter
+) {
+    ComPtr<IDXGIFactory6> pFactory6;
+
+    if (SUCCEEDED(pFactory->QueryInterface(__uuidof(IDXGIFactory6), &pFactory6)))
+        pFactory6->EnumAdapterByGpuPreference(
+            0u,
+            DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE,
+            __uuidof(IDXGIAdapter1),
+            reinterpret_cast<void**>(ppAdapter)
+        );
+    else
+        pFactory->EnumAdapters1(
+            0u, ppAdapter
+        );
+
+    if (FAILED(
+        D3D12CreateDevice(
+            *ppAdapter, D3D_FEATURE_LEVEL_11_0,
+            __uuidof(ID3D12Device), nullptr)
+    ))
+        throw D3D12NotSupportedException();
 }

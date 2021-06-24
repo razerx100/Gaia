@@ -72,6 +72,8 @@ Window::Window(int width, int height, const char* name)
 
 	ImGuiImpl::ImGuiWindowInit(m_hWnd);
 
+	Graphics::SetRenderFormat(DXGI_FORMAT_B8G8R8A8_UNORM);
+
 	m_pGfx = std::make_unique<Graphics>(
 		m_hWnd, static_cast<std::uint32_t>(width), static_cast<std::uint32_t>(height)
 		);

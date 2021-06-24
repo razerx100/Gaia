@@ -14,7 +14,7 @@ Texture::Texture(Graphics& gfx,
 	texDesc.Height = s.GetHeight();
 	texDesc.Width = s.GetWidth();
 	texDesc.MipLevels = 1;
-	texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	texDesc.Format = Graphics::GetRenderFormat();
 	texDesc.SampleDesc.Count = 1;
 	texDesc.DepthOrArraySize = 1;
 	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -71,7 +71,7 @@ Texture::Texture(Graphics& gfx,
 
 void Texture::CreateSRV(Graphics& gfx, D3D12_CPU_DESCRIPTOR_HANDLE srvHandle) {
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	srvDesc.Format = Graphics::GetRenderFormat();
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

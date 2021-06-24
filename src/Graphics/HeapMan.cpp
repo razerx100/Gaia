@@ -116,9 +116,9 @@ void HeapMan::ProcessRequests() {
     if (m_currentDescOffsetFromBase > m_currentDescCount)
         CreateHeap(m_currentDescOffsetFromBase);
 
-    int requestsSize = m_queuedRequests.size();
+    std::uint32_t requestsSize = static_cast<std::uint32_t>(m_queuedRequests.size());
 
-    for (int i = 0; i < requestsSize; i++) {
+    for (std::uint32_t i = 0; i < requestsSize; ++i) {
         std::uint32_t index = m_queuedRequests.front();
         m_queuedRequests.pop();
 

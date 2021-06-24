@@ -3,21 +3,22 @@
 #include <Exception.hpp>
 #include <vector>
 
-typedef long HRESULT;
-
 class HrException : public Exception {
 public:
-	HrException(int line, const char* file, HRESULT hr) noexcept;
-	HrException(int line, const char* file, HRESULT hr, const std::vector<std::string>& infoMsgs) noexcept;
+	HrException(int line, const char* file, long hr) noexcept;
+	HrException(
+		int line, const char* file,
+		long hr, const std::vector<std::string>& infoMsgs
+	) noexcept;
 	const char* what() const noexcept override;
 	const char* GetType() const noexcept override;
-	HRESULT GetErrorCode() const noexcept;
-	static std::string TranslateErrorCode(HRESULT hr) noexcept;
+	long GetErrorCode() const noexcept;
+	static std::string TranslateErrorCode(long hr) noexcept;
 	std::string GetErrorString() const noexcept;
 	std::string GetErrorInfo() const noexcept;
 
 private:
-	HRESULT m_hr;
+	long m_hr;
 	std::string m_info;
 };
 
@@ -29,13 +30,20 @@ public:
 
 class InfoException : public Exception {
 public:
-	InfoException(int line, const char* file, const std::vector<std::string>& infoMsgs) noexcept;
+	InfoException(int line, const char* file,
+		const std::vector<std::string>& infoMsgs
+	) noexcept;
 	const char* what() const noexcept override;
 	const char* GetType() const noexcept override;
 	std::string GetErrorInfo() const noexcept;
 
 private:
 	std::string m_info;
+};
+
+class D3D12NotSupportedException : public std::exception {
+public:
+	const char* what() const noexcept override;
 };
 
 #endif

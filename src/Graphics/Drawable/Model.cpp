@@ -84,7 +84,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		else
 			material.Get(AI_MATKEY_SHININESS, shininess);
 
-		textureHeap->FinishedAdding(gfx);
+		textureHeap->FinishAdding(gfx);
 		bindables.emplace_back(std::move(textureHeap));
 	}
 

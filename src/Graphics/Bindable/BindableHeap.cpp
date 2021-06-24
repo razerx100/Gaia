@@ -14,7 +14,7 @@ BindableHeap::BindableHeap(Graphics& gfx,
 	);
 }
 
-void BindableHeap::FinishedAdding(Graphics& gfx) {
+void BindableHeap::FinishAdding(Graphics& gfx) {
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
 	srvHeapDesc.NumDescriptors = static_cast<std::uint32_t>(m_copyHeaps.size());
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;

@@ -12,7 +12,7 @@ public:
 	);
 
 	void AddSRV(Graphics& gfx, std::unique_ptr<class Texture> texture);
-	void FinishedAdding(Graphics& gfx);
+	void FinishAdding(Graphics& gfx);
 
 	void BindCommand(Graphics& gfx) noexcept override;
 	void OnDestroy(Graphics& gfx) noexcept;

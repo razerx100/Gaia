@@ -2,11 +2,11 @@
 #include <GraphicsExceptions.hpp>
 #include <sstream>
 
-HrException::HrException(int line, const char* file, HRESULT hr) noexcept
+HrException::HrException(int line, const char* file, long hr) noexcept
 	: Exception(line, file), m_hr(hr) {}
 
 
-HrException::HrException(int line, const char* file, HRESULT hr,
+HrException::HrException(int line, const char* file, long hr,
 	const std::vector<std::string>& infoMsgs) noexcept
 	: Exception(line, file), m_hr(hr) {
 	for (const std::string& m : infoMsgs) {
@@ -40,11 +40,11 @@ const char* DeviceRemovedException::GetType() const noexcept {
 	return "Graphics Exception [Device Removed]";
 }
 
-HRESULT HrException::GetErrorCode() const noexcept {
+long HrException::GetErrorCode() const noexcept {
 	return m_hr;
 }
 
-std::string HrException::TranslateErrorCode(HRESULT hr) noexcept {
+std::string HrException::TranslateErrorCode(long hr) noexcept {
 	char* pMsgBuf = nullptr;
 	DWORD nMsgLen = FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -99,4 +99,8 @@ const char* InfoException::GetType() const noexcept {
 
 std::string InfoException::GetErrorInfo() const noexcept {
 	return m_info;
+}
+
+const char* D3D12NotSupportedException::what() const noexcept {
+	return "GPU doesn't have hardware support for DirectX12.";
 }
