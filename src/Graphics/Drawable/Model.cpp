@@ -116,16 +116,34 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 
 	std::unique_ptr<RootSignature> rootSig;
 	if (hasSpecular) {
-		rootSig = std::make_unique<RootSignature>(
+		rootSig = std::make_unique<RootSignaturePreCompiled>(
 			gfx, App::GetShaderPath() + L"RSPixelLightSpec.cso"
 			);
 
 		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLightSpec.cso");
 	}
 	else {
-		rootSig = std::make_unique<RootSignature>(
+		rootSig = std::make_unique<RootSignaturePreCompiled>(
 			gfx, App::GetShaderPath() + L"RSPixelLight.cso"
 			);
+
+		/*auto rootSigDy = std::make_unique<RootSignatureDynamic>();
+
+		rootSigDy->AddConstants(16u, D3D12_SHADER_VISIBILITY_VERTEX, 0u);
+		rootSigDy->AddConstantBufferView(D3D12_SHADER_VISIBILITY_VERTEX, 1u);
+		rootSigDy->AddConstants(15u, D3D12_SHADER_VISIBILITY_PIXEL, 1u, 1u);
+		rootSigDy->AddDescriptorTable(
+			D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+			1u,
+			D3D12_SHADER_VISIBILITY_PIXEL,
+			0u
+		);
+		rootSigDy->AddConstantBufferView(D3D12_SHADER_VISIBILITY_PIXEL, 0u, 1u);
+		rootSigDy->AddStaticSampler();
+
+		rootSigDy->CompileSignature(gfx);
+
+		rootSig = std::move(rootSigDy);*/
 
 		pso.SetPixelShader(App::GetShaderPath() + L"PSPixelLight.cso");
 

@@ -14,9 +14,10 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 
 		pso.SetInputLayout(vertexLayout);
 
-		std::unique_ptr<RootSignature> rootSig = std::make_unique<RootSignature>(
-			gfx, App::GetShaderPath() + L"RSSolidColor.cso"
-			);
+		std::unique_ptr<RootSignature> rootSig =
+			std::make_unique<RootSignaturePreCompiled>(
+				gfx, App::GetShaderPath() + L"RSSolidColor.cso"
+				);
 
 		pso.SetRootSignature(rootSig.get());
 
@@ -53,7 +54,7 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 				float green;
 				float blue;
 				float alpha;
-			}face_color;
+			}fill_color;
 		};
 
 		ConstantBufferColor materialColor = {
