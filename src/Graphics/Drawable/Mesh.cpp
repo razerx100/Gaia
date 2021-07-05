@@ -2,12 +2,7 @@
 #include <Bindable.hpp>
 #include <IndexBuffer.hpp>
 
-Mesh::Mesh(
-	std::deque<std::unique_ptr<Bindable>>&& pBinds,
-	std::unique_ptr<IndexBuffer> pIndexBuffer
-) {
-	AddIndexBuffer(std::move(pIndexBuffer));
-
+Mesh::Mesh(std::deque<std::unique_ptr<Bindable>>&& pBinds) {
 	for (auto& pBind : pBinds)
 		AddBind(std::move(pBind));
 }

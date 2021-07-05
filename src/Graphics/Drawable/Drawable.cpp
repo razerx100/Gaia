@@ -1,6 +1,9 @@
 #include <Drawable.hpp>
 #include <Bindable.hpp>
 #include <IndexBuffer.hpp>
+#include <typeinfo>
+
+Drawable::~Drawable(){}
 
 void Drawable::Draw(Graphics& gfx) const noexcept(!IS_DEBUG) {
 	for (auto& bind : m_Binds)
@@ -9,9 +12,9 @@ void Drawable::Draw(Graphics& gfx) const noexcept(!IS_DEBUG) {
 	gfx.DrawIndexed(GetIndexCount());
 }
 
-void Drawable::Update(float deltaTime) noexcept {}
-
 void Drawable::AddBind(std::unique_ptr<Bindable> bind) noexcept {
+	if (typeid(*bind.get()).name() == typeid(IndexBuffer).name())
+		m_IndexCount = reinterpret_cast<IndexBuffer*>(bind.get())->GetIndexCount();
 	m_Binds.emplace_back(std::move(bind));
 }
 

@@ -6,10 +6,7 @@
 
 class Mesh : public Drawable {
 public:
-	Mesh(
-		std::deque<std::unique_ptr<Bindable>>&& pBinds,
-		std::unique_ptr<class IndexBuffer> pIndexBuffer
-	);
+	Mesh(std::deque<std::unique_ptr<Bindable>>&& pBinds);
 
 	void Draw(
 		Graphics& gfx,

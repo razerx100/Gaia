@@ -108,6 +108,8 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 
 	bindables.emplace_back(std::make_unique<VertexBuffer>(vertices));
 
+	bindables.emplace_back(std::make_unique<IndexBuffer>(indices));
+
 	PSODesc pso = PSODesc();
 
 	pso.SetInputLayout(vertexLayout);
@@ -186,10 +188,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		)
 	);
 
-	auto pMesh = std::make_unique<Mesh>(
-		std::move(bindables),
-		std::make_unique<IndexBuffer>(indices)
-		);
+	auto pMesh = std::make_unique<Mesh>(std::move(bindables));
 
 	pMesh->AddBind(std::make_unique<ConstantBufferMat>(
 		0u, 16u, std::bind(

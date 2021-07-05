@@ -9,9 +9,8 @@ class Bindable;
 class Drawable {
 public:
 	Drawable() = default;
-	virtual ~Drawable() = default;
+	virtual ~Drawable();
 
-	virtual void Update(float deltaTime) noexcept;
 	virtual void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
 
 	// Bind Root Signature before constant buffers
