@@ -3,78 +3,57 @@
 #include <Sphere.hpp>
 #include <BindAll.hpp>
 #include <App.hpp>
+#include <BindableCodex.hpp>
+#include <PSODesc.hpp>
+#include <BindableProcessor.hpp>
 
 SolidSphere::SolidSphere(Graphics& gfx, float radius) {
-	if (!IsDataInitialized()) {
-		PSODesc pso = PSODesc();
-
-		VertexLayout vertexLayout = {
-			{"Position", 12u}
-		};
-
-		pso.SetInputLayout(vertexLayout);
-
-		std::unique_ptr<RootSignature> rootSig =
-			std::make_unique<RootSignaturePreCompiled>(
-				gfx, App::GetShaderPath() + L"RSSolidColor.cso"
-				);
-
-		pso.SetRootSignature(rootSig.get());
-
-		pso.SetPixelShader(App::GetShaderPath() + L"PSSolidColor.cso");
-
-		pso.SetVertexShader(App::GetShaderPath() + L"VSSolidColor.cso");
-
-		std::unique_ptr<Topology> topo = std::make_unique<Topology>(
-			D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
-			D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST
-			);
-
-		pso.SetTopology(topo.get());
-
-		AddStaticBind(std::make_unique<PipelineState>(gfx, pso));
-
-		AddStaticBind(std::move(rootSig));
-
-		AddStaticBind(std::move(topo));
-
-		IndexedTriangleList model = Sphere::Make();
-
-		model.Transform(DirectX::XMMatrixScaling(radius, radius, radius));
-
-		AddStaticBind(std::make_unique<VertexBuffer>(
-			model.GetVerticesObject(vertexLayout))
-		);
-
-		AddStaticIndexBuffer(std::make_unique<IndexBuffer>(model.GetIndices()));
-
-		struct ConstantBufferColor {
-			struct {
-				float red;
-				float green;
-				float blue;
-				float alpha;
-			}fill_color;
-		};
-
-		ConstantBufferColor materialColor = {
-			{1.0f, 1.0f, 1.0f, 1.0f}
-		};
-
-		AddStaticBind(std::make_unique<ConstantBufferCBVStatic<ConstantBufferColor>>(
-			1u, &materialColor
-			)
-		);
-	}
-
-	AddBind(std::make_unique<ConstantBufferMat>(
-		0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_Transform)
-		)
+	BindProcessor process = BindProcessor(
+		"SolidSphereWhite",
+		"SolidColor"
 	);
 
-	m_Transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);
+	IndexedTriangleList model = Sphere::Make();
+
+	model.Transform(DirectX::XMMatrixScaling(radius, radius, radius));
+
+	process.ProcessWithoutTex(gfx, model);
+
+	AddBind(process.GetPipelineState());
+	AddBind(process.GetRootSignature());
+	AddBind(process.GetTopology());
+	AddBind(process.GetVertexBuffer());
+	AddBind(process.GetIndexBuffer());
+
+	struct ConstantBufferColor {
+		struct {
+			float red;
+			float green;
+			float blue;
+			float alpha;
+		}fill_color;
+	};
+
+	ConstantBufferColor materialColor = {
+		{1.0f, 1.0f, 1.0f, 1.0f}
+	};
+
+	AddBind(BindProcessor::GetOrAddGeneric
+		<ConstantBufferCBVStatic<ConstantBufferColor>>(
+			"CBVStaticWhite",
+			1u, &materialColor
+			)
+	);
+
+	AddBind(
+		std::make_unique<ConstantBufferMat>(
+			0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_transform)
+			)
+	);
+
+	m_transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);
 }
 
 void SolidSphere::SetPosition(DirectX::XMFLOAT3 position) noexcept {
-	m_Transform = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
+	m_transform = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
 }

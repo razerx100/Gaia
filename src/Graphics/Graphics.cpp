@@ -415,5 +415,5 @@ void Graphics::GetHardwareAdapter(
             *ppAdapter, D3D_FEATURE_LEVEL_11_0,
             __uuidof(ID3D12Device), nullptr)
     ))
-        throw D3D12NotSupportedException();
+        throw GenericException("GPU doesn't have hardware support for DirectX12.");
 }

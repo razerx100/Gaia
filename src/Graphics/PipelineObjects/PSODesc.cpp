@@ -1,6 +1,8 @@
 #include <PSODesc.hpp>
 #include <d3dx12.h>
 #include <Graphics.hpp>
+#include <RootSignature.hpp>
+#include <Topology.hpp>
 
 PSODesc::PSODesc()
 	: m_psoDesc{} {
@@ -27,13 +29,13 @@ void PSODesc::SetRootSignature(RootSignature* signature) noexcept {
 	m_psoDesc.pRootSignature = signature->GetSignature();
 }
 
-void PSODesc::SetVertexShader(const std::wstring& filePath) noexcept {
+void PSODesc::SetVertexShader(const std::string& filePath) noexcept {
 	m_vertexShader.Init(filePath);
 
 	m_psoDesc.VS = m_vertexShader.GetShaderByteCode();
 }
 
-void PSODesc::SetPixelShader(const std::wstring& filePath) noexcept {
+void PSODesc::SetPixelShader(const std::string& filePath) noexcept {
 	m_pixelShader.Init(filePath);
 
 	m_psoDesc.PS = m_pixelShader.GetShaderByteCode();
@@ -45,4 +47,12 @@ void PSODesc::SetTopology(Topology* topology) noexcept {
 
 const D3D12_GRAPHICS_PIPELINE_STATE_DESC* PSODesc::GetPSO() const noexcept {
 	return &m_psoDesc;
+}
+
+std::string GeneratePSOName(
+	const std::string& layoutName, const std::string& RSName,
+	const std::string& VSName, const std::string& PSName,
+	const std::string& topologyName
+) noexcept {
+	return topologyName + "#" + layoutName + RSName + "#" + VSName + "#" + PSName;
 }

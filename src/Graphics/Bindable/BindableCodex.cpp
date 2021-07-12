@@ -1,17 +1,12 @@
 #include <BindableCodex.hpp>
 #include <Bindable.hpp>
 
-BindPtr::BindPtr(std::unique_ptr<Bindable> bindPtr)
-	: m_pBind(std::move(bindPtr)), m_refCount(0u) {}
+BindPtr::BindPtr(const std::string& key, std::unique_ptr<Bindable> bindPtr) noexcept
+	: m_pBind(std::move(bindPtr)), m_refCount(0u), m_keyName(key) {}
 
-BindPtr& BindPtr::operator=(std::unique_ptr<Bindable> bindPtr) noexcept {
-	m_pBind = std::move(bindPtr);
-	return *this;
-}
-
-Bindable* BindPtr::GetPtr() const noexcept {
-	return m_pBind.get();
-}
+BindPtr::BindPtr(BindPtr&& bindPtr) noexcept
+	: m_pBind(std::move(bindPtr.m_pBind)),
+	m_refCount(bindPtr.m_refCount), m_keyName(bindPtr.m_keyName) {}
 
 BindPtr& BindPtr::operator++() noexcept {
 	++m_refCount;
@@ -23,31 +18,50 @@ BindPtr& BindPtr::operator--() noexcept {
 	return *this;
 }
 
-std::uint32_t BindPtr::GetRefCount() const noexcept {
-	return m_refCount;
+BindPtr& BindPtr::operator=(BindPtr&& bindPtr) noexcept {
+	m_pBind = std::move(bindPtr.m_pBind);
+	m_refCount = bindPtr.m_refCount;
+	m_keyName = bindPtr.m_keyName;
+
+	return *this;
 }
 
-Codex Codex::s_Instance;
+// Codex
 
-Bindable* Codex::GetBindableRef(std::string key) noexcept {
+BindPtr* Codex::GetBindableRef(const std::string& key) noexcept {
 	auto result = s_Instance.m_codex.find(key);
 
-	if (result == s_Instance.m_codex.end())
+	if (result == s_Instance.m_codex.end()) [[unlikely]]
 		return nullptr;
-	else {
+	else [[likely]] {
 		++result->second;
-		return result->second.GetPtr();
+		return &result->second;
 	}
 }
 
-void Codex::AddBind(std::string key, std::unique_ptr<Bindable> bind) noexcept {
-	s_Instance.m_codex.emplace(std::make_pair(key, std::move(bind)));
+bool Codex::IsInCodex(const std::string& key) noexcept {
+	return s_Instance.m_codex.contains(key);
 }
 
-void Codex::ReleaseRef(std::string key) noexcept {
-	auto result = s_Instance.m_codex.find(key);
-	--result->second;
+BindPtr* Codex::AddAndGetBind(
+	const std::string& key, std::unique_ptr<Bindable> bind
+) noexcept {
 
-	if (!result->second.GetRefCount())
-		s_Instance.m_codex.erase(result);
+	auto result = s_Instance.m_codex.emplace(
+		std::make_pair(key, BindPtr(key, std::move(bind)))
+	);
+
+	++result.first->second;
+	return &result.first->second;
+}
+
+void Codex::ReleaseRef(const std::string& key) noexcept {
+	auto result = s_Instance.m_codex.find(key);
+
+	if (result != s_Instance.m_codex.end()) {
+		--(result->second);
+
+		if (!result->second.m_refCount)
+			s_Instance.m_codex.erase(result);
+	}
 }

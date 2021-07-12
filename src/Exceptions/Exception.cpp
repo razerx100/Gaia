@@ -31,3 +31,10 @@ std::string Exception::GetOriginString() const noexcept {
 
 	return oss.str();
 }
+
+GenericException::GenericException(const std::string& errorText) noexcept
+	: m_errorText(errorText) {}
+
+const char* GenericException::what() const noexcept {
+	return m_errorText.c_str();
+}

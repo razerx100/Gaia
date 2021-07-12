@@ -11,10 +11,13 @@ class PreCompiled {
 public:
 	PreCompiled() = default;
 
-	PreCompiled(const std::wstring& fileName);
+	PreCompiled(const std::string& fileName);
 
 protected:
-	void ReadBinary(const std::wstring& fileName);
+	void ReadBinary(const std::string& fileName);
+
+private:
+	std::wstring StrToWStr(const std::string& str) const noexcept;
 
 protected:
 	ComPtr<ID3DBlob> m_pBinary;

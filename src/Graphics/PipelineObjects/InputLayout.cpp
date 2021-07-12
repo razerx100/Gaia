@@ -35,6 +35,8 @@ D3D12_INPUT_LAYOUT_DESC InputLayout::GetInputLayout() const noexcept {
 	return m_InputLayout;
 }
 
+// Vertex Layout
+
 VertexLayout::VertexLayout(std::initializer_list<VertexData> list)
 	: m_sizeByte(0u) {
 	for (VertexData element : list) {
@@ -47,6 +49,15 @@ VertexLayout::VertexLayout(const VertexLayout& vertex)
 	: m_sizeByte(vertex.m_sizeByte) {
 	for (VertexData element : vertex.m_elements)
 		m_elements.emplace_back(element);
+}
+
+VertexLayout& VertexLayout::operator=(const VertexLayout& vertex) noexcept {
+	m_sizeByte = vertex.m_sizeByte;
+
+	for (VertexData element : vertex.m_elements)
+		m_elements.emplace_back(element);
+
+	return *this;
 }
 
 std::uint32_t VertexLayout::SizeByte() const noexcept {
@@ -63,4 +74,12 @@ std::uint32_t VertexLayout::GetElementSizeByte(std::uint32_t index) const noexce
 
 std::vector<VertexData> VertexLayout::GetElements() const noexcept {
 	return m_elements;
+}
+
+std::string VertexLayout::GetTag() const noexcept {
+	std::string tag = "";
+	for (VertexData vData : m_elements)
+		tag.append(vData.name.substr(0u, 3u) + "#");
+
+	return tag;
 }

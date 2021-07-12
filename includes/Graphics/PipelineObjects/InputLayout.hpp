@@ -12,13 +12,17 @@ struct VertexData {
 
 class VertexLayout {
 public:
+    VertexLayout() = default;
     VertexLayout(std::initializer_list<VertexData> list);
     VertexLayout(const VertexLayout& vertex);
+
+    VertexLayout& operator=(const VertexLayout& vertex) noexcept;
 
     std::uint32_t SizeByte() const noexcept;
     std::uint32_t ElementsNumber() const noexcept;
     std::uint32_t GetElementSizeByte(std::uint32_t index) const noexcept;
     std::vector<VertexData> GetElements() const noexcept;
+    std::string GetTag() const noexcept;
 
 private:
     std::vector<VertexData> m_elements;

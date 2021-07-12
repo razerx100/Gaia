@@ -1,6 +1,7 @@
 #ifndef __RESOURCE_VIEW_HPP__
 #define __RESOURCE_VIEW_HPP__
 #include <cinttypes>
+#include <string>
 
 class ResourceView {
 public:

@@ -26,11 +26,10 @@ ID3D12RootSignature* RootSignature::GetSignature() const noexcept {
 
 
 RootSignaturePreCompiled::RootSignaturePreCompiled(
-	Graphics& gfx, const std::wstring& filename
+	Graphics& gfx, const std::string& filename
 ) : PreCompiled(filename) {
 	CreateRootSignature(gfx, m_pBinary.Get());
 }
-
 
 RootSignatureDynamic::RootSignatureDynamic()
 	: m_hasStaticSampler(false) {}

@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
+#include <Light.hpp>
+#include <BindableCodex.hpp>
+#include <Bindable.hpp>
 
 #ifdef _IMGUI
 #include <ImGuiMan.hpp>
@@ -10,16 +13,15 @@ ImGuiMan ImGuiMan::s_initObj;
 #endif
 
 GDIPlusManager gdim;
-std::wstring App::s_shaderPath;
-
+std::string App::s_shaderPath;
+// Codex instance defined here so it's destroyed last
+Codex Codex::s_Instance;
 std::unique_ptr<Light> App::s_light;
-
 ImGuiImpl::Position pos;
 
 App::App()
 	:
-	m_wnd(1920, 1080, "DirectX12 Window"),
-	m_speedFactor(1.0f) {
+	m_wnd(1920, 1080, "Gaia") {
 
 	SetShaderPath();
 
@@ -45,7 +47,7 @@ int App::Go() {
 }
 
 void App::DoFrame() {
-	const float deltaTime = m_timer.Mark() * m_speedFactor;
+	const float deltaTime = m_timer.Mark();
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 
 	s_light->Update();
@@ -55,7 +57,7 @@ void App::DoFrame() {
 	s_light->Draw(m_wnd.GetGfx());
 	m_pNano->Draw(m_wnd.GetGfx(), pos.GetTransform());
 
-	ImGuiImpl::ImGuiRenderSimulationSlider(m_speedFactor, m_wnd.m_kb.IsKeyPressed(VK_SPACE));
+	ImGuiImpl::ImGuiRenderFPSCounter();
 	m_camera.ControlWindow();
 	ImGuiImpl::ImGuiModelControl(pos);
 	s_light->ImGuiLightSlider();
@@ -64,16 +66,16 @@ void App::DoFrame() {
 }
 
 void App::SetShaderPath() noexcept {
-	wchar_t path[MAX_PATH];
-	GetModuleFileNameW(nullptr, path, MAX_PATH);
+	char path[MAX_PATH];
+	GetModuleFileNameA(nullptr, path, MAX_PATH);
 	s_shaderPath = path;
-	for (int i = static_cast<int>(s_shaderPath.size() - 1); s_shaderPath[i] != L'\\'; i--)
+	for (int i = static_cast<int>(s_shaderPath.size() - 1); s_shaderPath[i] != '\\'; i--)
 		s_shaderPath.pop_back();
 
-	s_shaderPath.append(L"shaders\\");
+	s_shaderPath.append("shaders\\");
 }
 
-std::wstring App::GetShaderPath() noexcept {
+std::string App::GetShaderPath() noexcept {
 	return s_shaderPath;
 }
 

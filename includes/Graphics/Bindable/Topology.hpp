@@ -4,9 +4,10 @@
 
 class Topology : public Bindable {
 public:
-	Topology(D3D12_PRIMITIVE_TOPOLOGY_TYPE PSOTopology, D3D_PRIMITIVE_TOPOLOGY IATopology);
+	Topology(const std::string& topologyName);
 
 	void BindCommand(Graphics& gfx) noexcept override;
+
 	D3D12_PRIMITIVE_TOPOLOGY_TYPE GetTopology() const noexcept;
 
 private:

@@ -100,7 +100,3 @@ const char* InfoException::GetType() const noexcept {
 std::string InfoException::GetErrorInfo() const noexcept {
 	return m_info;
 }
-
-const char* D3D12NotSupportedException::what() const noexcept {
-	return "GPU doesn't have hardware support for DirectX12.";
-}

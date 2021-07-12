@@ -1,6 +1,7 @@
 #include <PipelineState.hpp>
 #include <GraphicsThrowMacros.hpp>
 #include <Graphics.hpp>
+#include <PSODesc.hpp>
 
 PipelineState::PipelineState(Graphics& gfx, const PSODesc& psoDesc) {
 	GFX_THROW_FAILED(hr,
@@ -10,6 +11,7 @@ PipelineState::PipelineState(Graphics& gfx, const PSODesc& psoDesc) {
 				&m_pPipelineState
 			)
 		);
+
 }
 
 void PipelineState::BindCommand(Graphics& gfx) noexcept {

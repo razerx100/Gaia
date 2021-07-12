@@ -1,28 +1,31 @@
 #include <Drawable.hpp>
+#include <Graphics.hpp>
 #include <Bindable.hpp>
 #include <IndexBuffer.hpp>
+#include <BindableCodex.hpp>
 #include <typeinfo>
 
-Drawable::~Drawable(){}
+Drawable::~Drawable(){
+	for (auto& bind : m_pBindRefs) {
+		Codex::ReleaseRef(bind->m_keyName);
+	}
+}
 
-void Drawable::Draw(Graphics& gfx) const noexcept(!IS_DEBUG) {
-	for (auto& bind : m_Binds)
+void Drawable::Draw(Graphics& gfx) const noexcept {
+	for (auto& bind : m_pBindRefs)
+		bind->m_pBind->BindCommand(gfx);
+	for (auto& bind : m_pBinds)
 		bind->BindCommand(gfx);
 
-	gfx.DrawIndexed(GetIndexCount());
+	gfx.DrawIndexed(m_indexCount);
+}
+
+void Drawable::AddBind(BindPtr* bind) noexcept {
+	if (typeid(*(bind->m_pBind.get())).name() == typeid(IndexBuffer).name())
+		m_indexCount = reinterpret_cast<IndexBuffer*>(bind->m_pBind.get())->GetIndexCount();
+	m_pBindRefs.emplace_back(std::move(bind));
 }
 
 void Drawable::AddBind(std::unique_ptr<Bindable> bind) noexcept {
-	if (typeid(*bind.get()).name() == typeid(IndexBuffer).name())
-		m_IndexCount = reinterpret_cast<IndexBuffer*>(bind.get())->GetIndexCount();
-	m_Binds.emplace_back(std::move(bind));
-}
-
-std::uint32_t Drawable::GetIndexCount() const noexcept {
-	return m_IndexCount;
-}
-
-void Drawable::AddIndexBuffer(std::unique_ptr<IndexBuffer> indexBuffer) noexcept {
-	m_IndexCount = indexBuffer->GetIndexCount();
-	m_Binds.emplace_back(std::move(indexBuffer));
+	m_pBinds.emplace_back(std::move(bind));
 }

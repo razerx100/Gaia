@@ -40,10 +40,4 @@ public:
 private:
 	std::string m_info;
 };
-
-class D3D12NotSupportedException : public std::exception {
-public:
-	const char* what() const noexcept override;
-};
-
 #endif

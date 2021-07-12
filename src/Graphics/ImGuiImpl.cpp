@@ -61,18 +61,13 @@ namespace ImGuiImpl {
 		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouse;
 	}
 
-	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {
-		if (ImGui::Begin("Simulation Speed")) {
-			ImGui::SliderFloat("Speed Factor", &speedFactor, 0.0f, 4.0f);
+	void ImGuiRenderFPSCounter() {
+		if (ImGui::Begin("Frames per second")) {
 
 			ImGui::Text(
 				"Application average %.3f ms/frame (%.1f FPS)",
 				1000.0f / ImGui::GetIO().Framerate,
 				ImGui::GetIO().Framerate
-			);
-
-			ImGui::Text(
-				"Status: %s", isPaused ? "PAUSED" : "RUNNING"
 			);
 		}
 
@@ -181,7 +176,7 @@ namespace ImGuiImpl {
 	void EnableMouseInput() noexcept {}
 	void DisableMouseInput() noexcept {}
 
-	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused) {}
+	 void ImGuiRenderFPSCounter() {}
 
 	void ImGuiRenderCameraControl(
 		DirectX::XMFLOAT3& cameraPosition,

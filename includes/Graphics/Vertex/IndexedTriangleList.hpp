@@ -28,39 +28,13 @@ public:
 	// Positions only
 	Vertices GetVerticesObject(
 		const VertexLayout& vertexLayout
-	) noexcept;
+	) const noexcept;
 
 	// Put Positions first then Normals in VertexLayout
 	Vertices GetVerticesObject(
 		const VertexLayout& vertexLayout,
 		bool normals
-	) noexcept;
-
-	// Put Positions first then colors in VertexLayout
-	Vertices GetVerticesObject(
-		const VertexLayout& vertexLayout,
-		const std::vector<DirectX::XMFLOAT4>& colors
-	) noexcept;
-
-	// Put Positions first then Normals then colors in VertexLayout
-	Vertices GetVerticesObject(
-		const VertexLayout& vertexLayout,
-		bool normals,
-		const std::vector<DirectX::XMFLOAT4>& colors
-	) noexcept;
-
-	// Put Positions first then uvs in VertexLayout
-	Vertices GetVerticesObject(
-		const VertexLayout& vertexLayout,
-		const std::vector<DirectX::XMFLOAT2>& uvs
-	) noexcept;
-
-	// Put Positions first then Normals then uvs in VertexLayout
-	Vertices GetVerticesObject(
-		const VertexLayout& vertexLayout,
-		bool normals,
-		const std::vector<DirectX::XMFLOAT2>& uvs
-	) noexcept;
+	) const noexcept;
 
 private:
 	std::vector<DirectX::XMFLOAT3> m_Vertices;

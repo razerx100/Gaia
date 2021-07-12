@@ -60,7 +60,7 @@ namespace ImGuiImpl {
 	void DisableMouseInput() noexcept;
 
 	// My Widgets
-	void ImGuiRenderSimulationSlider(float& speedFactor, bool isPaused);
+	void ImGuiRenderFPSCounter();
 
 	void ImGuiRenderCameraControl(
 		DirectX::XMFLOAT3& cameraPosition,

@@ -7,14 +7,16 @@
 #include <Mesh.hpp>
 
 class Node;
+class Graphics;
 
 class Model {
 public:
 	Model(Graphics& gfx, const std::string& fileName);
 
-	static std::unique_ptr<Mesh> ParseMesh(
+	std::unique_ptr<Mesh> ParseMesh(
 		Graphics& gfx, const struct aiMesh& mesh,
-		const struct aiMaterial* const* pMaterials
+		const struct aiMaterial* const* pMaterials,
+		const std::string& filePath
 	);
 	std::unique_ptr<Node> ParseNode(const struct aiNode& node);
 
@@ -23,6 +25,7 @@ public:
 private:
 	std::unique_ptr<Node> m_pRoot;
 	std::vector<std::unique_ptr<Mesh>> m_pMeshes;
+	std::string m_name;
 };
 
 class Node {
@@ -41,6 +44,6 @@ private:
 private:
 	std::vector<std::unique_ptr<Node>> m_pChildren;
 	std::vector<Mesh*> m_pMeshes;
-	DirectX::XMMATRIX m_Transform;
+	DirectX::XMMATRIX m_transform;
 };
 #endif

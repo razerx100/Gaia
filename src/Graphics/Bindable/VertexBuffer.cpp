@@ -1,5 +1,7 @@
 #include <VertexBuffer.hpp>
 #include <Graphics.hpp>
+#include <BufferMan.hpp>
+#include <Vertices.hpp>
 
 VertexBuffer::VertexBuffer(const Vertices& vertices)
 	: m_VertexBufferView{} {

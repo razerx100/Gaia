@@ -21,4 +21,14 @@ protected:
 	mutable std::string m_whatBuffer;
 };
 
+class GenericException : public std::exception {
+public:
+	GenericException(const std::string& errorText) noexcept;
+
+	const char* what() const noexcept override;
+
+private:
+	std::string m_errorText;
+};
+
 #endif

@@ -4,7 +4,6 @@
 #include <Timer.hpp>
 #include <vector>
 #include <Camera.hpp>
-#include <Light.hpp>
 #include <Model.hpp>
 
 class App {
@@ -14,8 +13,8 @@ public:
 
 	int Go();
 
-	static Light* GetLight() noexcept;
-	static std::wstring GetShaderPath() noexcept;
+	static class Light* GetLight() noexcept;
+	static std::string GetShaderPath() noexcept;
 
 private:
 	void DoFrame();
@@ -33,9 +32,7 @@ private:
 	Camera m_camera;
 	std::unique_ptr<Model> m_pNano;
 
-	float m_speedFactor;
-
-	static std::wstring s_shaderPath;
-	static std::unique_ptr<Light> s_light;
+	static std::string s_shaderPath;
+	static std::unique_ptr<class Light> s_light;
 };
 #endif

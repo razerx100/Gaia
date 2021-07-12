@@ -67,7 +67,7 @@ std::uint32_t IndexedTriangleList::GetVerticesSize() const noexcept {
 
 Vertices IndexedTriangleList::GetVerticesObject(
 	const VertexLayout& vertexLayout
-) noexcept {
+) const noexcept {
 	Vertices vertices = {
 		vertexLayout,
 		static_cast<std::uint32_t>(m_Vertices.size())
@@ -82,7 +82,7 @@ Vertices IndexedTriangleList::GetVerticesObject(
 Vertices IndexedTriangleList::GetVerticesObject(
 	const VertexLayout& vertexLayout,
 	bool normals
-) noexcept {
+) const noexcept {
 	Vertices vertices = {
 		vertexLayout,
 		static_cast<std::uint32_t>(m_Vertices.size())
@@ -90,68 +90,6 @@ Vertices IndexedTriangleList::GetVerticesObject(
 
 	for (int i = 0; i < m_Vertices.size(); ++i)
 		vertices.AddVertexData(m_Vertices[i], m_Normals[i]);
-
-	return vertices;
-}
-
-Vertices IndexedTriangleList::GetVerticesObject(
-	const VertexLayout& vertexLayout,
-	const std::vector<DirectX::XMFLOAT4>& colors
-) noexcept {
-	Vertices vertices = {
-		vertexLayout,
-		static_cast<std::uint32_t>(m_Vertices.size())
-	};
-
-	for (int i = 0; i < m_Vertices.size(); ++i)
-		vertices.AddVertexData(m_Vertices[i], colors[i]);
-
-	return vertices;
-}
-
-Vertices IndexedTriangleList::GetVerticesObject(
-	const VertexLayout& vertexLayout,
-	bool normals,
-	const std::vector<DirectX::XMFLOAT4>& colors
-) noexcept {
-	Vertices vertices = {
-		vertexLayout,
-		static_cast<std::uint32_t>(m_Vertices.size())
-	};
-
-	for (int i = 0; i < m_Vertices.size(); ++i)
-		vertices.AddVertexData(m_Vertices[i], m_Normals[i], colors[i]);
-
-	return vertices;
-}
-
-Vertices IndexedTriangleList::GetVerticesObject(
-	const VertexLayout& vertexLayout,
-	const std::vector<DirectX::XMFLOAT2>& uvs
-) noexcept {
-	Vertices vertices = {
-		vertexLayout,
-		static_cast<std::uint32_t>(m_Vertices.size())
-	};
-
-	for (int i = 0; i < m_Vertices.size(); ++i)
-		vertices.AddVertexData(m_Vertices[i], uvs[i]);
-
-	return vertices;
-}
-
-Vertices IndexedTriangleList::GetVerticesObject(
-	const VertexLayout& vertexLayout,
-	bool normals,
-	const std::vector<DirectX::XMFLOAT2>& uvs
-) noexcept {
-	Vertices vertices = {
-		vertexLayout,
-		static_cast<std::uint32_t>(m_Vertices.size())
-	};
-
-	for (int i = 0; i < m_Vertices.size(); ++i)
-		vertices.AddVertexData(m_Vertices[i], m_Normals[i], uvs[i]);
 
 	return vertices;
 }

@@ -5,14 +5,13 @@
 class Shader : public PreCompiled {
 public:
 	Shader() = default;
+	Shader(const std::string& fileName);
 
-	Shader(const std::wstring& fileName);
-
-	void Init(const std::wstring& fileName);
+	void Init(const std::string& fileName);
 
 	D3D12_SHADER_BYTECODE GetShaderByteCode() const noexcept;
 
-protected:
+private:
 	D3D12_SHADER_BYTECODE m_ByteCode;
 };
 #endif

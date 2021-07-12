@@ -1,29 +1,28 @@
 #ifndef __DRAWABLE_HPP__
 #define __DRAWABLE_HPP__
-#include <Graphics.hpp>
 #include <Transform.hpp>
 #include <memory>
+#include <vector>
+#include <string>
 
-class Bindable;
+struct BindPtr;
 
 class Drawable {
 public:
 	Drawable() = default;
 	virtual ~Drawable();
 
-	virtual void Draw(Graphics& gfx) const noexcept(!IS_DEBUG);
+	virtual void Draw(class Graphics& gfx) const noexcept;
 
 	// Bind Root Signature before constant buffers
-	void AddBind(std::unique_ptr<Bindable> bind) noexcept;
-	void AddIndexBuffer(std::unique_ptr<class IndexBuffer> indexBuffer) noexcept;
+	void AddBind(BindPtr* bind) noexcept;
+	void AddBind(std::unique_ptr<class Bindable> bind) noexcept;
 
 protected:
-	virtual std::uint32_t GetIndexCount() const noexcept;
+	std::uint32_t m_indexCount;
+	std::vector<BindPtr*> m_pBindRefs;
+	std::vector<std::unique_ptr<class Bindable>> m_pBinds;
 
-protected:
-	std::uint32_t m_IndexCount;
-	std::vector<std::unique_ptr<Bindable>> m_Binds;
-
-	Transform m_Transform;
+	Transform m_transform;
 };
 #endif

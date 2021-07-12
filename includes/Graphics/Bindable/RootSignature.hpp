@@ -21,7 +21,7 @@ private:
 
 class RootSignaturePreCompiled : public RootSignature, public PreCompiled {
 public:
-	RootSignaturePreCompiled(Graphics& gfx, const std::wstring& filename);
+	RootSignaturePreCompiled(Graphics& gfx, const std::string& filename);
 };
 
 class RootSignatureDynamic : public RootSignature {
