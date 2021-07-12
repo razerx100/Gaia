@@ -1,5 +1,5 @@
 # Gaia
-3D Engine with DirectX12 on Win32.
+3D Engine written using DirectX12 on Win32.
 
 # External Dependencies
 Assimp

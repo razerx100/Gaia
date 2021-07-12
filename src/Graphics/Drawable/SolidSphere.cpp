@@ -10,7 +10,8 @@
 SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 	BindProcessor process = BindProcessor(
 		"SolidSphereWhite",
-		"SolidColor"
+		"SolidColor",
+		false
 	);
 
 	IndexedTriangleList model = Sphere::Make();

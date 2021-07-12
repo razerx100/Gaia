@@ -61,11 +61,21 @@ BindProcessor::BindProcessor(const std::string& filePath, const aiMesh& mesh,
 }
 
 
-BindProcessor::BindProcessor(const std::string& objectName,
-	const std::string& shaderName) : m_shininess(35.0f), m_hasTexture(false) {
-	m_vertexLayout = {
-		{"Position", 12u}
-	};
+BindProcessor::BindProcessor(
+	const std::string& objectName,
+	const std::string& shaderName,
+	bool hasNormals
+) : m_shininess(35.0f), m_hasTexture(false), m_hasSpecular(hasNormals) {
+
+	if(hasNormals)
+		m_vertexLayout = {
+			{"Position", 12u},
+			{"Normal", 12u}
+		};
+	else
+		m_vertexLayout = {
+			{"Position", 12u}
+		};
 
 	m_VShaderName = "VS" + shaderName;
 	m_PShaderName = "PS" + shaderName;
@@ -209,12 +219,20 @@ void BindProcessor::ProcessWithoutTex(
 	if (Codex::IsInCodex(m_vertexBuffer.first))
 		m_vertexBuffer.second = Codex::GetBindableRef(m_vertexBuffer.first);
 	else {
-		m_vertexBuffer.second = Codex::AddAndGetBind(
-			m_vertexBuffer.first,
-			std::make_unique<VertexBuffer>(
-				modelData.GetVerticesObject(m_vertexLayout)
-				)
-		);
+		if (m_hasSpecular)
+			m_vertexBuffer.second = Codex::AddAndGetBind(
+				m_vertexBuffer.first,
+				std::make_unique<VertexBuffer>(
+					modelData.GetVerticesObject(m_vertexLayout, true)
+					)
+			);
+		else
+			m_vertexBuffer.second = Codex::AddAndGetBind(
+				m_vertexBuffer.first,
+				std::make_unique<VertexBuffer>(
+					modelData.GetVerticesObject(m_vertexLayout)
+					)
+			);
 	}
 
 	// Index Buffer

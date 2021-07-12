@@ -14,7 +14,10 @@ public:
 		const std::string& filePath, const struct aiMesh& mesh,
 		const struct aiMaterial* const* pMaterials
 	);
-	BindProcessor(const std::string& objectName, const std::string& shaderName);
+	BindProcessor(const std::string& objectName,
+		const std::string& shaderName,
+		bool hasNormals
+	);
 
 	BindProcessor(const BindProcessor&) = delete;
 	BindProcessor(BindProcessor&&) = delete;
