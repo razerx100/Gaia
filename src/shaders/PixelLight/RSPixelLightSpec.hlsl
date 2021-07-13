@@ -4,10 +4,10 @@
 								"DENY_GEOMETRY_SHADER_ROOT_ACCESS ), " \
 			 "RootConstants(num32BitConstants = 16, b0, space=0, "\
 									"visibility=SHADER_VISIBILITY_VERTEX),"\
-			 "CBV(b1, space=0, visibility=SHADER_VISIBILITY_VERTEX,"\
-									"flags = DATA_STATIC_WHILE_SET_AT_EXECUTE ),"\
 			 "RootConstants(num32BitConstants = 15, b0, space=1, "\
 									"visibility=SHADER_VISIBILITY_PIXEL),"\
+			 "CBV(b1, space=0, visibility=SHADER_VISIBILITY_VERTEX,"\
+									"flags = DATA_STATIC_WHILE_SET_AT_EXECUTE ),"\
 			 "DescriptorTable(SRV(t0, space=0, numDescriptors=2,"\
 									"flags = DESCRIPTORS_VOLATILE ),"\
 									"visibility=SHADER_VISIBILITY_PIXEL),"\

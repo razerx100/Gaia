@@ -1,9 +1,15 @@
 #include <Light.hpp>
 #include <Graphics.hpp>
 #include <ImGuiImpl.hpp>
-
+#include <SolidSphere.hpp>
 
 Light::Light(Graphics& gfx, float radius) {
+	ResetData();
+
+	m_lightSource = std::make_unique<SolidSphere>(gfx, radius);
+}
+
+void Light::Init(Graphics& gfx, float radius) {
 	ResetData();
 
 	m_lightSource = std::make_unique<SolidSphere>(gfx, radius);

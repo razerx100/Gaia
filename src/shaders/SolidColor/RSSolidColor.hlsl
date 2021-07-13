@@ -4,6 +4,8 @@
 								"DENY_GEOMETRY_SHADER_ROOT_ACCESS ), " \
 			 "RootConstants(num32BitConstants = 16, b0, space=0, "\
 									"visibility=SHADER_VISIBILITY_VERTEX),"\
-			 "CBV(b0, space=1, visibility=SHADER_VISIBILITY_PIXEL,"\
-									"flags = DATA_VOLATILE ),"\
+			 "RootConstants(num32BitConstants = 15, b0, space=1, "\
+									"visibility=SHADER_VISIBILITY_PIXEL),"\
+			 "CBV(b1, space=1, visibility=SHADER_VISIBILITY_PIXEL,"\
+									"flags = DATA_VOLATILE )"\
 

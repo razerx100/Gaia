@@ -81,13 +81,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 	bindables.emplace_back(process.GetTextures());
 
 	// Constant buffers
-
-	bindables.emplace_back(BindProcessor::GetOrAddGeneric<ConstantBuffer<LightData>>(
-		"CBLightData",
-		2u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
-		std::bind(&Light::GetLightData, App::GetLight())
-		)
-	);
+	// Root Index Slot 1 is reserved for Light Buffer data from Light object
 
 	auto pMesh = std::make_unique<Mesh>(std::move(bindables));
 
@@ -101,7 +95,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 
 	perInstanceBInd.emplace_back(
 		std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
-			1u, std::bind(&Transform::GetTransformCM, pMesh->GetTransform())
+			2u, std::bind(&Transform::GetTransformCM, pMesh->GetTransform())
 			)
 	);
 

@@ -8,15 +8,6 @@
 									"visibility=SHADER_VISIBILITY_PIXEL),"\
 			 "CBV(b1, space=0, visibility=SHADER_VISIBILITY_VERTEX,"\
 									"flags = DATA_STATIC_WHILE_SET_AT_EXECUTE ),"\
-			 "DescriptorTable(SRV(t0, space=0, numDescriptors=1,"\
-									"flags = DESCRIPTORS_VOLATILE ),"\
-									"visibility=SHADER_VISIBILITY_PIXEL),"\
 			 "CBV(b1, space=1, visibility=SHADER_VISIBILITY_PIXEL,"\
-									"flags = DATA_STATIC_WHILE_SET_AT_EXECUTE ),"\
-			 "StaticSampler(s0,"\
-							"space = 0,"\
-							"filter = FILTER_MIN_MAG_MIP_LINEAR,"\
-							"addressU = TEXTURE_ADDRESS_WRAP,"\
-							"addressV = TEXTURE_ADDRESS_WRAP,"\
-							"addressW = TEXTURE_ADDRESS_WRAP,"\
-							"visibility = SHADER_VISIBILITY_PIXEL)"
+									"flags = DATA_VOLATILE )"\
+

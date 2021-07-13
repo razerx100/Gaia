@@ -1,7 +1,7 @@
-cbuffer ColorBuf : register(b0, space1) {
-	float4 color;
+cbuffer ColorBuf : register(b1, space1) {
+	float3 color;
 };
 
 float4 main() : SV_TARGET{
-    return color;
+    return float4(color, 1.0f);
 }

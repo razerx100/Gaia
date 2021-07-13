@@ -2,7 +2,6 @@
 #define __LIGHT_HPP__
 #include <DirectXMath.h>
 #include <memory>
-#include <SolidSphere.hpp>
 
 enum class LightType {
 	Directional,
@@ -28,14 +27,15 @@ struct LightData {
 
 class Light {
 public:
+	Light() = default;
 	Light(class Graphics& gfx, float radius);
+
 	LightData GetLightData() const noexcept;
 
+	void Init(class Graphics& gfx, float radius);
 	void ImGuiLightSlider() noexcept;
-
 	void Update() noexcept;
 	void Draw(class Graphics& gfx) noexcept;
-
 	void ResetData() noexcept;
 
 private:

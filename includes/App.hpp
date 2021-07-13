@@ -5,6 +5,7 @@
 #include <vector>
 #include <Camera.hpp>
 #include <Model.hpp>
+#include <Light.hpp>
 
 class App {
 public:
@@ -13,7 +14,7 @@ public:
 
 	int Go();
 
-	static class Light* GetLight() noexcept;
+	static Light* GetLight() noexcept;
 	static std::string GetShaderPath() noexcept;
 
 private:
@@ -33,6 +34,6 @@ private:
 	std::unique_ptr<Model> m_pNano;
 
 	static std::string s_shaderPath;
-	static std::unique_ptr<class Light> s_light;
+	static Light s_light;
 };
 #endif

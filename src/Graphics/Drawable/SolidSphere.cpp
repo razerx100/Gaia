@@ -6,6 +6,7 @@
 #include <BindableCodex.hpp>
 #include <PSODesc.hpp>
 #include <BindableProcessor.hpp>
+#include <Light.hpp>
 
 SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 	BindProcessor process = BindProcessor(
@@ -31,19 +32,25 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 			float red;
 			float green;
 			float blue;
-			float alpha;
 		}fill_color;
 	};
 
 	ConstantBufferColor materialColor = {
-		{1.0f, 1.0f, 1.0f, 1.0f}
+		{1.0f, 1.0f, 1.0f}
 	};
 
 	AddBind(BindProcessor::GetOrAddGeneric
 		<ConstantBufferCBVStatic<ConstantBufferColor>>(
 			"CBVStaticWhite",
-			1u, &materialColor
+			2u, &materialColor
 			)
+	);
+
+	AddBind(BindProcessor::GetOrAddGeneric<ConstantBuffer<LightData>>(
+		"CBLightData",
+		1u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
+		std::bind(&Light::GetLightData, App::GetLight())
+		)
 	);
 
 	AddBind(

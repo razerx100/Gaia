@@ -1,4 +1,5 @@
 cbuffer ColorBuf : register(b1, space1) {
+	float3 color;
     float specularIntensity;
     float specularPower;
 };
@@ -13,12 +14,8 @@ cbuffer LightBuf : register(b0, space1) {
     float attQuad;
 };
 
-Texture2D tex : register(t0);
-SamplerState samplerState : register(s0);
-
 float4 main(float3 worldPos : Position,
-			float3 normal : Normal,
-            float2 uv : TexCoord) : SV_TARGET {
+			float3 normal : Normal) : SV_TARGET {
     const float3 vectorToLight = lightPosition - worldPos;
     const float distanceToLight = length(vectorToLight);
     const float3 directionOfLight = vectorToLight / distanceToLight;
@@ -39,7 +36,7 @@ float4 main(float3 worldPos : Position,
     );
 
     return float4(
-        saturate((diffuse + ambient) * tex.Sample(samplerState, uv).rgb + specular)
+        saturate((diffuse + ambient) * color + specular)
         , 1.0f
     );
 }

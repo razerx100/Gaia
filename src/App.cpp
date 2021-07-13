@@ -3,9 +3,9 @@
 #include <algorithm>
 #include <GDIPlusManager.hpp>
 #include <ImGuiImpl.hpp>
-#include <Light.hpp>
 #include <BindableCodex.hpp>
 #include <Bindable.hpp>
+#include <SolidSphere.hpp>
 
 #ifdef _IMGUI
 #include <ImGuiMan.hpp>
@@ -16,7 +16,7 @@ GDIPlusManager gdim;
 std::string App::s_shaderPath;
 // Codex instance defined here so it's destroyed last
 Codex Codex::s_Instance;
-std::unique_ptr<Light> App::s_light;
+Light App::s_light;
 ImGuiImpl::Position pos;
 
 App::App()
@@ -28,7 +28,7 @@ App::App()
 	Camera::SetCameraInstance(&m_camera);
 	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1080.0f / 1920.0f, 0.5f, 60.0f));
 
-	s_light = std::make_unique<Light>(m_wnd.GetGfx(), 0.4f);
+	s_light.Init(m_wnd.GetGfx(), 0.4f);
 
 	m_pNano = std::make_unique<Model>(m_wnd.GetGfx(), "models\\nano_textured\\nanosuit.obj");
 
@@ -50,17 +50,17 @@ void App::DoFrame() {
 	const float deltaTime = m_timer.Mark();
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 
-	s_light->Update();
+	s_light.Update();
 	pos.Update();
 	InputLoop(deltaTime);
 
-	s_light->Draw(m_wnd.GetGfx());
+	s_light.Draw(m_wnd.GetGfx());
 	m_pNano->Draw(m_wnd.GetGfx(), pos.GetTransform());
 
 	ImGuiImpl::ImGuiRenderFPSCounter();
 	m_camera.ControlWindow();
 	ImGuiImpl::ImGuiModelControl(pos);
-	s_light->ImGuiLightSlider();
+	s_light.ImGuiLightSlider();
 
 	m_wnd.GetGfx().EndFrame();
 }
@@ -80,7 +80,7 @@ std::string App::GetShaderPath() noexcept {
 }
 
 Light* App::GetLight() noexcept {
-	return s_light.get();
+	return &s_light;
 }
 
 void App::InputLoop(float deltaTime) noexcept {
