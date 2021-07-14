@@ -107,9 +107,9 @@ namespace ImGuiImpl {
 	) {
 		if (ImGui::Begin("Light")) {
 			ImGui::Text("Position");
-			ImGui::SliderFloat("X", &data.source.x, -18.0f, 18.0f, "%.1f");
-			ImGui::SliderFloat("Y", &data.source.y, -18.0f, 18.0f, "%.1f");
-			ImGui::SliderFloat("Z", &data.source.z, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("X", &data.lightPosition.x, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("Y", &data.lightPosition.y, -18.0f, 18.0f, "%.1f");
+			ImGui::SliderFloat("Z", &data.lightPosition.z, -18.0f, 18.0f, "%.1f");
 
 			ImGui::Text("Intensity/Color");
 			ImGui::SliderFloat("Intensity", &data.diffuseIntensity, 0.01f, 2.0f, "%.2f");

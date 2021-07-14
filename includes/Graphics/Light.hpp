@@ -14,10 +14,12 @@ enum class ShadingType {
 };
 
 struct LightData {
-	DirectX::XMFLOAT3 source;
+	DirectX::XMFLOAT3 lightPosition;
 	float padding0;
-	DirectX::XMFLOAT3 ambient;
+	DirectX::XMFLOAT3 cameraPosition;
 	float padding1;
+	DirectX::XMFLOAT3 ambient;
+	float padding2;
 	DirectX::XMFLOAT3 diffuseColor;
 	float diffuseIntensity;
 	float attenuationConstant;

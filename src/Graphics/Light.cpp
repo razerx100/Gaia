@@ -2,6 +2,7 @@
 #include <Graphics.hpp>
 #include <ImGuiImpl.hpp>
 #include <SolidSphere.hpp>
+#include <Camera.hpp>
 
 Light::Light(Graphics& gfx, float radius) {
 	ResetData();
@@ -28,8 +29,9 @@ void Light::ImGuiLightSlider() noexcept {
 
 void Light::Update() noexcept {
 	m_lightSource->SetPosition(
-		m_lightData.source
+		m_lightData.lightPosition
 	);
+	m_lightData.cameraPosition = Camera::GetCameraPos();
 }
 
 void Light::Draw(Graphics& gfx) noexcept {
@@ -37,7 +39,7 @@ void Light::Draw(Graphics& gfx) noexcept {
 }
 
 void Light::ResetData() noexcept {
-	m_lightData.source = { 1.0f, 3.5f, -10.5f };
+	m_lightData.lightPosition = { 1.0f, 3.5f, -10.5f };
 	m_lightData.ambient = { 0.05f, 0.05f, 0.05f };
 	m_lightData.diffuseColor = { 1.0f, 1.0f, 1.0f };
 	m_lightData.diffuseIntensity = 1.0f;

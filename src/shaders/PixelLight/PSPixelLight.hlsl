@@ -5,6 +5,7 @@ cbuffer ColorBuf : register(b1, space1) {
 
 cbuffer LightBuf : register(b0, space1) {
 	float3 lightPosition;
+    float3 cameraPosition;
     float3 ambient;
     float3 diffuseColor;
     float diffuseIntensity;
@@ -24,18 +25,20 @@ float4 main(float3 worldPos : Position,
     const float3 directionOfLight = vectorToLight / distanceToLight;
 
     const float attenuation = 1.0f /
-        (attConst + attLin * distanceToLight + attQuad * (distanceToLight * distanceToLight));
+        (attConst + attLin * distanceToLight + attQuad *
+            (distanceToLight * distanceToLight));
 
     const float3 diffuse = diffuseColor * diffuseIntensity * attenuation
                            * max(0.0f, dot(directionOfLight, normal));
 
     // Specular highlight
-    const float3 vn = normalize(vectorToLight);
-    const float3 r = reflect(normalize(-lightPosition), normalize(normal));
+    const float3 viewVector = normalize(cameraPosition - worldPos);
+    const float3 reflectionVector =
+        reflect(-normalize(directionOfLight), normalize(normal));
 
     const float3 specular = attenuation * (diffuseColor * diffuseIntensity)
         * specularIntensity * pow(
-        max(0.0f, dot(r, vn)), specularPower
+        max(0.0f, dot(reflectionVector, viewVector)), specularPower
     );
 
     return float4(

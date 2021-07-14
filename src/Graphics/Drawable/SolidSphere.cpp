@@ -46,10 +46,9 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 			)
 	);
 
-	AddBind(BindProcessor::GetOrAddGeneric<ConstantBuffer<LightData>>(
+	AddBind(BindProcessor::GetOrAddGeneric<ConstantBufferCBVDynamic<LightData>>(
 		"CBLightData",
-		1u, static_cast<std::uint32_t>(sizeof(LightData) / 4u),
-		std::bind(&Light::GetLightData, App::GetLight())
+		1u, std::bind(&Light::GetLightData, App::GetLight())
 		)
 	);
 
