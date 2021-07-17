@@ -4,33 +4,46 @@
 #include <utility>
 #include <InputLayout.hpp>
 #include <BindableCodex.hpp>
+#include <IndexedTriangleList.hpp>
 
 class Graphics;
 class PSODesc;
 
 class BindProcessor {
 public:
+	BindProcessor() = default;
 	BindProcessor(
 		const std::string& filePath, const struct aiMesh& mesh,
 		const struct aiMaterial* const* pMaterials
 	);
-	BindProcessor(const std::string& objectName,
-		const std::string& shaderName,
-		bool hasNormals
+	BindProcessor(
+		const std::string& objectName,
+		LegacyType type,
+		const std::string& texturePath = ""
 	);
 
 	BindProcessor(const BindProcessor&) = delete;
 	BindProcessor(BindProcessor&&) = delete;
 
-	void ProcessWithTex(
+	void Init(
+		const std::string& filePath, const struct aiMesh& mesh,
+		const struct aiMaterial* const* pMaterials
+	);
+	void Init(
+		const std::string& objectName,
+		LegacyType type,
+		const std::string& texturePath = ""
+	);
+	void Process(
 		Graphics& gfx,
 		const struct aiMesh& mesh,
 		const struct aiMaterial* const* pMaterials,
 		std::uint32_t textureRootIndex
 	);
-	void ProcessWithoutTex(
+	void ProcessLegacyType(
 		Graphics& gfx,
-		const class IndexedTriangleList& modelData
+		const class IndexedTriangleList& modelData,
+		std::uint32_t textureRootIndex = 0u
 	);
 
 	bool IsSpecularAvailable() const noexcept;
@@ -42,6 +55,8 @@ public:
 	BindPtr* GetVertexBuffer() const noexcept;
 	BindPtr* GetIndexBuffer() const noexcept;
 	BindPtr* GetTextures() const noexcept;
+
+	const std::string& GetTexturesName() const noexcept;
 
 private:
 	void SetTopology(PSODesc& pso);
@@ -80,7 +95,8 @@ private:
 
 	VertexLayout m_vertexLayout;
 	std::string m_texturePath;
-	float m_shininess;
+	LegacyType m_legacyType;
+	float m_shininess = 35.0f;
 
 	bool m_hasTexture;
 	bool m_hasSpecular;

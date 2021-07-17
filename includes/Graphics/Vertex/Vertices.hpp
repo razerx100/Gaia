@@ -5,7 +5,10 @@
 
 class Vertices {
 public:
-    Vertices(const VertexLayout& vertexLayout, std::uint32_t elementNumber);
+    Vertices() = default;
+    Vertices(const VertexLayout& vertexLayout, std::uint32_t elementsNumber);
+
+    void Init(const VertexLayout& vertexLayout, std::uint32_t elementsNumber);
 
     template<class T, class ... Ts>
     void AddVertexData(T&& arg, Ts&& ... args) noexcept {

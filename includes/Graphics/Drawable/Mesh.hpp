@@ -6,10 +6,11 @@
 
 class Mesh : public Drawable {
 public:
-	Mesh(std::vector<BindPtr*>&& pBindRefs);
+	Mesh(std::vector<BindPtr*>&& pBindRefs, const std::string& name);
 	Mesh(
 		std::vector<BindPtr*>&& pBindRefs,
-		std::vector<std::unique_ptr<Bindable>>&& pBinds
+		std::vector<std::unique_ptr<Bindable>>&& pBinds,
+		const std::string& name
 	);
 
 	void AddBinds(std::vector<std::unique_ptr<Bindable>>&& pBinds) noexcept;

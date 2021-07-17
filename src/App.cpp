@@ -17,7 +17,7 @@ std::string App::s_shaderPath;
 // Codex instance defined here so it's destroyed last
 Codex Codex::s_Instance;
 Light App::s_light;
-ImGuiImpl::Position pos;
+ImGuiImpl::Position nanoSuitPos, nano2Pos, quadPos;
 
 App::App()
 	:
@@ -30,7 +30,16 @@ App::App()
 
 	s_light.Init(m_wnd.GetGfx(), 0.4f);
 
-	m_pNano = std::make_unique<Model>(m_wnd.GetGfx(), "models\\nano_textured\\nanosuit.obj");
+	m_pNano = std::make_unique<Model>(
+		m_wnd.GetGfx(), "NanoSuit1", "models\\nano_textured\\nanosuit.obj"
+		);
+	m_pNano2 = std::make_unique<Model>(
+		m_wnd.GetGfx(), "NanoSuit2", "models\\nano_textured\\nanosuit.obj"
+		);
+	m_pQuad = std::make_unique<Quad>(
+		m_wnd.GetGfx(),
+		"WhiteSheet"
+		);
 
 	m_wnd.GetGfx().InitialGPUSetup();
 }
@@ -51,15 +60,22 @@ void App::DoFrame() {
 	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
 
 	s_light.Update();
-	pos.Update();
+	nanoSuitPos.Update();
+	nano2Pos.Update();
+	quadPos.Update();
 	InputLoop(deltaTime);
 
 	s_light.Draw(m_wnd.GetGfx());
-	m_pNano->Draw(m_wnd.GetGfx(), pos.GetTransform());
+	m_pNano->Draw(m_wnd.GetGfx(), nanoSuitPos.GetTransform());
+	m_pNano2->Draw(m_wnd.GetGfx(), nano2Pos.GetTransform());
+	m_pQuad->Draw(m_wnd.GetGfx());
+	m_pQuad->SetTransform(quadPos.GetTransform());
 
 	ImGuiImpl::ImGuiRenderFPSCounter();
 	m_camera.ControlWindow();
-	ImGuiImpl::ImGuiModelControl(pos);
+	ImGuiImpl::ImGuiModelControl(m_pNano->GetName(), nanoSuitPos);
+	ImGuiImpl::ImGuiModelControl(m_pNano2->GetName(), nano2Pos);
+	ImGuiImpl::ImGuiModelControl(m_pQuad->GetName(), quadPos);
 	s_light.ImGuiLightSlider();
 
 	m_wnd.GetGfx().EndFrame();

@@ -19,11 +19,11 @@ DirectX::XMMATRIX Camera::GetCameraMatrix() noexcept {
 	return s_pCamera->GetMatrix();
 }
 
-DirectX::XMFLOAT3 Camera::GetCameraPos() noexcept {
+const DirectX::XMFLOAT3& Camera::GetCameraPos() noexcept {
 	return s_pCamera->m_position;
 }
 
-DirectX::XMMATRIX Camera::GetProjection() noexcept {
+const DirectX::XMMATRIX& Camera::GetProjection() noexcept {
 	return s_projection;
 }
 

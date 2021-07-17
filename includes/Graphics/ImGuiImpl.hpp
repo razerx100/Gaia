@@ -70,6 +70,7 @@ namespace ImGuiImpl {
 	);
 
 	void ImGuiModelControl(
+		const std::string& name,
 		Position& position
 	);
 

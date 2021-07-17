@@ -1,5 +1,5 @@
 cbuffer ColorBuf : register(b1, space1) {
-	float3 color;
+	float4 color;
     float specularIntensity;
     float specularPower;
 };
@@ -36,8 +36,7 @@ float4 main(float3 worldPos : Position,
         max(0.0f, dot(r, vn)), specularPower
     );
 
-    return float4(
-        saturate((diffuse + ambient) * color + specular)
-        , 1.0f
+    return saturate(float4((diffuse + ambient + specular)
+        , 1.0f) * color
     );
 }

@@ -15,8 +15,9 @@
 #include <Light.hpp>
 #include <BindableProcessor.hpp>
 
-Model::Model(Graphics& gfx, const std::string& fileName)
-	: m_name(GUtil::GetNameFromPath(fileName)) {
+Model::Model(
+	Graphics& gfx, const std::string& objectName, const std::string& fileName
+) : m_name(objectName) {
 	Assimp::Importer importer;
 
 	const auto pScene = importer.ReadFile(
@@ -49,7 +50,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		pMaterials
 	);
 
-	process.ProcessWithTex(gfx, mesh, pMaterials, 3u);
+	process.Process(gfx, mesh, pMaterials, 3u);
 
 	std::vector<std::unique_ptr<Bindable>> perInstanceBInd;
 
@@ -83,7 +84,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 	// Constant buffers
 	// Root Index Slot 1 is reserved for Light Buffer data from Light object
 
-	auto pMesh = std::make_unique<Mesh>(std::move(bindables));
+	auto pMesh = std::make_unique<Mesh>(
+			std::move(bindables),
+			process.GetTexturesName()
+		);
 
 	perInstanceBInd.emplace_back(
 		std::make_unique<ConstantBufferMat>(
@@ -133,6 +137,12 @@ std::unique_ptr<Node> Model::ParseNode(const aiNode& node) {
 void Model::Draw(Graphics& gfx, const DirectX::XMMATRIX& transform) const {
 	m_pRoot->Draw(gfx, transform);
 }
+
+const std::string& Model::GetName() const noexcept {
+	return m_name;
+}
+
+// Node
 
 Node::Node(std::vector<Mesh*>&& pMeshes, const DirectX::XMMATRIX& transform)
 	: m_pMeshes(std::move(pMeshes)), m_transform(transform) {}

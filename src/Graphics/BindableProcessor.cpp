@@ -7,11 +7,25 @@
 #include <Graphics.hpp>
 #include <Texture.hpp>
 #include <Surface.hpp>
-#include <IndexedTriangleList.hpp>
 
 BindProcessor::BindProcessor(const std::string& filePath, const aiMesh& mesh,
-	const aiMaterial* const* pMaterials)
-	: m_shininess(35.0f), m_hasTexture(true) {
+	const aiMaterial* const* pMaterials) {
+	Init(filePath, mesh, pMaterials);
+}
+
+BindProcessor::BindProcessor(
+	const std::string& objectName,
+	LegacyType type,
+	const std::string& texturePath
+) {
+	Init(objectName, type, texturePath);
+}
+
+void BindProcessor::Init(
+	const std::string& filePath, const struct aiMesh& mesh,
+	const struct aiMaterial* const* pMaterials
+) {
+	m_hasTexture = true;
 
 	std::string objectName;
 	m_texturePath = GUtil::GetFileRootFromPath(filePath);
@@ -59,28 +73,46 @@ BindProcessor::BindProcessor(const std::string& filePath, const aiMesh& mesh,
 	m_vertexBuffer.first = "VB" + objectName;
 	m_indexBuffer.first = "IB" + objectName;
 }
-
-
-BindProcessor::BindProcessor(
+void BindProcessor::Init(
 	const std::string& objectName,
-	const std::string& shaderName,
-	bool hasNormals
-) : m_shininess(35.0f), m_hasTexture(false), m_hasSpecular(hasNormals) {
+	LegacyType type,
+	const std::string& texturePath
+) {
+	m_legacyType = type;
 
-	if(hasNormals)
+	if (type == LegacyType::SolidColor) {
 		m_vertexLayout = {
 			{"Position", 12u},
 			{"Normal", 12u}
 		};
-	else
+
+		m_VShaderName = "VSSolidColorNormal";
+		m_PShaderName = "PSSolidColorNormal";
+		m_rootSignature.first = "RSSolidColorNormal";
+	}
+	else if (type == LegacyType::WithTexture) {
+		m_vertexLayout = {
+			{"Position", 12u},
+			{"Normal", 12u},
+			{"TexCoord", 8u}
+		};
+
+		m_VShaderName = "VSPixelLight";
+		m_PShaderName = "PSPixelLight";
+		m_rootSignature.first = "RSPixelLight";
+
+		m_textures.first.append("Tex#" + GUtil::GetNameFromPath(texturePath));
+		m_texturePath = texturePath;
+	}
+	else if (type == LegacyType::SolidColorNoNorm) {
 		m_vertexLayout = {
 			{"Position", 12u}
 		};
 
-	m_VShaderName = "VS" + shaderName;
-	m_PShaderName = "PS" + shaderName;
-
-	m_rootSignature.first = "RS" + shaderName;
+		m_VShaderName = "VSSolidColor";
+		m_PShaderName = "PSSolidColor";
+		m_rootSignature.first = "RSSolidColor";
+	}
 
 	m_topology.first = "TriangleList";
 
@@ -96,7 +128,7 @@ BindProcessor::BindProcessor(
 	m_indexBuffer.first = "IB" + objectName;
 }
 
-void BindProcessor::ProcessWithTex(
+void BindProcessor::Process(
 	Graphics& gfx,
 	const struct aiMesh& mesh,
 	const struct aiMaterial* const* pMaterials,
@@ -142,7 +174,7 @@ void BindProcessor::ProcessWithTex(
 		m_indexBuffer.second = Codex::GetBindableRef(m_indexBuffer.first);
 	else {
 		std::vector<std::uint16_t> indices;
-		indices.reserve(mesh.mNumFaces * 3);
+		indices.reserve(static_cast<std::uint64_t>(mesh.mNumFaces) * 3u);
 
 		for (std::uint32_t i = 0; i < mesh.mNumFaces; ++i) {
 			auto& face = mesh.mFaces[i];
@@ -200,9 +232,10 @@ void BindProcessor::ProcessWithTex(
 	}
 }
 
-void BindProcessor::ProcessWithoutTex(
+void BindProcessor::ProcessLegacyType(
 	Graphics& gfx,
-	const IndexedTriangleList& modelData
+	const IndexedTriangleList& modelData,
+	std::uint32_t textureRootIndex
 ) {
 	PSODesc pso;
 
@@ -218,31 +251,46 @@ void BindProcessor::ProcessWithoutTex(
 	// Vertex Buffer
 	if (Codex::IsInCodex(m_vertexBuffer.first))
 		m_vertexBuffer.second = Codex::GetBindableRef(m_vertexBuffer.first);
-	else {
-		if (m_hasSpecular)
-			m_vertexBuffer.second = Codex::AddAndGetBind(
-				m_vertexBuffer.first,
-				std::make_unique<VertexBuffer>(
-					modelData.GetVerticesObject(m_vertexLayout, true)
-					)
-			);
-		else
-			m_vertexBuffer.second = Codex::AddAndGetBind(
-				m_vertexBuffer.first,
-				std::make_unique<VertexBuffer>(
-					modelData.GetVerticesObject(m_vertexLayout)
-					)
-			);
-	}
+	else
+		m_vertexBuffer.second = Codex::AddAndGetBind(
+			m_vertexBuffer.first,
+			std::make_unique<VertexBuffer>(
+				modelData.GetVerticesObject(m_vertexLayout, m_legacyType)
+				)
+		);
 
 	// Index Buffer
 	if (Codex::IsInCodex(m_indexBuffer.first))
 		m_indexBuffer.second = Codex::GetBindableRef(m_indexBuffer.first);
-	else {
+	else
 		m_indexBuffer.second = Codex::AddAndGetBind(
 			m_indexBuffer.first,
 			std::make_unique<IndexBuffer>(modelData.GetIndices())
 		);
+
+	// Texture
+	if (m_legacyType == LegacyType::WithTexture) {
+		if (Codex::IsInCodex(m_textures.first))
+			m_textures.second = Codex::GetBindableRef(m_textures.first);
+		else {
+			auto textureHeap = std::make_unique<BindableHeap>(gfx, textureRootIndex);
+
+			textureHeap->AddSRV(gfx, std::make_unique<Texture>(
+				gfx,
+				Surface::FromFile(
+					m_texturePath
+				),
+				0u
+				)
+			);
+
+			textureHeap->FinishAdding(gfx);
+
+			m_textures.second = Codex::AddAndGetBind(
+				m_textures.first,
+				std::move(textureHeap)
+			);
+		}
 	}
 }
 
@@ -277,6 +325,10 @@ BindPtr* BindProcessor::GetIndexBuffer() const noexcept {
 }
 BindPtr* BindProcessor::GetTextures() const noexcept {
 	return m_textures.second;
+}
+
+const std::string& BindProcessor::GetTexturesName() const noexcept {
+	return m_textures.first;
 }
 
 // Setters

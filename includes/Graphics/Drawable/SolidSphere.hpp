@@ -4,8 +4,8 @@
 
 class SolidSphere : public Drawable {
 public:
-	SolidSphere(Graphics& gfx, float radius);
+	SolidSphere(Graphics& gfx, float radius, const std::string& name);
 
-	void SetPosition(DirectX::XMFLOAT3 position) noexcept;
+	void SetPosition(const DirectX::XMFLOAT3& position) noexcept;
 };
 #endif

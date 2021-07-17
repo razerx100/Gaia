@@ -9,7 +9,7 @@ struct BindPtr;
 
 class Drawable {
 public:
-	Drawable() = default;
+	Drawable(const std::string& name);
 	virtual ~Drawable();
 
 	virtual void Draw(class Graphics& gfx) const noexcept;
@@ -18,11 +18,14 @@ public:
 	void AddBind(BindPtr* bind) noexcept;
 	void AddBind(std::unique_ptr<class Bindable> bind) noexcept;
 
+	const std::string& GetName() const noexcept;
+
 protected:
 	std::uint32_t m_indexCount;
 	std::vector<BindPtr*> m_pBindRefs;
 	std::vector<std::unique_ptr<class Bindable>> m_pBinds;
 
 	Transform m_transform;
+	std::string m_name;
 };
 #endif

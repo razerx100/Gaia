@@ -6,6 +6,12 @@
 #include <optional>
 #include <functional>
 
+enum class LegacyType {
+	SolidColor,
+	SolidColorNoNorm,
+	WithTexture
+};
+
 class IndexedTriangleList {
 public:
 	IndexedTriangleList() = default;
@@ -16,8 +22,13 @@ public:
 		std::vector<DirectX::XMFLOAT3>&& verticesInput,
 		std::vector<DirectX::XMFLOAT3>&& normalsInput,
 		std::vector<std::uint16_t>&& indicesInput);
+	IndexedTriangleList(
+		std::vector<DirectX::XMFLOAT3>&& verticesInput,
+		std::vector<DirectX::XMFLOAT3>&& normalsInput,
+		std::vector<DirectX::XMFLOAT2>&& uvsInput,
+		std::vector<std::uint16_t>&& indicesInput);
 
-	void Transform(DirectX::FXMMATRIX matrix);
+	void Transform(const DirectX::XMMATRIX& matrix);
 	void SetNormalsIndependentFlat() noexcept;
 
 	std::uint32_t GetVerticesSize() const noexcept;
@@ -27,19 +38,15 @@ public:
 
 	// Positions only
 	Vertices GetVerticesObject(
-		const VertexLayout& vertexLayout
-	) const noexcept;
-
-	// Put Positions first then Normals in VertexLayout
-	Vertices GetVerticesObject(
 		const VertexLayout& vertexLayout,
-		bool normals
+		LegacyType type
 	) const noexcept;
 
 private:
-	std::vector<DirectX::XMFLOAT3> m_Vertices;
-	std::vector<std::uint16_t> m_Indices;
-	std::vector<DirectX::XMFLOAT3> m_Normals;
+	std::vector<DirectX::XMFLOAT3> m_vertices;
+	std::vector<std::uint16_t> m_indices;
+	std::vector<DirectX::XMFLOAT3> m_normals;
+	std::vector<DirectX::XMFLOAT2> m_uvs;
 };
 
 #endif

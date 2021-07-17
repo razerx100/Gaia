@@ -3,15 +3,17 @@
 #include <IndexBuffer.hpp>
 #include <BindableCodex.hpp>
 
-Mesh::Mesh(std::vector<BindPtr*>&& pBindRefs) {
+Mesh::Mesh(std::vector<BindPtr*>&& pBindRefs, const std::string& name)
+	: Drawable(name) {
 	for (auto& pBind : pBindRefs)
 		AddBind(std::move(pBind));
 }
 
 Mesh::Mesh(
 	std::vector<BindPtr*>&& pBindRefs,
-	std::vector<std::unique_ptr<Bindable>>&& pBinds
-) {
+	std::vector<std::unique_ptr<Bindable>>&& pBinds,
+	const std::string& name
+) : Drawable(name) {
 	for (auto& pBind : pBindRefs)
 		AddBind(std::move(pBind));
 

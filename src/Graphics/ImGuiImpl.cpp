@@ -131,9 +131,10 @@ namespace ImGuiImpl {
 	}
 
 	void ImGuiModelControl(
+		const std::string& name,
 		Position& position
 	) {
-		if (ImGui::Begin("Model")) {
+		if (ImGui::Begin(name.c_str())) {
 			ImGui::Text("Position");
 
 			ImGui::SliderFloat("X", &position.x, -20.0f, 20.0f);
@@ -176,7 +177,7 @@ namespace ImGuiImpl {
 	void EnableMouseInput() noexcept {}
 	void DisableMouseInput() noexcept {}
 
-	 void ImGuiRenderFPSCounter() {}
+	void ImGuiRenderFPSCounter() {}
 
 	void ImGuiRenderCameraControl(
 		DirectX::XMFLOAT3& cameraPosition,
@@ -191,6 +192,7 @@ namespace ImGuiImpl {
 	) {}
 
 	void ImGuiModelControl(
+		const std::string& name,
 		Position& position
 	) {}
 }

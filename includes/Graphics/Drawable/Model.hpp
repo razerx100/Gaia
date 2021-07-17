@@ -11,7 +11,7 @@ class Graphics;
 
 class Model {
 public:
-	Model(Graphics& gfx, const std::string& fileName);
+	Model(Graphics& gfx, const std::string& objectName, const std::string& fileName);
 
 	std::unique_ptr<Mesh> ParseMesh(
 		Graphics& gfx, const struct aiMesh& mesh,
@@ -21,6 +21,8 @@ public:
 	std::unique_ptr<Node> ParseNode(const struct aiNode& node);
 
 	void Draw(Graphics& gfx, const DirectX::XMMATRIX& transform) const;
+
+	const std::string& GetName() const noexcept;
 
 private:
 	std::unique_ptr<Node> m_pRoot;

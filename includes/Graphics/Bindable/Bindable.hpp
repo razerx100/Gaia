@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include <memory>
+#include <Utilities.hpp>
 
 using Microsoft::WRL::ComPtr;
 
@@ -19,9 +20,4 @@ public:
 protected:
 	HRESULT hr;
 };
-
-namespace GUtil {
-	std::string GetNameFromPath(const std::string& path) noexcept;
-	std::string GetFileRootFromPath(const std::string& path) noexcept;
-}
 #endif

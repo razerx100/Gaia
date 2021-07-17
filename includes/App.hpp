@@ -6,6 +6,7 @@
 #include <Camera.hpp>
 #include <Model.hpp>
 #include <Light.hpp>
+#include <Quad.hpp>
 
 class App {
 public:
@@ -32,6 +33,8 @@ private:
 	Timer m_timer;
 	Camera m_camera;
 	std::unique_ptr<Model> m_pNano;
+	std::unique_ptr<Model> m_pNano2;
+	std::unique_ptr<Quad> m_pQuad;
 
 	static std::string s_shaderPath;
 	static Light s_light;

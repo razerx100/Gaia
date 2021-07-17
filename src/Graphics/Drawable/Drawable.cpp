@@ -5,6 +5,9 @@
 #include <BindableCodex.hpp>
 #include <typeinfo>
 
+Drawable::Drawable(const std::string& name)
+	: m_indexCount(0u), m_name(name) {}
+
 Drawable::~Drawable(){
 	for (auto& bind : m_pBindRefs) {
 		Codex::ReleaseRef(bind->m_keyName);
@@ -28,4 +31,8 @@ void Drawable::AddBind(BindPtr* bind) noexcept {
 
 void Drawable::AddBind(std::unique_ptr<Bindable> bind) noexcept {
 	m_pBinds.emplace_back(std::move(bind));
+}
+
+const std::string& Drawable::GetName() const noexcept {
+	return m_name;
 }

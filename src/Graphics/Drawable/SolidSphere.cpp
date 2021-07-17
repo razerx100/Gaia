@@ -1,25 +1,24 @@
 #include <SolidSphere.hpp>
 #include <Graphics.hpp>
 #include <Sphere.hpp>
-#include <BindAll.hpp>
 #include <App.hpp>
+#include <BindAll.hpp>
 #include <BindableCodex.hpp>
-#include <PSODesc.hpp>
 #include <BindableProcessor.hpp>
 #include <Light.hpp>
 
-SolidSphere::SolidSphere(Graphics& gfx, float radius) {
+SolidSphere::SolidSphere(Graphics& gfx, float radius, const std::string& name)
+	: Drawable(name) {
 	BindProcessor process = BindProcessor(
 		"SolidSphereWhite",
-		"SolidColor",
-		false
+		LegacyType::SolidColorNoNorm
 	);
 
 	IndexedTriangleList model = Sphere::Make();
 
 	model.Transform(DirectX::XMMatrixScaling(radius, radius, radius));
 
-	process.ProcessWithoutTex(gfx, model);
+	process.ProcessLegacyType(gfx, model);
 
 	AddBind(process.GetPipelineState());
 	AddBind(process.GetRootSignature());
@@ -32,11 +31,12 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 			float red;
 			float green;
 			float blue;
+			float alpha;
 		}fill_color;
 	};
 
 	ConstantBufferColor materialColor = {
-		{1.0f, 1.0f, 1.0f}
+		{1.0f, 1.0f, 1.0f, 1.0f}
 	};
 
 	AddBind(BindProcessor::GetOrAddGeneric
@@ -61,6 +61,6 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius) {
 	m_transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);
 }
 
-void SolidSphere::SetPosition(DirectX::XMFLOAT3 position) noexcept {
+void SolidSphere::SetPosition(const DirectX::XMFLOAT3& position) noexcept {
 	m_transform = DirectX::XMMatrixTranslation(position.x, position.y, position.z);
 }
