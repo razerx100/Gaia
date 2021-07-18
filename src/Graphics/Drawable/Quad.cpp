@@ -55,7 +55,7 @@ Quad::Quad(
 			{1.0f, 1.0f, 1.0f, 1.0f}
 		};
 
-		AddBind(BindProcessor::GetOrAddGeneric
+		AddBind(BindProcessor::GetOrAddGenericCBuffer
 			<ConstantBufferCBVStatic<ConstantBufferColor>>(
 				"CBVStaticWhite",
 				2u, &materialColor

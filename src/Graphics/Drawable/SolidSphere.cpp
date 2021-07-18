@@ -39,14 +39,14 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius, const std::string& name)
 		{1.0f, 1.0f, 1.0f, 1.0f}
 	};
 
-	AddBind(BindProcessor::GetOrAddGeneric
+	AddBind(BindProcessor::GetOrAddGenericCBuffer
 		<ConstantBufferCBVStatic<ConstantBufferColor>>(
 			"CBVStaticWhite",
 			2u, &materialColor
 			)
 	);
 
-	AddBind(BindProcessor::GetOrAddGeneric<ConstantBufferCBVDynamic<LightData>>(
+	AddBind(BindProcessor::GetOrAddGenericCBuffer<ConstantBufferCBVDynamic<LightData>>(
 		"CBLightData",
 		1u, std::bind(&Light::GetLightData, App::GetLight())
 		)

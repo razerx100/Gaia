@@ -36,7 +36,8 @@ float4 main(float3 worldPos : Position,
         max(0.0f, dot(r, vn)), specularPower
     );
 
-    return saturate(float4((diffuse + ambient + specular)
-        , 1.0f) * color
+    return float4(
+        saturate((diffuse + ambient) * color.rgb + specular)
+        , 1.0f
     );
 }

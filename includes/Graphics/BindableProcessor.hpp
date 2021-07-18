@@ -71,13 +71,16 @@ private:
 
 public:
 	template<typename T, typename ...Ts>
-	static BindPtr* GetOrAddGeneric(const std::string& key, Ts&& ...args) {
-		if (Codex::IsInCodex(key))
-			return Codex::GetBindableRef(key);
+	static BindPtr* GetOrAddGenericCBuffer(
+		const std::string& key, std::uint32_t rootIndex, Ts&& ...args
+	) {
+		std::string keyName = key + "#" + std::to_string(rootIndex);
+		if (Codex::IsInCodex(keyName))
+			return Codex::GetBindableRef(keyName);
 		else {
 			return Codex::AddAndGetBind(
-				key,
-				std::make_unique<T>(std::forward<Ts>(args)...)
+				keyName,
+				std::make_unique<T>(rootIndex, std::forward<Ts>(args)...)
 			);
 		}
 	}
