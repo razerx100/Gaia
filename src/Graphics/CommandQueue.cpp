@@ -4,14 +4,14 @@
 
 // Command List
 CommandList::CommandList(
-	Graphics& gfx, D3D12_COMMAND_LIST_TYPE type, std::uint32_t bufferCount
+	Graphics& gfx, D3D12_COMMAND_LIST_TYPE type, std::uint32_t allocatorsPerCmdList
 ) {
-	Init(gfx, type, bufferCount);
+	Init(gfx, type, allocatorsPerCmdList);
 }
 void CommandList::Init(
-	Graphics& gfx, D3D12_COMMAND_LIST_TYPE type, std::uint32_t bufferCount
+	Graphics& gfx, D3D12_COMMAND_LIST_TYPE type, std::uint32_t allocatorsPerCmdList
 ) {
-	for (std::uint32_t index = 0; index < bufferCount; index++) {
+	for (std::uint32_t index = 0; index < allocatorsPerCmdList; index++) {
 		m_pCommandAllocators.emplace_back();
 		m_FreeAllocators.push(index);
 
@@ -24,10 +24,9 @@ void CommandList::Init(
 	}
 
 	GFX_THROW_FAILED(hr,
-		GetDevice(gfx)->CreateCommandList(
+		GetDevice(gfx)->CreateCommandList1(
 			0, type,
-			m_pCommandAllocators[0].Get(),
-			nullptr,
+			D3D12_COMMAND_LIST_FLAG_NONE,
 			__uuidof(ID3D12GraphicsCommandList),
 			&m_pCommandList
 		)
@@ -72,7 +71,7 @@ ID3D12GraphicsCommandList* CommandList::operator->() const noexcept {
 void CommandQueue::Init(
 	Graphics& gfx,
 	D3D12_COMMAND_LIST_TYPE type,
-	std::uint32_t bufferCount,
+	std::uint32_t allocatorsPerCmdList,
 	std::uint32_t numberOfCommandLists
 ) {
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -87,7 +86,7 @@ void CommandQueue::Init(
 
 	for (std::uint32_t i = 0; i < numberOfCommandLists; ++i)
 		m_commandLists.emplace_back(
-			std::make_unique<CommandList>(gfx, type, bufferCount)
+			std::make_unique<CommandList>(gfx, type, allocatorsPerCmdList)
 		);
 }
 

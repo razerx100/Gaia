@@ -24,7 +24,7 @@ private:
 
 #ifdef _DEBUG
 public:
-	static void SetDebugInfoManager(ID3D12Device2* device) noexcept;
+	static void SetDebugInfoManager(ID3D12Device5* device) noexcept;
 	static DebugInfoManager& GetDebugInfoManager() noexcept;
 
 private:

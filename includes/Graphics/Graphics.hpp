@@ -62,11 +62,10 @@ private:
     D3D12_VIEWPORT m_viewport;
     D3D12_RECT m_scissorRect;
     ComPtr<IDXGISwapChain4> m_pSwapChain;
-    ComPtr<ID3D12Device2> m_pDevice;
+    ComPtr<ID3D12Device5> m_pDevice;
     ComPtr<ID3D12Resource> m_pRenderTargets[bufferCount];
     CommandQueue m_gfxCommandQueue;
     CommandList* m_gfxCommandListRef;
-    CommandQueue m_copyCommandQueue;
 
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
     ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;

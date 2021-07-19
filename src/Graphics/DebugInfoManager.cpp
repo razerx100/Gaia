@@ -37,7 +37,7 @@ std::vector<std::string> DebugInfoManager::GetMessages() const {
 
 DebugInfoManager DebugInfoManager::s_InfoManager;
 
-void DebugInfoManager::SetDebugInfoManager(ID3D12Device2* device) noexcept {
+void DebugInfoManager::SetDebugInfoManager(ID3D12Device5* device) noexcept {
     device->QueryInterface(__uuidof(ID3D12InfoQueue), &s_InfoManager.m_pInfoQueue);
 }
 

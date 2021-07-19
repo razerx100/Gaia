@@ -55,7 +55,7 @@ void Graphics::Initialize(HWND hwnd) {
         D3D12CreateDevice(
             adapter.Get(),
             D3D_FEATURE_LEVEL_11_0,
-            __uuidof(ID3D12Device2),
+            __uuidof(ID3D12Device5),
             &m_pDevice
         );
     }
@@ -68,6 +68,7 @@ void Graphics::Initialize(HWND hwnd) {
 
     m_gfxCommandQueue.Init(*this, D3D12_COMMAND_LIST_TYPE_DIRECT, bufferCount);
     m_gfxCommandListRef = m_gfxCommandQueue.GetCommandList(0u);
+    m_gfxCommandListRef->Record();
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.BufferCount = bufferCount;

@@ -14,13 +14,15 @@ class CommandList : public GraphicsExtractor {
 public:
 	CommandList() = default;
 	CommandList(
-		Graphics& gfx, D3D12_COMMAND_LIST_TYPE type, std::uint32_t bufferCount
+		Graphics& gfx, D3D12_COMMAND_LIST_TYPE type,
+		std::uint32_t allocatorsPerCmdList
 	);
 
 	ID3D12GraphicsCommandList* Get() const noexcept;
 
 	void Init(
-		Graphics& gfx, D3D12_COMMAND_LIST_TYPE type, std::uint32_t bufferCount
+		Graphics& gfx, D3D12_COMMAND_LIST_TYPE type,
+		std::uint32_t allocatorsPerCmdList
 	);
 	void Record();
 	void Close();
@@ -42,7 +44,7 @@ public:
 	void Init(
 		Graphics& gfx,
 		D3D12_COMMAND_LIST_TYPE type,
-		std::uint32_t bufferCount,
+		std::uint32_t allocatorsPerCmdList,
 		std::uint32_t numberOfCommandLists = 1u
 	);
 	void ExecuteCommandLists();
