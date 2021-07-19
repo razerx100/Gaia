@@ -19,7 +19,7 @@ void Drawable::Draw(Graphics& gfx) const noexcept {
 	for (auto& bind : m_pBinds)
 		bind->BindCommand(gfx);
 
-	gfx.DrawIndexed(m_indexCount);
+	gfx.DrawIndexed(GetCommandList(gfx), m_indexCount);
 }
 
 void Drawable::AddBind(BindPtr* bind) noexcept {

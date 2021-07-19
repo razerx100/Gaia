@@ -66,13 +66,8 @@ void Graphics::Initialize(HWND hwnd) {
 
     BufferMan::Init(this);
 
-    D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
-    GFX_THROW_FAILED(hr, m_pDevice->CreateCommandQueue(
-        &queueDesc, __uuidof(ID3D12CommandQueue), &m_pCommandQueue
-    ));
+    m_gfxCommandQueue.Init(*this, D3D12_COMMAND_LIST_TYPE_DIRECT, bufferCount);
+    m_gfxCommandListRef = m_gfxCommandQueue.GetCommandList(0u);
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.BufferCount = bufferCount;
@@ -86,7 +81,7 @@ void Graphics::Initialize(HWND hwnd) {
 
     ComPtr<IDXGISwapChain1> swapChain;
     GFX_THROW_FAILED(hr, factory->CreateSwapChainForHwnd(
-        m_pCommandQueue.Get(),
+        m_gfxCommandQueue.GetCommandQueue(),
         hwnd,
         &swapChainDesc,
         nullptr,
@@ -146,13 +141,38 @@ void Graphics::Initialize(HWND hwnd) {
         GFX_THROW_FAILED(hr, HRESULT_FROM_WIN32(GetLastError()));
 
     // Command List
-    m_gfxCommandList.Create(*this, D3D12_COMMAND_LIST_TYPE_DIRECT, bufferCount);
-
-    m_pSRVHeapMan = std::make_unique<HeapMan>(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, this);
+    m_pSRVHeapMan = std::make_unique<HeapMan>(
+        D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, this
+        );
 }
 
-void Graphics::BeginFrame(float red, float green, float blue) {
-    ResetCommandList();
+void Graphics::BeginFrame() {
+    m_gfxCommandListRef->Record();
+    TransitionIntoRenderMode(
+        m_pRenderTargets[m_currentBackBufferIndex].Get(),
+        m_gfxCommandListRef->Get()
+    );
+
+    RecordCommonCommands(m_gfxCommandListRef->Get());
+}
+
+void Graphics::SetBGColor(float red, float green, float blue) {
+    m_color[0] = red;
+    m_color[1] = green;
+    m_color[2] = blue;
+}
+
+void Graphics::RecordCommonCommands(ID3D12GraphicsCommandList* commandList) {
+    ID3D12DescriptorHeap* ppHeaps[] = {
+        m_pSRVHeapMan->GetHeap()
+    };
+
+    commandList->SetDescriptorHeaps(
+        m_pSRVHeapMan->GetHeapCount(), ppHeaps
+    );
+
+    commandList->RSSetViewports(1, &m_viewport);
+    commandList->RSSetScissorRects(1, &m_scissorRect);
 
     ImGuiImpl::ImGuiBeginFrame();
 
@@ -160,48 +180,27 @@ void Graphics::BeginFrame(float red, float green, float blue) {
         m_pRTVHeap->GetCPUDescriptorHandleForHeapStart(),
         m_currentBackBufferIndex, m_nRTVHeapIncSize);
 
-    m_color[0] = red;
-    m_color[1] = green;
-    m_color[2] = blue;
+    commandList->ClearRenderTargetView(rtvHandle, m_color, 0, nullptr);
 
-    m_gfxCommandList->ClearRenderTargetView(rtvHandle, m_color, 0, nullptr);
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle =
+        m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
 
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_pDSVHeap->GetCPUDescriptorHandleForHeapStart();
-
-    m_gfxCommandList->ClearDepthStencilView(
+    commandList->ClearDepthStencilView(
         dsvHandle,
         D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    m_gfxCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+    commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 }
 
-void Graphics::DrawIndexed(std::uint32_t indexCount) noexcept {
-    m_gfxCommandList->DrawIndexedInstanced(indexCount, 1u, 0u, 0u, 0u);
-}
-
-void Graphics::ResetCommandList() {
-    m_gfxCommandList.Reset();
-
-    ID3D12DescriptorHeap* ppHeaps[] = {
-        m_pSRVHeapMan->GetHeap()
-    };
-
-    m_gfxCommandList->SetDescriptorHeaps(
-        m_pSRVHeapMan->GetHeapCount(), ppHeaps
-    );
-
-    m_gfxCommandList->RSSetViewports(1, &m_viewport);
-    m_gfxCommandList->RSSetScissorRects(1, &m_scissorRect);
-
-    CD3DX12_RESOURCE_BARRIER prebar = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_pRenderTargets[m_currentBackBufferIndex].Get(),
-        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-    m_gfxCommandList->ResourceBarrier(1, &prebar);
+void Graphics::DrawIndexed(
+    ID3D12GraphicsCommandList* commandList,
+    std::uint32_t indexCount
+) noexcept {
+    commandList->DrawIndexedInstanced(indexCount, 1u, 0u, 0u, 0u);
 }
 
 void Graphics::WaitForGPU() {
-    GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(
+    GFX_THROW_FAILED(hr, m_gfxCommandQueue.GetCommandQueue()->Signal(
         m_pFence.Get(), m_fenceValues[m_currentBackBufferIndex]));
 
     GFX_THROW_FAILED(hr,
@@ -214,7 +213,10 @@ void Graphics::WaitForGPU() {
 
 void Graphics::MoveToNextFrame() {
     const std::uint64_t currentFenceValue = m_fenceValues[m_currentBackBufferIndex];
-    GFX_THROW_FAILED(hr, m_pCommandQueue->Signal(m_pFence.Get(), currentFenceValue));
+    GFX_THROW_FAILED(hr,
+        m_gfxCommandQueue.GetCommandQueue()->Signal(m_pFence.Get(),
+            currentFenceValue)
+    );
 
     m_currentBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
@@ -229,39 +231,30 @@ void Graphics::MoveToNextFrame() {
 }
 
 void Graphics::EndFrame() {
-    ImGuiImpl::ImGuiEndFrame(m_gfxCommandList.Get());
+    ImGuiImpl::ImGuiEndFrame(m_gfxCommandListRef->Get());
 
-    CD3DX12_RESOURCE_BARRIER postbar = CD3DX12_RESOURCE_BARRIER::Transition(
+    TransitionIntoPresentMode(
         m_pRenderTargets[m_currentBackBufferIndex].Get(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-    m_gfxCommandList->ResourceBarrier(1, &postbar);
-
-    m_gfxCommandList.Close();
+        m_gfxCommandListRef->Get()
+    );
+    m_gfxCommandListRef->Close();
 }
 
 void Graphics::PresentFrame() {
-    ExecuteCommandList();
-
-    m_gfxCommandList.FinishedExecution();
+    m_gfxCommandQueue.SubmitCommandList(m_gfxCommandListRef);
+    m_gfxCommandQueue.ExecuteCommandLists();
 
     GFX_THROW_FAILED(hr, m_pSwapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING));
 
-    m_pSRVHeapMan->ProcessRequests();
-
     MoveToNextFrame();
-}
-
-void Graphics::ExecuteCommandList() {
-    ID3D12CommandList* ppCommandLists[] = { m_gfxCommandList.Get() };
-    m_pCommandQueue->ExecuteCommandLists(
-        static_cast<std::uint32_t>(std::size(ppCommandLists)), ppCommandLists
-    );
+    m_gfxCommandListRef->FinishedExecution();
+    m_pSRVHeapMan->ProcessRequests();
 }
 
 void Graphics::InitialGPUSetup() {
-    m_gfxCommandList.Close();
-    ExecuteCommandList();
+    m_gfxCommandListRef->Close();
+    m_gfxCommandQueue.SubmitCommandList(m_gfxCommandListRef);
+    m_gfxCommandQueue.ExecuteCommandLists();
 
     m_pSRVHeapMan->ProcessRequests();
 
@@ -321,6 +314,28 @@ void Graphics::CreateDSV() {
             m_pDSVHeap->GetCPUDescriptorHandleForHeapStart()
         )
     )
+}
+
+void Graphics::TransitionIntoPresentMode(
+    ID3D12Resource* rtv,
+    ID3D12GraphicsCommandList* commandList
+) {
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        rtv,
+        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+
+    commandList->ResourceBarrier(1, &barrier);
+}
+
+void Graphics::TransitionIntoRenderMode(
+    ID3D12Resource* rtv,
+    ID3D12GraphicsCommandList* commandList
+) {
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        rtv,
+        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    commandList->ResourceBarrier(1, &barrier);
 }
 
 void Graphics::InitializeViewPortAndSRECT() {

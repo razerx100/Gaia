@@ -4,10 +4,11 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <GraphicsExtractor.hpp>
 
 struct BindPtr;
 
-class Drawable {
+class Drawable : public GraphicsExtractor {
 public:
 	Drawable(const std::string& name);
 	virtual ~Drawable();

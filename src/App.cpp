@@ -23,6 +23,7 @@ App::App()
 	m_wnd(1920, 1080, "Gaia") {
 
 	GUtil::ShaderPath::Set();
+	m_wnd.GetGfx().SetBGColor(0.07f, 0.0f, 0.12f);
 
 	Camera::SetCameraInstance(&m_camera);
 	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1080.0f / 1920.0f, 0.5f, 60.0f));
@@ -56,7 +57,7 @@ int App::Go() {
 
 void App::DoFrame() {
 	const float deltaTime = m_timer.Mark();
-	m_wnd.GetGfx().BeginFrame(0.07f, 0.0f, 0.12f);
+	m_wnd.GetGfx().BeginFrame();
 
 	Light::UpdateLights(m_wnd.GetGfx());
 	InputLoop(deltaTime);

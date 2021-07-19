@@ -6,7 +6,7 @@
 #include <wrl.h>
 #include <d3dx12.h>
 #include <HeapMan.hpp>
-#include <CommandList.hpp>
+#include <CommandQueue.hpp>
 
 using Microsoft::WRL::ComPtr;
 
@@ -19,11 +19,16 @@ public:
 	~Graphics();
 
 	void EndFrame();
-    void BeginFrame(float red, float green, float blue);
+    void BeginFrame();
     void PresentFrame();
-    void DrawIndexed(std::uint32_t indexCount) noexcept;
+    void DrawIndexed(
+        ID3D12GraphicsCommandList* commandList,
+        std::uint32_t indexCount
+    ) noexcept;
+    void RecordCommonCommands(ID3D12GraphicsCommandList* commandList);
     void InitialGPUSetup();
     void ResizeBuffer(std::uint32_t width, std::uint32_t height);
+    void SetBGColor(float red, float green, float blue);
 
     DXGI_OUTPUT_DESC GetOutputDesc();
 
@@ -32,8 +37,6 @@ public:
 
 private:
     void Initialize(HWND hwnd);
-    void ExecuteCommandList();
-    void ResetCommandList();
 	void WaitForGPU();
 	void MoveToNextFrame();
     void CreateRTVs();
@@ -42,6 +45,14 @@ private:
     void GetHardwareAdapter(
         IDXGIFactory1* pFactory,
         IDXGIAdapter1** ppAdapter
+    );
+    void TransitionIntoPresentMode(
+        ID3D12Resource* rtv,
+        ID3D12GraphicsCommandList* commandList
+    );
+    void TransitionIntoRenderMode(
+        ID3D12Resource* rtv,
+        ID3D12GraphicsCommandList* commandList
     );
 
 private:
@@ -53,8 +64,9 @@ private:
     ComPtr<IDXGISwapChain4> m_pSwapChain;
     ComPtr<ID3D12Device2> m_pDevice;
     ComPtr<ID3D12Resource> m_pRenderTargets[bufferCount];
-    ComPtr<ID3D12CommandQueue> m_pCommandQueue;
-    CommandList m_gfxCommandList;
+    CommandQueue m_gfxCommandQueue;
+    CommandList* m_gfxCommandListRef;
+    CommandQueue m_copyCommandQueue;
 
     ComPtr<ID3D12DescriptorHeap> m_pRTVHeap;
     ComPtr<ID3D12DescriptorHeap> m_pDSVHeap;
@@ -67,8 +79,8 @@ private:
 
     ComPtr<ID3D12Fence> m_pFence;
     HANDLE m_fenceEvent;
-    std::uint32_t m_currentBackBufferIndex;
     std::uint64_t m_fenceValues[bufferCount];
+    std::uint32_t m_currentBackBufferIndex;
 
 	std::uint32_t m_width;
 	std::uint32_t m_height;

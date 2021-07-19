@@ -6,7 +6,7 @@ ID3D12Device2* GraphicsExtractor::GetDevice(Graphics& gfx) noexcept {
 }
 
 ID3D12GraphicsCommandList* GraphicsExtractor::GetCommandList(Graphics& gfx) noexcept {
-	return gfx.m_gfxCommandList.Get();
+	return gfx.m_gfxCommandListRef->Get();
 }
 
 HeapMan& GraphicsExtractor::GetSRVHeapMan(Graphics& gfx) noexcept {
