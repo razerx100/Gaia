@@ -9,9 +9,8 @@ Drawable::Drawable(const std::string& name)
 	: m_indexCount(0u), m_name(name) {}
 
 Drawable::~Drawable(){
-	for (auto& bind : m_pBindRefs) {
+	for (auto& bind : m_pBindRefs)
 		Codex::ReleaseRef(bind->m_keyName);
-	}
 }
 
 void Drawable::Draw(Graphics& gfx) const noexcept {

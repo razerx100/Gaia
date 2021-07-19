@@ -1,4 +1,5 @@
 #include <Utilities.hpp>
+#include <CleanWin.hpp>
 
 namespace GUtil {
 	std::string GetNameFromPath(const std::string& path) noexcept {
@@ -17,5 +18,21 @@ namespace GUtil {
 
 		return (nameEndIndex != std::string::npos ?
 			path.substr(0u, nameEndIndex + 1) : "\\");
+	}
+
+	std::string ShaderPath::s_shaderPath;
+
+	void ShaderPath::Set() {
+		char path[MAX_PATH];
+		GetModuleFileNameA(nullptr, path, MAX_PATH);
+		s_shaderPath = path;
+		for (int i = static_cast<int>(s_shaderPath.size() - 1); s_shaderPath[i] != '\\'; i--)
+			s_shaderPath.pop_back();
+
+		s_shaderPath.append("shaders\\");
+	}
+
+	std::string ShaderPath::Get() noexcept {
+		return s_shaderPath;
 	}
 }

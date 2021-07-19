@@ -1,4 +1,5 @@
 #include <ImGuiImpl.hpp>
+#include <TestObject.hpp>
 
 #ifdef _IMGUI
 namespace ImGuiImpl {

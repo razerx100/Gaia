@@ -27,21 +27,28 @@ struct LightData {
 	float attenuationQuadratic;
 };
 
+class Graphics;
+
 class Light {
 public:
 	Light() = default;
-	Light(class Graphics& gfx, float radius);
+	Light(Graphics& gfx, float radius);
 
 	LightData GetLightData() const noexcept;
 
-	void Init(class Graphics& gfx, float radius);
+	static Light* GetLight() noexcept;
+	static void UpdateLights(Graphics& gfx) noexcept;
+
+	void Init(Graphics& gfx, float radius);
 	void ImGuiLightSlider() noexcept;
 	void Update() noexcept;
-	void Draw(class Graphics& gfx) noexcept;
+	void Draw(Graphics& gfx) noexcept;
 	void ResetData() noexcept;
 
 private:
 	LightData m_lightData;
 	std::unique_ptr<class SolidSphere> m_lightSource;
+
+	static Light s_instance;
 };
 #endif

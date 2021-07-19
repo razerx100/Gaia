@@ -4,6 +4,8 @@
 #include <SolidSphere.hpp>
 #include <Camera.hpp>
 
+Light Light::s_instance;
+
 Light::Light(Graphics& gfx, float radius) {
 	Init(gfx, radius);
 }
@@ -32,6 +34,12 @@ void Light::Update() noexcept {
 	m_lightData.cameraPosition = Camera::GetCameraPos();
 }
 
+void Light::UpdateLights(Graphics& gfx) noexcept {
+	s_instance.Update();
+	s_instance.Draw(gfx);
+	s_instance.ImGuiLightSlider();
+}
+
 void Light::Draw(Graphics& gfx) noexcept {
 	m_lightSource->Draw(gfx);
 }
@@ -44,4 +52,8 @@ void Light::ResetData() noexcept {
 	m_lightData.attenuationConstant = 1.0f;
 	m_lightData.attenuationLinear = 0.045f;
 	m_lightData.attenuationQuadratic = 0.0075f;
+}
+
+Light* Light::GetLight() noexcept {
+	return &s_instance;
 }

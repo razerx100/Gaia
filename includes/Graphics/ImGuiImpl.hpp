@@ -8,35 +8,9 @@
 #include <functional>
 #include <DirectXMath.h>
 
+struct Position;
+
 namespace ImGuiImpl {
-	class Position {
-	public:
-		float roll = 0.0f;
-		float pitch = 0.0f;
-		float yaw = 0.0f;
-		float x = 0.0f;
-		float y = -8.5f;
-		float z = 0.0f;
-
-		void Update() noexcept {
-			m_transform =
-				DirectX::XMMatrixRotationRollPitchYaw(
-					roll, pitch, yaw
-				)
-				*
-				DirectX::XMMatrixTranslation(
-					x, y, z
-				);
-		}
-
-		DirectX::XMMATRIX GetTransform() const noexcept {
-			return m_transform;
-		}
-
-	private:
-		DirectX::XMMATRIX m_transform;
-	};
-
 	void ImGuiWindowInit(void* hwnd);
 
 	void ImGuiWindowQuit();

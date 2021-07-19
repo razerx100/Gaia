@@ -5,8 +5,8 @@
 #include <vector>
 #include <Camera.hpp>
 #include <Model.hpp>
-#include <Light.hpp>
 #include <Quad.hpp>
+#include <TestObject.hpp>
 
 class App {
 public:
@@ -14,9 +14,6 @@ public:
 	~App() = default;
 
 	int Go();
-
-	static Light* GetLight() noexcept;
-	static std::string GetShaderPath() noexcept;
 
 private:
 	void DoFrame();
@@ -26,17 +23,12 @@ private:
 	void ToggleCursor(std::uint8_t keyCode) noexcept;
 	void CameraMovement(float deltaTime) noexcept;
 
-	static void SetShaderPath() noexcept;
-
 private:
 	Window m_wnd;
 	Timer m_timer;
 	Camera m_camera;
-	std::unique_ptr<Model> m_pNano;
-	std::unique_ptr<Model> m_pNano2;
-	std::unique_ptr<Quad> m_pQuad;
-
-	static std::string s_shaderPath;
-	static Light s_light;
+	TestObject<Model> m_pNano;
+	TestObject<Model> m_pNano2;
+	TestObject<Quad> m_pQuad;
 };
 #endif

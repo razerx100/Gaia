@@ -2,11 +2,11 @@
 #include <Vertices.hpp>
 #include <assimp/scene.h>
 #include <PSODesc.hpp>
-#include <App.hpp>
 #include <BindAll.hpp>
 #include <Graphics.hpp>
 #include <Texture.hpp>
 #include <Surface.hpp>
+#include <Utilities.hpp>
 
 BindProcessor::BindProcessor(const std::string& filePath, const aiMesh& mesh,
 	const aiMaterial* const* pMaterials) {
@@ -378,7 +378,7 @@ void BindProcessor::SetRootSignature(Graphics& gfx, PSODesc& pso) {
 
 		auto rootSignature = std::make_unique<RootSignaturePreCompiled>(
 			gfx,
-			App::GetShaderPath()
+			GUtil::ShaderPath::Get()
 			+ m_rootSignature.first + ".cso"
 			);
 		pso.SetRootSignature(rootSignature.get());
@@ -396,11 +396,11 @@ void BindProcessor::SetPipelineState(Graphics& gfx, PSODesc& pso) {
 	else {
 		pso.SetInputLayout(m_vertexLayout);
 		pso.SetVertexShader(
-			App::GetShaderPath()
+			GUtil::ShaderPath::Get()
 			+ m_VShaderName + ".cso"
 		);
 		pso.SetPixelShader(
-			App::GetShaderPath()
+			GUtil::ShaderPath::Get()
 			+ m_PShaderName + ".cso"
 		);
 

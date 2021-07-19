@@ -1,7 +1,6 @@
 #include <SolidSphere.hpp>
 #include <Graphics.hpp>
 #include <Sphere.hpp>
-#include <App.hpp>
 #include <BindAll.hpp>
 #include <BindableCodex.hpp>
 #include <BindableProcessor.hpp>
@@ -48,7 +47,7 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius, const std::string& name)
 
 	AddBind(BindProcessor::GetOrAddGenericCBuffer<ConstantBufferCBVDynamic<LightData>>(
 		"CBLightData",
-		1u, std::bind(&Light::GetLightData, App::GetLight())
+		1u, std::bind(&Light::GetLightData, Light::GetLight())
 		)
 	);
 

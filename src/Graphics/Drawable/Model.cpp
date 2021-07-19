@@ -1,7 +1,6 @@
 #include <Model.hpp>
 #include <Graphics.hpp>
 #include <Mesh.hpp>
-#include <App.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -12,7 +11,6 @@
 #include <InputLayout.hpp>
 #include <Vertices.hpp>
 #include <PSODesc.hpp>
-#include <Light.hpp>
 #include <BindableProcessor.hpp>
 
 Model::Model(
