@@ -54,8 +54,10 @@ private:
     std::unique_ptr<Memory> _RequestMemory(
         std::uint64_t bufferSize, std::uint64_t alignment
     ) noexcept;
-    std::uint64_t AlignUp(std::uint64_t number, std::uint64_t alignment) noexcept;
-    std::uint64_t GetAlignedSizeDiff(
+    static std::uint64_t AlignUp(
+        std::uint64_t number, std::uint64_t alignment
+    ) noexcept;
+    static std::uint64_t GetAlignedSizeDiff(
         const Partition& partition, std::uint64_t alignment
     ) noexcept;
 
@@ -73,8 +75,19 @@ private:
     HRESULT hr;
 };
 
-constexpr std::uint64_t operator"" _B(unsigned long long number);
-constexpr std::uint64_t operator"" _KB(unsigned long long number);
-constexpr std::uint64_t operator"" _MB(unsigned long long number);
-constexpr std::uint64_t operator"" _GB(unsigned long long number);
+constexpr std::uint64_t operator"" _B(unsigned long long number) {
+    return number;
+}
+
+constexpr std::uint64_t operator"" _KB(unsigned long long number) {
+    return number * 1024u;
+}
+
+constexpr std::uint64_t operator"" _MB(unsigned long long number) {
+    return number * 1024u * 1024u;
+}
+
+constexpr std::uint64_t operator"" _GB(unsigned long long number) {
+    return number * 1024u * 1024u * 1024u;
+}
 #endif

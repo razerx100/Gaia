@@ -41,6 +41,8 @@ Quad::Quad(
 	AddBind(process.GetVertexBuffer());
 	AddBind(process.GetIndexBuffer());
 
+	std::uint8_t transformRootIndex;
+
 	if (texturePath == "") {
 		struct ConstantBufferColor {
 			struct {
@@ -49,21 +51,47 @@ Quad::Quad(
 				float blue;
 				float alpha;
 			}fill_color;
+			float specularIntensity;
+			float specularPower;
 		};
 
 		ConstantBufferColor materialColor = {
-			{1.0f, 1.0f, 1.0f, 1.0f}
+			{1.0f, 1.0f, 1.0f, 1.0f},
+			0.8f,
+			35.0f
 		};
 
 		AddBind(BindProcessor::GetOrAddGenericCBuffer
 			<ConstantBufferCBVStatic<ConstantBufferColor>>(
-				"CBVStaticWhite",
+				"CBVStaticWhiteWithSpec",
 				2u, &materialColor
 				)
 		);
+
+		transformRootIndex = 3u;
 	}
-	else
+	else {
 		AddBind(process.GetTextures());
+
+		struct ConstantBufferSpecular {
+			float specularIntensity;
+			float specularPower;
+		};
+
+		ConstantBufferSpecular specularDetails = {
+			0.8f,
+			35.0f
+		};
+
+		AddBind(BindProcessor::GetOrAddGenericCBuffer
+			<ConstantBufferCBVStatic<ConstantBufferSpecular>>(
+				"CBVStaticSpecularDetails",
+				4u, &specularDetails
+				)
+		);
+
+		transformRootIndex = 2u;
+	}
 
 	AddBind(
 		std::make_unique<ConstantBufferMat>(
@@ -75,7 +103,7 @@ Quad::Quad(
 
 	AddBind(
 		std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
-			3u, std::bind(&Transform::GetTransformCM, &m_transform)
+			transformRootIndex, std::bind(&Transform::GetTransformCM, &m_transform)
 			)
 	);
 

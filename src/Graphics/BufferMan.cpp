@@ -63,7 +63,7 @@ std::unique_ptr<Memory> BufferMan::_RequestMemory(
         auto firstFind =
             std::lower_bound(
                 page->m_freePartitions.begin(), page->m_freePartitions.end(), bufferSize,
-                [&](const Partition& a, const std::uint64_t b) {
+                [&alignment](const Partition& a, const std::uint64_t b) {
                     std::uint64_t alignedSizeDiff = GetAlignedSizeDiff(a, alignment);
                     return (a.size - alignedSizeDiff) < b;
                 }
@@ -153,21 +153,4 @@ void BufferMan::Free(Partition&& partition) noexcept {
 
 void BufferMan::FreePartition(Partition&& partition) noexcept {
     s_instance->Free(std::move(partition));
-}
-
-// Custom Literal Suffix
-constexpr std::uint64_t operator"" _B(unsigned long long number) {
-    return number;
-}
-
-constexpr std::uint64_t operator"" _KB(unsigned long long number) {
-    return number * 1024u;
-}
-
-constexpr std::uint64_t operator"" _MB(unsigned long long number) {
-    return number * 1024u * 1024u;
-}
-
-constexpr std::uint64_t operator"" _GB(unsigned long long number) {
-    return number * 1024u * 1024u * 1024u;
 }

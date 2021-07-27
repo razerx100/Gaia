@@ -38,7 +38,8 @@ App::App()
 		);
 	m_pQuad.Init(
 		m_wnd.GetGfx(),
-		"WhiteSheet"
+		"WhiteSheet",
+		"models\\images\\brickwall.jpg"
 		);
 
 	m_wnd.GetGfx().InitialGPUSetup();

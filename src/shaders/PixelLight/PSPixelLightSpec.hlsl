@@ -21,7 +21,8 @@ float4 main(float3 worldPos : Position,
     const float3 directionOfLight = vectorToLight / distanceToLight;
 
     const float attenuation = 1.0f /
-        (attConst + attLin * distanceToLight + attQuad * (distanceToLight * distanceToLight));
+        (attConst + attLin * distanceToLight + attQuad *
+            (distanceToLight * distanceToLight));
 
     const float3 diffuse = diffuseColor * diffuseIntensity * attenuation
                            * max(0.0f, dot(directionOfLight, normal));
