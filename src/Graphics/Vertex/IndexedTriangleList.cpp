@@ -1,42 +1,24 @@
 #include <IndexedTriangleList.hpp>
 
-IndexedTriangleList::IndexedTriangleList(
-	std::vector<DirectX::XMFLOAT3>&& verticesInput,
-	std::vector<std::uint16_t>&& indicesInput)
-	: m_vertices(std::move(verticesInput)), m_indices(std::move(indicesInput)) {
-
-	assert(m_vertices.size() > 2);
-	assert(m_indices.size() % 3 == 0);
+void IndexedTriangleList::SetVertices(
+	std::vector<DirectX::XMFLOAT3>&& verticesInput) noexcept {
+	m_vertices = std::move(verticesInput);
 }
 
-IndexedTriangleList::IndexedTriangleList(
-	std::vector<DirectX::XMFLOAT3>&& verticesInput,
-	std::vector<DirectX::XMFLOAT3>&& normalsInput,
-	std::vector<std::uint16_t>&& indicesInput)
-	:
-	m_vertices(std::move(verticesInput)),
-	m_normals(std::move(normalsInput)),
-	m_indices(std::move(indicesInput)) {
-
-	assert(m_vertices.size() > 2);
-	assert(m_indices.size() % 3 == 0);
+void IndexedTriangleList::SetIndices(
+	std::vector<std::uint16_t>&& indicesInput) noexcept {
+	m_indices = std::move(indicesInput);
 }
 
-IndexedTriangleList::IndexedTriangleList(
-	std::vector<DirectX::XMFLOAT3>&& verticesInput,
-	std::vector<DirectX::XMFLOAT3>&& normalsInput,
-	std::vector<DirectX::XMFLOAT2>&& uvsInput,
-	std::vector<std::uint16_t>&& indicesInput)
-	:
-	m_vertices(std::move(verticesInput)),
-	m_normals(std::move(normalsInput)),
-	m_uvs(std::move(uvsInput)),
-	m_indices(std::move(indicesInput)) {
-
-	assert(m_vertices.size() > 2);
-	assert(m_indices.size() % 3 == 0);
+void IndexedTriangleList::SetNormals(
+	std::vector<DirectX::XMFLOAT3>&& normalsInput) noexcept {
+	m_normals = std::move(normalsInput);
 }
 
+void IndexedTriangleList::SetUVs(
+	std::vector<DirectX::XMFLOAT2>&& uvsInput) noexcept {
+	m_uvs = std::move(uvsInput);
+}
 
 void IndexedTriangleList::Transform(const DirectX::XMMATRIX& matrix) {
 	for (DirectX::XMFLOAT3& v : m_vertices) {

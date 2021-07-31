@@ -8,14 +8,35 @@
 Quad::Quad(
 	Graphics& gfx,
 	const std::string& objectName,
-	const std::string& texturePath
+	const std::string& texturePath,
+	const std::string& normalMapPath
 )
 	: Drawable(objectName) {
 
 	BindProcessor process;
 	IndexedTriangleList model;
 
-	if (texturePath == "") {
+	if (texturePath != "") {
+		if (normalMapPath != "") {
+			process.Init(
+				objectName,
+				LegacyType::WithTexture,
+				texturePath,
+				normalMapPath
+			);
+		}
+		else {
+			process.Init(
+				objectName,
+				LegacyType::WithTexture,
+				texturePath
+			);
+		}
+
+		model = Plane::MakeTesselatedTextured(1, 1);
+		process.ProcessLegacyType(gfx, model, 3u);
+	}
+	else {
 		process.Init(
 			objectName,
 			LegacyType::SolidColor
@@ -23,16 +44,6 @@ Quad::Quad(
 
 		model = Plane::MakeTesselated(1, 1);
 		process.ProcessLegacyType(gfx, model);
-	}
-	else {
-		process.Init(
-			objectName,
-			LegacyType::WithTexture,
-			texturePath
-		);
-
-		model = Plane::MakeTesselatedTextured(1, 1);
-		process.ProcessLegacyType(gfx, model, 3u);
 	}
 
 	AddBind(process.GetPipelineState());
@@ -79,8 +90,8 @@ Quad::Quad(
 		};
 
 		ConstantBufferSpecular specularDetails = {
-			0.8f,
-			35.0f
+			0.1f,
+			20.0f
 		};
 
 		AddBind(BindProcessor::GetOrAddGenericCBuffer

@@ -11,7 +11,7 @@ class PSODesc;
 
 class BindProcessor {
 public:
-	BindProcessor() = default;
+	BindProcessor();
 	BindProcessor(
 		const std::string& filePath, const struct aiMesh& mesh,
 		const struct aiMaterial* const* pMaterials
@@ -19,7 +19,8 @@ public:
 	BindProcessor(
 		const std::string& objectName,
 		LegacyType type,
-		const std::string& texturePath = ""
+		const std::string& texturePath = "",
+		const std::string& normalMapPath = ""
 	);
 
 	BindProcessor(const BindProcessor&) = delete;
@@ -32,7 +33,8 @@ public:
 	void Init(
 		const std::string& objectName,
 		LegacyType type,
-		const std::string& texturePath = ""
+		const std::string& texturePath = "",
+		const std::string& normalMapPath = ""
 	);
 	void Process(
 		Graphics& gfx,
@@ -98,10 +100,12 @@ private:
 
 	VertexLayout m_vertexLayout;
 	std::string m_texturePath;
+	std::string m_normalMapPath;
 	LegacyType m_legacyType;
 	float m_shininess = 35.0f;
 
 	bool m_hasTexture;
 	bool m_hasSpecular;
+	bool m_hasNormalMap;
 };
 #endif

@@ -65,7 +65,11 @@ IndexedTriangleList Prism::MakeTesselated(int longDiv) {
 		indices.push_back((i + 3u) % mod + 2u);
 	}
 
-	return IndexedTriangleList(std::move(vertices), std::move(indices));
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+
+	return data;
 }
 
 IndexedTriangleList Prism::MakeTesselatedIndependentCapNormals(int longDiv) {
@@ -178,7 +182,12 @@ IndexedTriangleList Prism::MakeTesselatedIndependentCapNormals(int longDiv) {
 		indices.push_back(static_cast<std::uint16_t>(i + 1 + iFusilage));
 	}
 
-	return { std::move(vertices), std::move(normals), std::move(indices) };
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+	data.SetNormals(std::move(normals));
+
+	return data;
 }
 
 IndexedTriangleList Prism::Make() {

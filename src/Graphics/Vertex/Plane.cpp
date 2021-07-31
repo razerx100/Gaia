@@ -43,9 +43,12 @@ IndexedTriangleList Plane::MakeTesselated(std::uint16_t divisions_x, std::uint16
 		nVertices_x, divisions_x, divisions_y
 	);
 
-	return IndexedTriangleList(
-		std::move(vertices), std::move(normals), std::move(indices)
-	);
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+	data.SetNormals(std::move(normals));
+
+	return data;
 }
 
 IndexedTriangleList Plane::MakeTesselatedTextured(
@@ -99,9 +102,13 @@ IndexedTriangleList Plane::MakeTesselatedTextured(
 		nVertices_x, divisions_x, divisions_y
 	);
 
-	return IndexedTriangleList(
-		std::move(vertices), std::move(normals), std::move(uvs), std::move(indices)
-	);
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+	data.SetNormals(std::move(normals));
+	data.SetUVs(std::move(uvs));
+
+	return data;
 }
 
 IndexedTriangleList Plane::Make() {

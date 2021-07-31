@@ -31,15 +31,21 @@ App::App()
 	Light::GetLight()->Init(m_wnd.GetGfx(), 0.4f);
 
 	m_pNano.Init(
-		m_wnd.GetGfx(), "NanoSuit1", "models\\nano_textured\\nanosuit.obj"
+		m_wnd.GetGfx(), "NanoSuit1",
+		6.0f, -8.5f, 0.0f,
+		"models\\nano_textured\\nanosuit.obj"
 		);
 	m_pNano2.Init(
-		m_wnd.GetGfx(), "NanoSuit2", "models\\nano_textured\\nanosuit.obj"
+		m_wnd.GetGfx(), "NanoSuit2",
+		-6.0f, -8.5f, 0.0f,
+		"models\\nano_textured\\nanosuit.obj"
 		);
 	m_pQuad.Init(
 		m_wnd.GetGfx(),
 		"WhiteSheet",
-		"models\\images\\brickwall.jpg"
+		0.0f, 3.0f, -8.5f,
+		"models\\images\\brickwall.jpg",
+		"models\\images\\brickwall_normal.jpg"
 		);
 
 	m_wnd.GetGfx().InitialGPUSetup();

@@ -11,7 +11,7 @@ struct Position {
 	float pitch = 0.0f;
 	float yaw = 0.0f;
 	float x = 0.0f;
-	float y = -8.5f;
+	float y = 0.0f;
 	float z = 0.0f;
 
 	inline void Update() noexcept {
@@ -39,9 +39,15 @@ public:
 	void Init(
 		Graphics& gfx,
 		const std::string& objectName,
-		const std::string& texturePath = ""
+		float posX, float posY, float posZ,
+		const std::string& texturePath = "",
+		const std::string& normalMapPath = ""
 	) {
-		m_model = std::make_unique<T>(gfx, objectName, texturePath);
+		m_positionData.x = posX;
+		m_positionData.y = posY;
+		m_positionData.z = posZ;
+
+		m_model = std::make_unique<T>(gfx, objectName, texturePath, normalMapPath);
 	}
 
 	void Draw(Graphics& gfx) {
@@ -62,8 +68,13 @@ public:
 	void Init(
 		Graphics& gfx,
 		const std::string& objectName,
+		float posX, float posY, float posZ,
 		const std::string& texturePath = ""
 	) {
+		m_positionData.x = posX;
+		m_positionData.y = posY;
+		m_positionData.z = posZ;
+
 		m_model = std::make_unique<Model>(gfx, objectName, texturePath);
 	}
 

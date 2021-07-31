@@ -42,7 +42,11 @@ IndexedTriangleList Cone::MakeTesselated(std::uint16_t longDiv) {
 		indices.push_back(iTip);
 	}
 
-	return IndexedTriangleList(std::move(vertices), std::move(indices));
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+
+	return data;
 }
 
 IndexedTriangleList Cone::MakeTesselatedIndependentFaces(int longDiv) {
@@ -98,7 +102,11 @@ IndexedTriangleList Cone::MakeTesselatedIndependentFaces(int longDiv) {
 		indices.push_back(iLong + iBaseEdge);
 	}
 
-	return { std::move(vertices),std::move(indices) };
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+
+	return data;
 }
 
 IndexedTriangleList Cone::Make() {

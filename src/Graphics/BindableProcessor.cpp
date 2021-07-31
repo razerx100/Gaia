@@ -8,17 +8,22 @@
 #include <Surface.hpp>
 #include <Utilities.hpp>
 
+BindProcessor::BindProcessor()
+	: m_hasTexture(false), m_hasSpecular(false), m_hasNormalMap(false) {}
+
 BindProcessor::BindProcessor(const std::string& filePath, const aiMesh& mesh,
-	const aiMaterial* const* pMaterials) {
+	const aiMaterial* const* pMaterials
+	) {
 	Init(filePath, mesh, pMaterials);
 }
 
 BindProcessor::BindProcessor(
 	const std::string& objectName,
 	LegacyType type,
-	const std::string& texturePath
+	const std::string& texturePath,
+	const std::string& normalMapPath
 ) {
-	Init(objectName, type, texturePath);
+	Init(objectName, type, texturePath, normalMapPath);
 }
 
 void BindProcessor::Init(
@@ -32,20 +37,41 @@ void BindProcessor::Init(
 
 	auto& material = *pMaterials[mesh.mMaterialIndex];
 
-	aiString texFileName;
+	{
+		aiString texFileName;
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
+		objectName.append(texFileName.C_Str());
+	}
 
-	material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
-	objectName.append(texFileName.C_Str());
-
-	m_hasSpecular = (material.GetTexture(aiTextureType_SPECULAR, 0, &texFileName)
+	aiString specTexName;
+	m_hasSpecular = (material.GetTexture(aiTextureType_SPECULAR, 0, &specTexName)
 		== aiReturn_SUCCESS);
+
+	aiString normTexName;
+	m_hasNormalMap = (material.GetTexture(aiTextureType_NORMALS, 0, &normTexName)
+		== aiReturn_SUCCESS);
+
 
 	m_VShaderName = "VSPixelLight";
 
+	m_vertexLayout = {
+		{"Position", 12u},
+		{"Normal", 12u},
+		{"TexCoord", 8u}
+	};
+
 	if (m_hasSpecular) {
-		m_rootSignature.first = "RSPixelLightSpec";
-		m_PShaderName = "PSPixelLightSpec";
-		objectName.append(std::string("#") + texFileName.C_Str());
+		objectName.append(std::string("#") + specTexName.C_Str());
+
+		if (m_hasNormalMap) {
+			m_rootSignature.first = "RSPixelLightSpecNorm";
+			m_PShaderName = "PSPixelLightSpecNorm";
+			objectName.append(std::string("#") + normTexName.C_Str());
+		}
+		else {
+			m_rootSignature.first = "RSPixelLightSpec";
+			m_PShaderName = "PSPixelLightSpec";
+		}
 	}
 	else {
 		m_rootSignature.first = "RSPixelLight";
@@ -53,12 +79,6 @@ void BindProcessor::Init(
 	}
 
 	m_textures.first.append("Tex#" + objectName);
-
-	m_vertexLayout = {
-		{"Position", 12u},
-		{"Normal", 12u},
-		{"TexCoord", 8u}
-	};
 
 	m_topology.first = "TriangleList";
 
@@ -76,7 +96,8 @@ void BindProcessor::Init(
 void BindProcessor::Init(
 	const std::string& objectName,
 	LegacyType type,
-	const std::string& texturePath
+	const std::string& texturePath,
+	const std::string& normalMapPath
 ) {
 	m_legacyType = type;
 
@@ -97,12 +118,24 @@ void BindProcessor::Init(
 			{"TexCoord", 8u}
 		};
 
-		m_VShaderName = "VSPixelLight";
-		m_PShaderName = "PSPixelLight";
-		m_rootSignature.first = "RSPixelLight";
-
 		m_textures.first.append("Tex#" + GUtil::GetNameFromPath(texturePath));
 		m_texturePath = texturePath;
+
+		m_VShaderName = "VSPixelLight";
+
+		if (normalMapPath != "") {
+			m_hasNormalMap = true;
+
+			m_PShaderName = "PSPixelLightNorm";
+			m_rootSignature.first = "RSPixelLightNorm";
+
+			m_textures.first.append("#" + GUtil::GetNameFromPath(normalMapPath));
+			m_normalMapPath = normalMapPath;
+		}
+		else {
+			m_PShaderName = "PSPixelLight";
+			m_rootSignature.first = "RSPixelLight";
+		}
 	}
 	else if (type == LegacyType::SolidColorNoNorm) {
 		m_vertexLayout = {
@@ -198,13 +231,15 @@ void BindProcessor::Process(
 
 		auto textureHeap = std::make_unique<BindableHeap>(gfx, textureRootIndex);
 
+		std::uint32_t textureSlot = 0u;
+
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &texFileName);
 		textureHeap->AddSRV(gfx, std::make_unique<Texture>(
 			gfx,
 			Surface::FromFile(
 				m_texturePath + texFileName.C_Str()
 			),
-			0u
+			textureSlot++
 			)
 		);
 
@@ -216,12 +251,25 @@ void BindProcessor::Process(
 				Surface::FromFile(
 					m_texturePath + texFileName.C_Str()
 				),
-				1u
+				textureSlot++
 				)
 			);
 		}
 		else
 			material.Get(AI_MATKEY_SHININESS, m_shininess);
+
+		if (m_hasNormalMap) {
+			material.GetTexture(aiTextureType_NORMALS, 0, &texFileName);
+
+			textureHeap->AddSRV(gfx, std::make_unique<Texture>(
+				gfx,
+				Surface::FromFile(
+					m_texturePath + texFileName.C_Str()
+				),
+				textureSlot++
+				)
+			);
+		}
 
 		textureHeap->FinishAdding(gfx);
 
@@ -283,6 +331,17 @@ void BindProcessor::ProcessLegacyType(
 				0u
 				)
 			);
+
+			if (m_hasNormalMap) {
+				textureHeap->AddSRV(gfx, std::make_unique<Texture>(
+					gfx,
+					Surface::FromFile(
+						m_normalMapPath
+					),
+					1u
+					)
+				);
+			}
 
 			textureHeap->FinishAdding(gfx);
 

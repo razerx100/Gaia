@@ -15,18 +15,11 @@ enum class LegacyType {
 class IndexedTriangleList {
 public:
 	IndexedTriangleList() = default;
-	IndexedTriangleList(
-		std::vector<DirectX::XMFLOAT3>&& verticesInput,
-		std::vector<std::uint16_t>&& indicesInput);
-	IndexedTriangleList(
-		std::vector<DirectX::XMFLOAT3>&& verticesInput,
-		std::vector<DirectX::XMFLOAT3>&& normalsInput,
-		std::vector<std::uint16_t>&& indicesInput);
-	IndexedTriangleList(
-		std::vector<DirectX::XMFLOAT3>&& verticesInput,
-		std::vector<DirectX::XMFLOAT3>&& normalsInput,
-		std::vector<DirectX::XMFLOAT2>&& uvsInput,
-		std::vector<std::uint16_t>&& indicesInput);
+
+	void SetVertices(std::vector<DirectX::XMFLOAT3>&& verticesInput) noexcept;
+	void SetIndices(std::vector<std::uint16_t>&& indicesInput) noexcept;
+	void SetNormals(std::vector<DirectX::XMFLOAT3>&& normalsInput) noexcept;
+	void SetUVs(std::vector<DirectX::XMFLOAT2>&& uvsInput) noexcept;
 
 	void Transform(const DirectX::XMMATRIX& matrix);
 	void SetNormalsIndependentFlat() noexcept;

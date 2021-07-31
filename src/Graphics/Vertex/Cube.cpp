@@ -23,10 +23,11 @@ IndexedTriangleList Cube::Make() {
 			0u, 1u, 4u,		1u, 5u, 4u
 	};
 
-	return IndexedTriangleList(
-		std::move(vertices),
-		std::move(indices)
-	);
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+
+	return data;
 }
 
 IndexedTriangleList Cube::MakeSkinned() {
@@ -58,10 +59,11 @@ IndexedTriangleList Cube::MakeSkinned() {
 			12u, 3u, 7u,	12u, 7u, 13u
 	};
 
-	return IndexedTriangleList(
-		std::move(vertices),
-		std::move(indices)
-	);
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+
+	return data;
 }
 
 IndexedTriangleList Cube::MakeIndependent() {
@@ -93,8 +95,10 @@ IndexedTriangleList Cube::MakeIndependent() {
 	vertices[22] = { -side,side,side };// 22
 	vertices[23] = { side,side,side };// 23
 
-	return{
-		std::move(vertices),{
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(
+		{
 			0u, 2u, 1u,			2u, 3u, 1u,
 			4u, 5u, 7u,			4u, 7u, 6u,
 			8u, 10u, 9u,		10u, 11u, 9u,
@@ -102,5 +106,7 @@ IndexedTriangleList Cube::MakeIndependent() {
 			16u, 17u, 18u,		18u, 17u, 19u,
 			20u, 23u, 21u,		20u, 22u, 23u
 		}
-	};
+	);
+
+	return data;
 }

@@ -84,7 +84,11 @@ IndexedTriangleList Sphere::MakeTesselated(std::uint16_t latDiv, std::uint16_t l
 	indices.push_back(calcIndex(latDiv - 2, longDiv - 1));
 	indices.push_back(iSouthPole);
 
-	return IndexedTriangleList(std::move(vertices), std::move(indices));
+	IndexedTriangleList data;
+	data.SetVertices(std::move(vertices));
+	data.SetIndices(std::move(indices));
+
+	return data;
 }
 
 IndexedTriangleList Sphere::Make() {
