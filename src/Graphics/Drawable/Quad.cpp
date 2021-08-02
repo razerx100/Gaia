@@ -8,8 +8,7 @@
 Quad::Quad(
 	Graphics& gfx,
 	const std::string& objectName,
-	const std::string& texturePath,
-	const std::string& normalMapPath
+	const std::string& texturePath
 )
 	: Drawable(objectName) {
 
@@ -17,21 +16,11 @@ Quad::Quad(
 	IndexedTriangleList model;
 
 	if (texturePath != "") {
-		if (normalMapPath != "") {
-			process.Init(
-				objectName,
-				LegacyType::WithTexture,
-				texturePath,
-				normalMapPath
-			);
-		}
-		else {
-			process.Init(
-				objectName,
-				LegacyType::WithTexture,
-				texturePath
-			);
-		}
+		process.Init(
+			objectName,
+			LegacyType::WithTexture,
+			texturePath
+		);
 
 		model = Plane::MakeTesselatedTextured(1, 1);
 		process.ProcessLegacyType(gfx, model, 3u);

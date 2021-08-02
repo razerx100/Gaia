@@ -15,9 +15,9 @@ cbuffer LightBuf : register(b0, space1) {
     float attQuad;
 };
 
-float4 main(float3 worldPos : Position,
-			float3 normal : Normal) : SV_TARGET {
-    const float3 vectorToLight = lightPosition - worldPos;
+float4 main(float3 viewPos : Position,
+			float3 viewNormal : Normal) : SV_TARGET {
+    const float3 vectorToLight = lightPosition - viewNormal;
     const float distanceToLight = length(vectorToLight);
     const float3 directionOfLight = vectorToLight / distanceToLight;
 
@@ -25,15 +25,16 @@ float4 main(float3 worldPos : Position,
         (attConst + attLin * distanceToLight + attQuad * (distanceToLight * distanceToLight));
 
     const float3 diffuse = diffuseColor * diffuseIntensity * attenuation
-                           * max(0.0f, dot(directionOfLight, normal));
+                            * max(0.0f, dot(directionOfLight, viewNormal));
 
     // Specular highlight
-    const float3 vn = normalize(cameraPosition - worldPos);
-    const float3 r = reflect(normalize(-lightPosition), normalize(normal));
+    const float3 viewVector = normalize(cameraPosition - viewPos);
+    const float3 reflectionVector =
+                    reflect(-normalize(lightPosition), normalize(viewNormal));
 
     const float3 specular = attenuation * (diffuseColor * diffuseIntensity)
         * specularIntensity * pow(
-        max(0.0f, dot(r, vn)), specularPower
+        max(0.0f, dot(reflectionVector, viewVector)), specularPower
     );
 
     return float4(

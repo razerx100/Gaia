@@ -40,12 +40,11 @@ App::App()
 		-6.0f, -8.5f, 0.0f,
 		"models\\nano_textured\\nanosuit.obj"
 		);
-	m_pQuad.Init(
+	m_pWall.Init(
 		m_wnd.GetGfx(),
-		"WhiteSheet",
+		"Wall",
 		0.0f, 3.0f, -8.5f,
-		"models\\images\\brickwall.jpg",
-		"models\\images\\brickwall_normal.jpg"
+		"models\\brick_wall\\brick_wall.obj"
 		);
 
 	m_wnd.GetGfx().InitialGPUSetup();
@@ -71,7 +70,7 @@ void App::DoFrame() {
 
 	m_pNano.Draw(m_wnd.GetGfx());
 	m_pNano2.Draw(m_wnd.GetGfx());
-	m_pQuad.Draw(m_wnd.GetGfx());
+	m_pWall.Draw(m_wnd.GetGfx());
 
 	ImGuiImpl::ImGuiRenderFPSCounter();
 	m_camera.ControlWindow();

@@ -29,6 +29,6 @@ private:
 	Camera m_camera;
 	TestObject<Model> m_pNano;
 	TestObject<Model> m_pNano2;
-	TestObject<Quad> m_pQuad;
+	TestObject<Model> m_pWall;
 };
 #endif

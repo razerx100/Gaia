@@ -40,14 +40,13 @@ public:
 		Graphics& gfx,
 		const std::string& objectName,
 		float posX, float posY, float posZ,
-		const std::string& texturePath = "",
-		const std::string& normalMapPath = ""
+		const std::string& texturePath = ""
 	) {
 		m_positionData.x = posX;
 		m_positionData.y = posY;
 		m_positionData.z = posZ;
 
-		m_model = std::make_unique<T>(gfx, objectName, texturePath, normalMapPath);
+		m_model = std::make_unique<T>(gfx, objectName, texturePath);
 	}
 
 	void Draw(Graphics& gfx) {

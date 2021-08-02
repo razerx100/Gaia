@@ -17,10 +17,10 @@ cbuffer LightBuf : register(b0, space1) {
 Texture2D tex : register(t0);
 SamplerState samplerState : register(s0);
 
-float4 main(float3 worldPos : Position,
-			float3 normal : Normal,
+float4 main(float3 viewPos : Position,
+			float3 viewNormal : Normal,
             float2 uv : TexCoord) : SV_TARGET {
-    const float3 vectorToLight = lightPosition - worldPos;
+    const float3 vectorToLight = lightPosition - viewPos;
     const float distanceToLight = length(vectorToLight);
     const float3 directionOfLight = vectorToLight / distanceToLight;
 
@@ -29,12 +29,12 @@ float4 main(float3 worldPos : Position,
             (distanceToLight * distanceToLight));
 
     const float3 diffuse = diffuseColor * diffuseIntensity * attenuation
-                           * max(0.0f, dot(directionOfLight, normal));
+                            * max(0.0f, dot(directionOfLight, viewNormal));
 
     // Specular highlight
-    const float3 viewVector = normalize(cameraPosition - worldPos);
+    const float3 viewVector = normalize(cameraPosition - viewPos);
     const float3 reflectionVector =
-        reflect(-normalize(directionOfLight), normalize(normal));
+        reflect(-normalize(directionOfLight), normalize(viewNormal));
 
     const float3 specular = attenuation * (diffuseColor * diffuseIntensity)
         * specularIntensity * pow(
@@ -42,7 +42,7 @@ float4 main(float3 worldPos : Position,
     );
 
     return float4(
-        saturate((diffuse + ambient) * tex.Sample(samplerState, uv).rgb + specular)
+        saturate((diffuse + ambient) * tex.Sample(samplerState, uv).xyz + specular)
         , 1.0f
     );
 }

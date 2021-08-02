@@ -7,8 +7,7 @@ public:
 	Quad(
 		Graphics& gfx,
 		const std::string& objectName,
-		const std::string& texturePath =  "",
-		const std::string& normalMapPath =  ""
+		const std::string& texturePath =  ""
 	);
 
 	void SetTransform(const DirectX::XMMATRIX& transform) noexcept;

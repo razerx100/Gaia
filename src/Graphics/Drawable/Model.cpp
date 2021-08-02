@@ -23,7 +23,8 @@ Model::Model(
 		aiProcess_Triangulate |
 		aiProcess_JoinIdenticalVertices |
 		aiProcess_ConvertToLeftHanded |
-		aiProcess_GenNormals
+		aiProcess_GenNormals |
+		aiProcess_CalcTangentSpace
 	);
 
 	for (std::uint32_t i = 0; i < pScene->mNumMeshes; ++i)

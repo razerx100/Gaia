@@ -3,10 +3,6 @@ cbuffer ColorBuf : register(b1, space1) {
     float specularPower;
 };
 
-cbuffer TransformData : register(b1, space0) {
-    matrix model;
-};
-
 cbuffer LightBuf : register(b0, space1) {
 	float3 lightPosition;
     float3 cameraPosition;
@@ -22,10 +18,11 @@ Texture2D tex : register(t0);
 Texture2D normalTex : register(t1);
 SamplerState samplerState : register(s0);
 
-float4 main(float3 worldPos : Position,
-			float3 normal : Normal,
+float4 main(float3 viewPos : Position, float3 viewTangent : Tangent,
+            float3 viewBiTangent : BiTangent, float3 viewNormal : Normal,
             float2 uv : TexCoord) : SV_TARGET {
-    const float3 vectorToLight = lightPosition - worldPos;
+
+    const float3 vectorToLight = lightPosition - viewPos;
     const float distanceToLight = length(vectorToLight);
     const float3 directionOfLight = vectorToLight / distanceToLight;
 
@@ -34,20 +31,25 @@ float4 main(float3 worldPos : Position,
             (distanceToLight * distanceToLight));
 
     // Normal map
-    float3 normalSample = normalTex.Sample(samplerState, uv).rgb;
-    normal.x = normalSample.x * 2.0f - 1.0f;
-    normal.y = -normalSample.y * 2.0f + 1.0f;
-    normal.z = -normalSample.z;
+    /*const float3x3 tanView = float3x3(
+        normalize(viewTangent),
+        normalize(viewBiTangent),
+        normalize(viewNormal)
+    );
 
-    normal = mul(normal, (float3x3) model);
+    const float3 normalSample = normalTex.Sample(samplerState, uv).xyz;
+    viewNormal = normalSample * 2.0f - 1.0f;
+    viewNormal.y = -viewNormal.y;
+
+    viewNormal = mul(viewNormal, tanView);*/
 
     const float3 diffuse = diffuseColor * diffuseIntensity * attenuation
-                           * max(0.0f, dot(directionOfLight, normal));
+                            * max(0.0f, dot(directionOfLight, viewNormal));
 
     // Specular highlight
-    const float3 viewVector = normalize(cameraPosition - worldPos);
+    const float3 viewVector = normalize(cameraPosition - viewPos);
     const float3 reflectionVector =
-        reflect(-normalize(directionOfLight), normalize(normal));
+        reflect(-normalize(directionOfLight), normalize(viewNormal));
 
     const float3 specular = attenuation * (diffuseColor * diffuseIntensity)
         * specularIntensity * pow(
@@ -55,7 +57,7 @@ float4 main(float3 worldPos : Position,
     );
 
     return float4(
-        saturate((diffuse + ambient) * tex.Sample(samplerState, uv).rgb + specular)
+        saturate((diffuse + ambient) * tex.Sample(samplerState, uv).xyz + specular)
         , 1.0f
     );
 }

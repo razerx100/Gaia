@@ -19,8 +19,7 @@ public:
 	BindProcessor(
 		const std::string& objectName,
 		LegacyType type,
-		const std::string& texturePath = "",
-		const std::string& normalMapPath = ""
+		const std::string& texturePath = ""
 	);
 
 	BindProcessor(const BindProcessor&) = delete;
@@ -33,8 +32,7 @@ public:
 	void Init(
 		const std::string& objectName,
 		LegacyType type,
-		const std::string& texturePath = "",
-		const std::string& normalMapPath = ""
+		const std::string& texturePath = ""
 	);
 	void Process(
 		Graphics& gfx,
@@ -100,7 +98,6 @@ private:
 
 	VertexLayout m_vertexLayout;
 	std::string m_texturePath;
-	std::string m_normalMapPath;
 	LegacyType m_legacyType;
 	float m_shininess = 35.0f;
 
