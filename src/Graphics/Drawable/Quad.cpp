@@ -23,7 +23,7 @@ Quad::Quad(
 		);
 
 		model = Plane::MakeTesselatedTextured(1, 1);
-		process.ProcessLegacyType(gfx, model, 3u);
+		process.ProcessLegacyType(gfx, model, 2u);
 	}
 	else {
 		process.Init(
@@ -41,8 +41,6 @@ Quad::Quad(
 	AddBind(process.GetVertexBuffer());
 	AddBind(process.GetIndexBuffer());
 
-	std::uint8_t transformRootIndex;
-
 	if (texturePath == "") {
 		struct ConstantBufferColor {
 			struct {
@@ -57,8 +55,8 @@ Quad::Quad(
 
 		ConstantBufferColor materialColor = {
 			{1.0f, 1.0f, 1.0f, 1.0f},
-			0.8f,
-			35.0f
+			0.6f,
+			90.0f
 		};
 
 		AddBind(BindProcessor::GetOrAddGenericCBuffer
@@ -68,7 +66,6 @@ Quad::Quad(
 				)
 		);
 
-		transformRootIndex = 3u;
 	}
 	else {
 		AddBind(process.GetTextures());
@@ -80,31 +77,22 @@ Quad::Quad(
 
 		ConstantBufferSpecular specularDetails = {
 			0.1f,
-			20.0f
+			90.0f
 		};
 
 		AddBind(BindProcessor::GetOrAddGenericCBuffer
 			<ConstantBufferCBVStatic<ConstantBufferSpecular>>(
 				"CBVStaticSpecularDetails",
-				4u, &specularDetails
+				3u, &specularDetails
 				)
 		);
-
-		transformRootIndex = 2u;
 	}
-
-	AddBind(
-		std::make_unique<ConstantBufferMat>(
-			0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_transform)
-			)
-	);
 
 	// Slot 1 is reserved for Light Buffer
 
-	AddBind(
-		std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
-			transformRootIndex, std::bind(&Transform::GetTransformCM, &m_transform)
-			)
+	AddBind(std::make_unique<ConstantBufferCBVDynamic<TransformMatrices>>(
+		0u, std::bind(&Transform::GetTransforms, &m_transform)
+		)
 	);
 
 	m_transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);

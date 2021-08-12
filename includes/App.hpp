@@ -7,6 +7,7 @@
 #include <Model.hpp>
 #include <Quad.hpp>
 #include <TestObject.hpp>
+#include <Test/Box.hpp>
 
 class App {
 public:
@@ -29,6 +30,6 @@ private:
 	Camera m_camera;
 	TestObject<Model> m_pNano;
 	TestObject<Model> m_pNano2;
-	TestObject<Model> m_pWall;
+	TestObject<Box> m_pBox;
 };
 #endif

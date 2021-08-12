@@ -1,5 +1,4 @@
 cbuffer SpecularBuf : register(b1, space1) {
-	float4 color;
     float specularIntensity;
     float specularPower;
 };
@@ -15,10 +14,14 @@ cbuffer LightBuf : register(b0, space1) {
     float attQuad;
 };
 
-float4 main(float3 worldPosition : Position, float3 worldNormal : Normal)
-    : SV_TARGET {
+Texture2D diffuseTex : register(t0);
+Texture2D normalTex : register(t1);
+SamplerState samplerState : register(s0);
 
-    float3 normal = normalize(worldNormal);
+float4 main(float3 worldPosition : Position, float3 worldTangent : Tangent,
+            float3 worldBiTangent : BiTangent, float3 worldNormal : Normal,
+            float2 uv : TexCoord) : SV_TARGET {
+
     float3 lightDirection = lightPosition - worldPosition;
     float lightDistance = length(lightDirection);
     lightDirection = normalize(lightDirection);
@@ -27,9 +30,24 @@ float4 main(float3 worldPosition : Position, float3 worldNormal : Normal)
                         + (attQuad * pow(lightDistance, 2.0f)));
     float3 lightColor = diffuseLight * diffuseIntensity * attenuation;
 
+    // Normal map
+    float3x3 TBN = float3x3(
+        normalize(worldTangent),
+        normalize(worldBiTangent),
+        normalize(worldNormal)
+    );
+
+    float3 normal = normalTex.Sample(samplerState, uv).xyz;
+    normal = normal * 2.0f - 1.0f;
+
+    normal = normalize(mul(normal, TBN));
+
+    // DiffuseTexture
+    float3 diffuseTexture = diffuseTex.Sample(samplerState, uv).xyz;
+
     // Diffuse
-    float3 ambient = ambientLight * color.xyz;
-    float3 diffuse = lightColor * max(dot(normal, lightDirection), 0.0f) * color.xyz;
+    float3 ambient = ambientLight * diffuseTexture;
+    float3 diffuse = lightColor * max(dot(normal, lightDirection), 0.0f) * diffuseTexture;
 
     // Specular
     float3 viewDirection = normalize(viewPosition - worldPosition);

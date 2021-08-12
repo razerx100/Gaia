@@ -13,7 +13,7 @@ BindProcessor::BindProcessor()
 
 BindProcessor::BindProcessor(const std::string& filePath, const aiMesh& mesh,
 	const aiMaterial* const* pMaterials
-	) {
+) : m_hasTexture(false), m_hasSpecular(false), m_hasNormalMap(false) {
 	Init(filePath, mesh, pMaterials);
 }
 
@@ -21,7 +21,7 @@ BindProcessor::BindProcessor(
 	const std::string& objectName,
 	LegacyType type,
 	const std::string& texturePath
-) {
+) : m_hasTexture(false), m_hasSpecular(false), m_hasNormalMap(false) {
 	Init(objectName, type, texturePath);
 }
 
@@ -126,7 +126,7 @@ void BindProcessor::Init(
 
 		m_VShaderName = "VSSolidColorNormal";
 		m_PShaderName = "PSSolidColorNormal";
-		m_rootSignature.first = "RSSolidColorNormal";
+		m_rootSignature.first = "RSSolidColor";
 	}
 	else if (type == LegacyType::WithTexture) {
 		m_vertexLayout = {

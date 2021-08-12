@@ -15,7 +15,7 @@ void Camera::SetProjection(DirectX::XMMATRIX projection) noexcept {
 	s_projection = projection;
 }
 
-DirectX::XMMATRIX Camera::GetCameraMatrix() noexcept {
+DirectX::XMMATRIX Camera::GetViewMatrix() noexcept {
 	return s_pCamera->GetMatrix();
 }
 

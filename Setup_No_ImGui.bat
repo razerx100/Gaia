@@ -3,3 +3,5 @@ if not exist Solution\ (
 )
 cd .\Solution
 cmake .. -G "Visual Studio 16 2019" -A x64 -DIMGUIFLAG:STRING=DISABLE
+cd ..
+.\GenerateHLSLFlags.exe .\Solution

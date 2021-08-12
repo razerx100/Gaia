@@ -26,7 +26,7 @@ App::App()
 	m_wnd.GetGfx().SetBGColor(0.07f, 0.0f, 0.12f);
 
 	Camera::SetCameraInstance(&m_camera);
-	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1080.0f / 1920.0f, 0.5f, 60.0f));
+	Camera::SetProjection(DirectX::XMMatrixPerspectiveLH(1.0f, 1080.0f / 1920.0f, 0.5f, 160.0f));
 
 	Light::GetLight()->Init(m_wnd.GetGfx(), 0.4f);
 
@@ -40,11 +40,10 @@ App::App()
 		-6.0f, -8.5f, 0.0f,
 		"models\\nano_textured\\nanosuit.obj"
 		);
-	m_pWall.Init(
+	m_pBox.Init(
 		m_wnd.GetGfx(),
-		"Wall",
-		0.0f, 3.0f, -8.5f,
-		"models\\brick_wall\\brick_wall.obj"
+		"Box",
+		0.0f, 0.0f, -8.5f
 		);
 
 	m_wnd.GetGfx().InitialGPUSetup();
@@ -70,7 +69,7 @@ void App::DoFrame() {
 
 	m_pNano.Draw(m_wnd.GetGfx());
 	m_pNano2.Draw(m_wnd.GetGfx());
-	m_pWall.Draw(m_wnd.GetGfx());
+	m_pBox.Draw(m_wnd.GetGfx());
 
 	ImGuiImpl::ImGuiRenderFPSCounter();
 	m_camera.ControlWindow();

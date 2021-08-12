@@ -2,19 +2,21 @@
 #define __TRANSFORM_HPP__
 #include <DirectXMath.h>
 
+struct TransformMatrices {
+	DirectX::XMMATRIX model;
+	DirectX::XMMATRIX view;
+	DirectX::XMMATRIX projection;
+};
+
 class Transform {
 public:
 	Transform() = default;
 
-	DirectX::XMMATRIX GetTransform() const noexcept;
-
-	DirectX::XMMATRIX GetTransformCM() const noexcept;
-
-	DirectX::XMMATRIX GetTransformWithProjectionCM() const noexcept;
+	TransformMatrices GetTransforms() const noexcept;
 
 	Transform& operator=(const DirectX::XMMATRIX& matrix) noexcept;
 
 private:
-	DirectX::XMMATRIX m_Transform;
+	DirectX::XMMATRIX m_transform;
 };
 #endif

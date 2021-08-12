@@ -49,7 +49,7 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		pMaterials
 	);
 
-	process.Process(gfx, mesh, pMaterials, 3u);
+	process.Process(gfx, mesh, pMaterials, 2u);
 
 	std::vector<std::unique_ptr<Bindable>> perInstanceBInd;
 
@@ -60,13 +60,13 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		};
 
 		PSMaterial matData = {
-			0.8f,
+			0.6f,
 			process.GetShininess()
 		};
 
 		perInstanceBInd.emplace_back(
 			std::make_unique<ConstantBufferCBVStatic<PSMaterial>>(
-				4u, &matData
+				3u, &matData
 				)
 		);
 	}
@@ -89,16 +89,10 @@ std::unique_ptr<Mesh> Model::ParseMesh(
 		);
 
 	perInstanceBInd.emplace_back(
-		std::make_unique<ConstantBufferMat>(
-			0u, 16u, std::bind(
-				&Transform::GetTransformWithProjectionCM,
+		std::make_unique<ConstantBufferCBVDynamic<TransformMatrices>>(
+			0u, std::bind(
+				&Transform::GetTransforms,
 				pMesh->GetTransform())
-			)
-	);
-
-	perInstanceBInd.emplace_back(
-		std::make_unique<ConstantBufferCBVDynamic<DirectX::XMMATRIX>>(
-			2u, std::bind(&Transform::GetTransformCM, pMesh->GetTransform())
 			)
 	);
 

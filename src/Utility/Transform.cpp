@@ -1,24 +1,18 @@
 #include <Transform.hpp>
 #include <Camera.hpp>
 
-DirectX::XMMATRIX Transform::GetTransform() const noexcept {
-	return m_Transform;
-}
+TransformMatrices Transform::GetTransforms() const noexcept {
+	TransformMatrices transforms {
+		DirectX::XMMatrixTranspose(m_transform),
+		DirectX::XMMatrixTranspose(Camera::GetViewMatrix()),
+		DirectX::XMMatrixTranspose(Camera::GetProjection())
+	};
 
-DirectX::XMMATRIX Transform::GetTransformCM() const noexcept {
-	return DirectX::XMMatrixTranspose(m_Transform);
-}
-
-DirectX::XMMATRIX Transform::GetTransformWithProjectionCM() const noexcept {
-	return DirectX::XMMatrixTranspose(
-		m_Transform *
-		Camera::GetCameraMatrix() *
-		Camera::GetProjection()
-	);
+	return transforms;
 }
 
 Transform& Transform::operator=(const DirectX::XMMATRIX& matrix) noexcept {
-	m_Transform = matrix;
+	m_transform = matrix;
 
 	return *this;
 }

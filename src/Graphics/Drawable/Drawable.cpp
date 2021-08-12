@@ -29,6 +29,8 @@ void Drawable::AddBind(BindPtr* bind) noexcept {
 }
 
 void Drawable::AddBind(std::unique_ptr<Bindable> bind) noexcept {
+	if (typeid(*(bind.get())).name() == typeid(IndexBuffer).name())
+		m_indexCount = reinterpret_cast<IndexBuffer*>(bind.get())->GetIndexCount();
 	m_pBinds.emplace_back(std::move(bind));
 }
 

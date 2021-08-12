@@ -1,9 +1,3 @@
-cbuffer SpecularBuf : register(b1, space1) {
-	float4 color;
-    float specularIntensity;
-    float specularPower;
-};
-
 cbuffer LightBuf : register(b0, space1) {
 	float3 lightPosition;
     float3 viewPosition;
@@ -13,6 +7,12 @@ cbuffer LightBuf : register(b0, space1) {
     float attConst;
     float attLin;
     float attQuad;
+};
+
+cbuffer ColorBuf : register(b1, space1) {
+	float4 color;
+    float specularIntensity;
+    float specularPower;
 };
 
 float4 main(float3 worldPosition : Position, float3 worldNormal : Normal)

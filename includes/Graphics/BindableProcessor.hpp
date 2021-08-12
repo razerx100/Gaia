@@ -99,7 +99,7 @@ private:
 	VertexLayout m_vertexLayout;
 	std::string m_texturePath;
 	LegacyType m_legacyType;
-	float m_shininess = 35.0f;
+	float m_shininess = 90.0f;
 
 	bool m_hasTexture;
 	bool m_hasSpecular;

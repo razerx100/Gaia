@@ -9,7 +9,7 @@ public:
 
 	static void SetCameraInstance(Camera* camera) noexcept;
 	static void SetProjection(DirectX::XMMATRIX projection) noexcept;
-	static DirectX::XMMATRIX GetCameraMatrix() noexcept;
+	static DirectX::XMMATRIX GetViewMatrix() noexcept;
 	static const DirectX::XMFLOAT3& GetCameraPos() noexcept;
 	static const DirectX::XMMATRIX& GetProjection() noexcept;
 

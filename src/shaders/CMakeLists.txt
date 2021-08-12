@@ -1,4 +1,4 @@
-file(GLOB_RECURSE SH_SRC *.hlsl)
+file(GLOB_RECURSE SH_SRC *.hlsl *.hlsli)
 
 add_executable(Shaders
     ${SH_SRC}

@@ -45,16 +45,14 @@ SolidSphere::SolidSphere(Graphics& gfx, float radius, const std::string& name)
 			)
 	);
 
-	AddBind(BindProcessor::GetOrAddGenericCBuffer<ConstantBufferCBVDynamic<LightData>>(
-		"CBLightData",
+	AddBind(std::make_unique<ConstantBufferCBVDynamic<LightData>>(
 		1u, std::bind(&Light::GetLightData, Light::GetLight())
 		)
 	);
 
-	AddBind(
-		std::make_unique<ConstantBufferMat>(
-			0u, 16u, std::bind(&Transform::GetTransformWithProjectionCM, &m_transform)
-			)
+	AddBind(std::make_unique<ConstantBufferCBVDynamic<TransformMatrices>>(
+		0u, std::bind(&Transform::GetTransforms, &m_transform)
+		)
 	);
 
 	m_transform = DirectX::XMMatrixTranslation(1.0f, 1.0f, 1.0f);
